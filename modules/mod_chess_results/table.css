@@ -1,0 +1,30 @@
+/**
+* Style für Rangliste des Tabellenanzeigers.
+* Author: Oliver Neff
+*/
+
+#rangliste .rangliste {width: 100%}
+#rangliste .rangliste tr th {background-color: #333333; color: #fff; padding-left: 0.1em;
+                             padding-top: 0.2em;
+                             padding-right: 0.1em;
+                             padding-bottom: 0.2em;
+                             border: 1px solid #CCCCCC; 
+                             font-weight: bold; 
+                             font-size: large;}
+
+#rangliste .rangliste tr:nth-child(even) td { background: #FFF; }
+#rangliste .rangliste tr:nth-child(odd) td { background: #F3F3F3; }
+#rangliste .rangliste tr td.U {background-color: #C0DF82}
+#rangliste .rangliste tr td.D {background-color: #E7A9A9 }
+#rangliste .rangliste tr td.team {text-align: left}
+#rangliste .rangliste tr td.mp {background-color: #FFFFCC}
+#rangliste .rangliste tr td.bp {background-color: #FFFFCC}
+
+#rangliste .rangliste td {
+	text-align: center;
+    padding-left: 0.1em;
+    padding-top: 0.2em;
+    padding-right: 0.1em;
+    padding-bottom: 0.2em;
+    border: 1px solid #CCCCCC;
+}

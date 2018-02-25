@@ -1,0 +1,48 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension type="module" version="3.1.0" client="site" method="upgrade">
+    <name>Tabelle Schach Resultate</name>
+    <author>Oliver Neff</author>
+    <version>0.0.2</version>
+    <description>Schachresultate als Tabelle des Bezirkes Startenburg.</description>
+    <files>
+        <filename>mod_chess_results.xml</filename>
+        <filename module="mod_chess_results">mod_chess_results.php</filename>
+        <filename>index.html</filename>
+        <filename>helper.php</filename>
+        <filename>tmpl/default.php</filename>
+        <filename>tmpl/index.html</filename>
+        <filename>table.css</filename>
+        <filename>service/rest_handler.php</filename>
+        <filename>persistence/cache_handler.php</filename>
+        <filename>sql/chess.install.sql</filename>
+        <filename>sql/chess.uninstall.sql</filename>
+        <scriptfile>script.php</scriptfile>
+    </files>
+    
+    <install>
+        <sql>
+            <file driver="mysql" charset="utf8">sql/chess.install.sql</file>
+        </sql>
+    </install>
+    <uninstall>
+        <sql>
+            <file driver="mysql" charset="utf8">sql/chess.uninstall.sql</file>
+        </sql>
+    </uninstall>
+	
+	<update>
+		<sql>
+			<file type="mysql" charset="utf8">sql/chess.remove.sql</file>
+		</sql>
+	</update>
+    
+    <config>
+        <fields name="params">
+			<fieldset name="basic" label="basic">
+            <field name="tournament" type="text" default="Mannschaft 2016/2017" label="Turnier" required="true" />
+			<field name="division" type="text" default="Kreisklasse A" label="Klasse" required="true" />
+			</fieldset>
+	</fields>
+    </config>
+    
+</extension>

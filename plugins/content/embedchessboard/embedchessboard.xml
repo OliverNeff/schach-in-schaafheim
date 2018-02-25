@@ -1,0 +1,64 @@
+<?xml version="1.0" encoding="utf-8"?>
+
+<extension version="1.6.0" type="plugin" group="content" method="upgrade">
+	<name>plg_content_embedchessboard</name>
+	<creationDate>May 2017</creationDate>
+	<copyright>Copyright (C) 2009-2017 Paolo Casaschi. All rights reserved.</copyright>
+	<license>GNU General Public License</license>
+	<author>Paolo Casaschi</author>
+	<authorEmail>pgn4web@casaschi.net</authorEmail>
+	<authorUrl>http://pgn4web.casaschi.net</authorUrl>
+	<description>PLG_CONTENT_EMBEDCHESSBOARD_XML_DESCRIPTION</description>
+	<version>3.03.00</version>
+	<scriptfile>scripts/postinstall-script.php</scriptfile>
+	<files>
+		<filename plugin="embedchessboard">embedchessboard.php</filename>
+		<filename>index.html</filename>
+		<folder>fields</folder>
+		<folder>pgn4web</folder>
+		<folder>scripts</folder>
+	</files>
+	<languages folder="language/en-GB">
+		<language tag="en-GB">en-GB.plg_content_embedchessboard.sys.ini</language>
+		<language tag="en-GB">en-GB.plg_content_embedchessboard.ini</language>
+	</languages>
+	<config>
+		<fields name="params" addfieldpath="plugins/content/embedchessboard/fields">
+			<fieldset name="basic">
+				<field name="mode" type="list" default="t" label="PLG_CONTENT_EMBEDCHESSBOARD_PARAMLABELHORIZONTALLAYOUT" description="PLG_CONTENT_EMBEDCHESSBOARD_PARAMDESCHORIZONTALLAYOUT">
+					<option value="t">PLG_CONTENT_EMBEDCHESSBOARD_PARAMOPITONHORIZONTALLAYOUTTRUE</option>
+					<option value="f">PLG_CONTENT_EMBEDCHESSBOARD_PARAMOPITONHORIZONTALLAYOUTFALSE</option>
+				</field>
+				<field name="height" type="text" default="auto" label="PLG_CONTENT_EMBEDCHESSBOARD_PARAMLABELHEIGHT" description="PLG_CONTENT_EMBEDCHESSBOARD_PARAMDESCHEIGHT"/>
+				<field name="spacer1" type="spacer" hr="true"/>
+				<field name="backgroundColor" type="jscolor" default="F6F6F6" label="PLG_CONTENT_EMBEDCHESSBOARD_PARAMLABELBACKGROUNDCOLOR" description="PLG_CONTENT_EMBEDCHESSBOARD_PARAMDESBACKGROUNDCOLOR"/>
+				<field name="spacer2" type="spacer" hr="true"/>
+				<field name="lightColor" type="jscolor" default="F6F6F6" label="PLG_CONTENT_EMBEDCHESSBOARD_PARAMLABELLIGHTSQUARESCOLOR" description="PLG_CONTENT_EMBEDCHESSBOARD_PARAMDESCLIGHTSQUARESCOLOR"/>
+				<field name="darkColor" type="jscolor" default="E0E0E0" label="PLG_CONTENT_EMBEDCHESSBOARD_PARAMLABELDARKSQUARESCOLOR" description="PLG_CONTENT_EMBEDCHESSBOARD_PARAMDESCDARKSQUARESCOLOR"/>
+				<field name="boardBorderColor" type="jscolor" default="E0E0E0" label="PLG_CONTENT_EMBEDCHESSBOARD_PARAMLABELBOARDBORDERCOLOR" description="PLG_CONTENT_EMBEDCHESSBOARD_PARAMDESCBOARDBORDERCOLOR"/>
+				<field name="highlightColor" type="jscolor" default="ABABAB" label="PLG_CONTENT_EMBEDCHESSBOARD_PARAMLABELSQUAREHIGHLIGHTCOLOR" description="PLG_CONTENT_EMBEDCHESSBOARD_PARAMDESCSQUAREHIGHLIGHTCOLOR"/>
+				<field name="spacer3" type="spacer" hr="true"/>
+				<field name="controlBackgroundColor" type="jscolor" default="F0F0F0" label="PLG_CONTENT_EMBEDCHESSBOARD_PARAMLABELCONTROLBUTTONSBACKGROUNDCOLOR" description="PLG_CONTENT_EMBEDCHESSBOARD_PARAMDESCCONTROLBUTTONSBACKGROUNDCOLOR"/>
+				<field name="controlTextColor" type="jscolor" default="696969" label="PLG_CONTENT_EMBEDCHESSBOARD_PARAMLABELCONTROLBUTTONSTEXTCOLOR" description="PLG_CONTENT_EMBEDCHESSBOARD_PARAMDESCCONTROLBUTTONSTEXTCOLOR"/>
+				<field name="spacer4" type="spacer" hr="true"/>
+				<field name="fontHeaderColor" type="jscolor" default="000000" label="PLG_CONTENT_EMBEDCHESSBOARD_PARAMLABELHEADERTEXTCOLOR" description="PLG_CONTENT_EMBEDCHESSBOARD_PARAMDESCHEADERTEXTCOLOR"/>
+				<field name="fontMovesColor" type="jscolor" default="000000" label="PLG_CONTENT_EMBEDCHESSBOARD_PARAMLABELMOVESTEXTCOLOR" description="PLG_CONTENT_EMBEDCHESSBOARD_PARAMDESCMOVESTEXTCOLOR"/>
+				<field name="highlightMovesColor" type="jscolor" default="E0E0E0" label="PLG_CONTENT_EMBEDCHESSBOARD_PARAMLABELMOVESHIGHLIGHTCOLOR" description="PLG_CONTENT_EMBEDCHESSBOARD_PARAMDESCMOVESHIGHLIGHTCOLOR"/>
+				<field name="fontCommentsColor" type="jscolor" default="808080" label="PLG_CONTENT_EMBEDCHESSBOARD_PARAMLABELCOMMENTSTEXTCOLOR" description="PLG_CONTENT_EMBEDCHESSBOARD_PARAMDESCCOMMENTSTEXTCOLOR"/>
+				<field name="spacer5" type="spacer" hr="true"/>
+				<field name="autoplayMode" type="list" default="l" label="PLG_CONTENT_EMBEDCHESSBOARD_PARAMLABELAUTOPLAYMODE" description="PLG_CONTENT_EMBEDCHESSBOARD_PARAMDESCAUTOPLAYMODE">
+					<option value="g">PLG_CONTENT_EMBEDCHESSBOARD_PARAMOPITONAUTOPLAYMODEGAME</option>
+					<option value="l">PLG_CONTENT_EMBEDCHESSBOARD_PARAMOPITONAUTOPLAYMODELOOP</option>
+					<option value="n">PLG_CONTENT_EMBEDCHESSBOARD_PARAMOPITONAUTOPLAYMODENONE</option>
+				</field>
+			</fieldset>
+			<fieldset name="advanced">
+				<field name="containerStyle" type="text" default="" label="PLG_CONTENT_EMBEDCHESSBOARD_PARAMLABELFRAMEDIVCSS" description="PLG_CONTENT_EMBEDCHESSBOARD_PARAMDESCFRAMEDIVCSS"/>
+				<field name="extendedOptions" type="text" default="" label="PLG_CONTENT_EMBEDCHESSBOARD_PARAMLABELEXTENDEDOPTIONS" description="PLG_CONTENT_EMBEDCHESSBOARD_PARAMDESCEXTENDEDOPTIONS"/>
+			</fieldset>
+		</fields>
+	</config>
+	<updateservers>
+		<server type="extension" priority="1" name="EmbedChessboard update site">http://svn.code.sf.net/p/pgn4web/joec/trunk/joomla-update/extension.xml</server>
+	</updateservers>
+</extension>
