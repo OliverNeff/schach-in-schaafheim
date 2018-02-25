@@ -3,6 +3,8 @@
 *.htaccess
 *.adminpasswd
 /images/phocagallery/*
+/images/icagenda/*
+/images/pdf/*
 */C_/*
 */D_/*
 */C:/*
