@@ -2,6 +2,8 @@
 *google1f0fd7659e6e449b.html
 *.htaccess
 *.adminpasswd
+*joomla_update.php
+*error.php
 /images/phocagallery/*
 /images/icagenda/*
 /images/pdf/*
