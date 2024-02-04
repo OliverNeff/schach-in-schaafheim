@@ -1,15 +1,16 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
-require_once(ACYMAILING_FRONT.'inc'.DS.'phpmailer'.DS.'class.phpmailer.php');
+require_once(ACYMAILING_INC.'phpmailer'.DS.'class.phpmailer.php');
 
 class acymailerHelper extends acymailingPHPMailer{
 
@@ -54,21 +55,17 @@ class acymailerHelper extends acymailingPHPMailer{
 		static $loaded = false;
 		if(!$loaded){
 			$loaded = true;
-			JPluginHelper::importPlugin('acymailing');
+			acymailing_importPlugin('acymailing');
 		}
 
 		$this->SMTPAutoTLS = false;
-
-		$this->dispatcher = JDispatcher::getInstance();
-
-		$this->app = JFactory::getApplication();
 
 		$this->subscriberClass = acymailing_get('class.subscriber');
 		$this->encodingHelper = acymailing_get('helper.encoding');
 		$this->userHelper = acymailing_get('helper.user');
 
 
-		$this->config =& acymailing_config();
+		$this->config = acymailing_config();
 		$this->setFrom($this->config->get('from_email'), $this->config->get('from_name'));
 
 		$this->Sender = $this->cleanText($this->config->get('bounce_email'));
@@ -109,7 +106,7 @@ class acymailerHelper extends acymailingPHPMailer{
 					$this->Password = trim($this->config->get('elasticemail_password'));
 					$this->SMTPAuth = true;
 				}else{
-					include_once(ACYMAILING_FRONT.'inc'.DS.'phpmailer'.DS.'class.elasticemail.php');
+					include_once(ACYMAILING_INC.'phpmailer'.DS.'class.elasticemail.php');
 					$this->Mailer = 'elasticemail';
 					$this->{$this->Mailer} = new acymailingElasticemail();
 					$this->{$this->Mailer}->Username = trim($this->config->get('elasticemail_username'));
@@ -228,7 +225,7 @@ class acymailerHelper extends acymailingPHPMailer{
 		if(!empty($warnings) && strpos($warnings, 'bloque')){
 			$result = false;
 		}
-
+		
 		$receivers = array();
 		foreach($this->to as $oneReceiver){
 			$receivers[] = $oneReceiver[0];
@@ -464,23 +461,8 @@ class acymailerHelper extends acymailingPHPMailer{
 			}
 		}
 
-		if(!empty($this->parameters)){
-			$this->generateAllParams();
-			$keysparams = array_keys($this->parameters);
-			$this->Subject = str_replace($keysparams, $this->parameters, $this->Subject);
-			$this->Body = str_replace($keysparams, $this->parameters, $this->Body);
-			if(!empty($this->AltBody)) $this->AltBody = str_replace($keysparams, $this->parameters, $this->AltBody);
+		$this->replaceParams();
 
-			if(!empty($this->From)) str_replace($keysparams, $this->parameters, $this->From);
-			if(!empty($this->FromName)) str_replace($keysparams, $this->parameters, $this->FromName);
-			if(!empty($this->ReplyTo)){
-				foreach($this->ReplyTo as $i => $replyto){
-					foreach($replyto as $a => $oneval){
-						$this->ReplyTo[$i][$a] = str_replace($keysparams, $this->parameters, $this->ReplyTo[$i][$a]);
-					}
-				}
-			}
-		}
 		if(!empty($this->introtext)){
 			$this->Body = $this->introtext.$this->Body;
 			$this->AltBody = $this->textVersion($this->introtext).$this->AltBody;
@@ -507,20 +489,19 @@ class acymailerHelper extends acymailingPHPMailer{
 		$this->language = @$this->defaultMail[$mailid]->language;
 		$this->favicon = @$this->defaultMail[$mailid]->favicon;
 
+		$this->replaceParams();
+
 		if(empty($receiver->key) && !empty($receiver->subid)){
 			$receiver->key = acymailing_generateKey(14);
-			$db = JFactory::getDBO();
-			$db->setQuery('UPDATE '.acymailing_table('subscriber').' SET `key`= '.$db->Quote($receiver->key).' WHERE subid = '.(int)$receiver->subid.' LIMIT 1');
-			$db->query();
+			acymailing_query('UPDATE '.acymailing_table('subscriber').' SET `key`= '.acymailing_escapeDB($receiver->key).' WHERE subid = '.(int)$receiver->subid.' LIMIT 1');
 		}
 
 		if(strpos($receiver->email, '@mail-tester.com') !== false){
-			$my = JFactory::getUser();
-			$currentUser = $this->subscriberClass->get($my->email);
+			$currentUser = $this->subscriberClass->get(acymailing_currentUserEmail());
 			if(empty($currentUser)) $currentUser = $receiver;
-			$this->dispatcher->trigger('acymailing_replaceusertags', array(&$this, &$currentUser, true));
+			acymailing_trigger('acymailing_replaceusertags', array(&$this, &$currentUser, true));
 		}else{
-			$this->dispatcher->trigger('acymailing_replaceusertags', array(&$this, &$receiver, true));
+			acymailing_trigger('acymailing_replaceusertags', array(&$this, &$receiver, true));
 		}
 
 		if($this->sendHTML){
@@ -538,6 +519,30 @@ class acymailerHelper extends acymailingPHPMailer{
 			$this->trackEmail = false;
 		}
 		return $status;
+	}
+
+	private function replaceParams(){
+		if(empty($this->parameters)) return;
+
+		$this->generateAllParams();
+		$keysparams = array_keys($this->parameters);
+		$this->Subject = str_replace($keysparams, $this->parameters, $this->Subject);
+		$this->Body = str_replace($keysparams, $this->parameters, $this->Body);
+		if(!empty($this->AltBody)) $this->AltBody = str_replace($keysparams, $this->parameters, $this->AltBody);
+
+
+		if(!empty($this->From)) str_replace($keysparams, $this->parameters, $this->From);
+		if(!empty($this->FromName)) str_replace($keysparams, $this->parameters, $this->FromName);
+
+		if(!empty($this->replyname)) $this->replyname = str_replace($keysparams, $this->parameters, $this->replyname);
+		if(!empty($this->replyemail)) $this->replyemail = str_replace($keysparams, $this->parameters, $this->replyemail);
+		if(!empty($this->ReplyTo)){
+			foreach($this->ReplyTo as $i => $replyto){
+				foreach($replyto as $a => $oneval){
+					$this->ReplyTo[$i][$a] = str_replace($keysparams, $this->parameters, $this->ReplyTo[$i][$a]);
+				}
+			}
+		}
 	}
 
 	protected function embedImages(){
@@ -751,28 +756,30 @@ class acymailerHelper extends acymailingPHPMailer{
 	}
 
 	function triggerTagsWithRightLanguage(&$mail, $loadedToSend){
-		if(!empty($mail->language)){
-			$lang = JFactory::getLanguage();
-			if(!in_array($mail->language, $lang->getLocale())){
-				$db = JFactory::getDBO();
-				$db->setQuery('SELECT lang_code FROM #__languages WHERE sef = '.$db->quote($mail->language).' LIMIT 1');
-				$emaillangcode = $db->loadResult();
-				if(!empty($emaillangcode)){
-					$previousLanguage = $lang->setLanguage($emaillangcode);
-					$lang->load(ACYMAILING_COMPONENT, JPATH_SITE, $emaillangcode, true);
-					$lang->load(ACYMAILING_COMPONENT.'_custom', JPATH_SITE, $emaillangcode, true);
-					$lang->load('joomla', JPATH_BASE, $emaillangcode, true);
-				}
+		if(!empty($mail->language) && !in_array($mail->language, acymailing_getLanguageLocale())){
+			$emaillangcode = '';
+
+			$languages = acymailing_getLanguages();
+			foreach($languages as $key => $oneLang){
+				if($oneLang->sef != $mail->language) continue;
+				$emaillangcode = $key;
+				break;
+			}
+
+			if(!empty($emaillangcode)){
+				$previousLanguage = acymailing_setLanguage($emaillangcode);
+				acymailing_loadLanguageFile(ACYMAILING_COMPONENT, ACYMAILING_ROOT, $emaillangcode, true);
+				acymailing_loadLanguageFile(ACYMAILING_COMPONENT.'_custom', ACYMAILING_ROOT, $emaillangcode, true);
+				acymailing_loadLanguageFile('joomla', ACYMAILING_BASE, $emaillangcode, true);
 			}
 		}
 
-		$dispatcher = JDispatcher::getInstance();
-		$dispatcher->trigger('acymailing_replacetags', array(&$mail, $loadedToSend));
+		acymailing_trigger('acymailing_replacetags', array(&$mail, &$loadedToSend));
 
 		if(empty($previousLanguage)) return;
-		$lang->setLanguage($previousLanguage);
-		$lang->load(ACYMAILING_COMPONENT, JPATH_SITE, $previousLanguage, true);
-		$lang->load(ACYMAILING_COMPONENT.'_custom', JPATH_SITE, $previousLanguage, true);
-		$lang->load('joomla', JPATH_BASE, $previousLanguage, true);
+		acymailing_setLanguage($previousLanguage);
+		acymailing_loadLanguageFile(ACYMAILING_COMPONENT, ACYMAILING_ROOT, $previousLanguage, true);
+		acymailing_loadLanguageFile(ACYMAILING_COMPONENT.'_custom', ACYMAILING_ROOT, $previousLanguage, true);
+		acymailing_loadLanguageFile('joomla', ACYMAILING_BASE, $previousLanguage, true);
 	}
 }

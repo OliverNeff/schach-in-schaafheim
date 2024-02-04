@@ -27,7 +27,7 @@ function clm_view_report($out) {
 	if ($liga[0]->durchgang > 1) {
 		 echo " (".$dg.". ".$lang->dg.")";
 	}
-	if ($liga[0]->datum != '0000-00-00' && $liga[0]->datum) { 
+	if ($liga[0]->datum != '0000-00-00' && $liga[0]->datum != '1970-01-01' && $liga[0]->datum) { 
 		//echo ', am '.	clm_core::$load->date_to_string($liga[0]->datum,false); 
 		echo '  '.$lang->date_on.' '.clm_core::$cms->showDate($liga[0]->datum, $lang->date_format_clm_f);
 	}
@@ -65,7 +65,7 @@ function clm_view_report($out) {
 			<?php } else { ?>
 			  <option value="<?php echo $heim[$x]->PKZ.':'.$heim[$x]->zps; ?>"<?php if (isset($oldresult[$i]) AND $heim[$x]->PKZ == $oldresult[$i]->PKZ AND $heim[$x]->zps == $oldresult[$i]->zps) echo ' selected="selected" '; ?>><?php echo $heim[$x]->snr;if($heim[$x]->snr < 10) {echo "&nbsp;&nbsp;";} echo ' - '.$heim[$x]->name; ?></option> 
 			<?php }}} ?>
-			<option value="-1"<?php if ($heim[$i]->zps =="ZZZZZ"){ ?> selected="selected"<?php } ?>>--&nbsp;<?php echo $lang->no_player; ?>&nbsp;--</option>
+			<option value="-1"<?php if (isset($oldresult[$i]) AND $oldresult[$i]->zps == null){ ?> selected="selected"<?php } ?>>--&nbsp;<?php echo $lang->no_player; ?>&nbsp;--</option>
 		  </select>
 </div>
 <div class="element result">
@@ -89,7 +89,7 @@ function clm_view_report($out) {
 			<?php } else { ?>
 			 <option value="<?php echo $gast[$x]->PKZ.':'.$gast[$x]->zps; ?>"<?php if (isset($oldresult[$i]) AND $gast[$x]->PKZ == $oldresult[$i]->gPKZ AND $gast[$x]->zps == $oldresult[$i]->gzps) echo ' selected="selected" '; ?>><?php echo $gast[$x]->snr;if($gast[$x]->snr <10) {echo "&nbsp;&nbsp;";} echo ' - '.$gast[$x]->name; ?></option> 
 			<?php }}} ?>
-			<option value="-1"<?php if ($gast[$i]->zps =="ZZZZZ"){ ?> selected="selected"<?php } ?>>--&nbsp;<?php echo $lang->no_player; ?>&nbsp;--</option>
+			<option value="-1"<?php if (isset($oldresult[$i]) AND $oldresult[$i]->gzps == null){ ?> selected="selected"<?php } ?>>--&nbsp;<?php echo $lang->no_player; ?>&nbsp;--</option>
 		  </select>
 </div>
 </div>

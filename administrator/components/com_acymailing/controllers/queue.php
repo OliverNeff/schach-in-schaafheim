@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -15,11 +16,11 @@ class QueueController extends acymailingController{
 
 	function remove(){
 		if(!$this->isAllowed($this->aclCat, 'delete')) return;
-		JRequest::checkToken() or die('Invalid Token');
-		$mailid = JRequest::getVar('filter_mail', 0, 'post', 'int');
+		acymailing_checkToken();
+		$mailid = acymailing_getVar('int', 'filter_mail', 0, 'post');
 
 		$queueClass = acymailing_get('class.queue');
-		$search = JRequest::getString('search');
+		$search = acymailing_getVar('string', 'search');
 		$filters = array();
 		if(!empty($search)){
 			$searchVal = '\'%'.acymailing_getEscaped($search, true).'%\'';
@@ -32,27 +33,27 @@ class QueueController extends acymailingController{
 
 		$total = $queueClass->delete($filters);
 		acymailing_enqueueMessage(acymailing_translation_sprintf('SUCC_DELETE_ELEMENTS', $total), 'message');
-		JRequest::setVar('filter_mail', 0, 'post');
-		JRequest::setVar('search', '', 'post');
+		acymailing_setVar('filter_mail', 0, 'post');
+		acymailing_setVar('search', '', 'post');
 
 		return $this->listing();
 	}
 
 	function process(){
 		if(!$this->isAllowed($this->aclCat, 'process')) return;
-		JRequest::setVar('layout', 'process');
+		acymailing_setVar('layout', 'process');
 		return parent::display();
 	}
 
 	function preview(){
-		JRequest::setVar('layout', 'preview');
+		acymailing_setVar('layout', 'preview');
 		return parent::display();
 	}
 
 	function cancelNewsletter(){
 		if(!$this->isAllowed($this->aclCat, 'delete')) return;
-		JRequest::checkToken() || JRequest::checkToken('get') || die('Invalid token');
-		$mailid = JRequest::getInt('mailid', 0);
+		acymailing_checkToken();
+		$mailid = acymailing_getVar('int', 'mailid', 0);
 		if(empty($mailid)){
 			acymailing_enqueueMessage('Mail id not found', 'error');
 			return;

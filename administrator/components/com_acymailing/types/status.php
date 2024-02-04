@@ -1,26 +1,28 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
-class statusType{
+class statusType extends acymailingClass{
 	function __construct(){
+		parent::__construct();
 		$this->values = array();
-		$this->values[] = JHTML::_('select.option', '-1', acymailing_translation('UNSUBSCRIBED') );
-		$this->values[] = JHTML::_('select.option', '0', acymailing_translation('NO_SUBSCRIPTION') );
-		$this->values[] = JHTML::_('select.option', '2', acymailing_translation('PENDING_SUBSCRIPTION') );
-		$this->values[] = JHTML::_('select.option', '1', acymailing_translation('SUBSCRIBED') );
+		$this->values[] = acymailing_selectOption('-1', acymailing_translation('UNSUBSCRIBED'));
+		$this->values[] = acymailing_selectOption('0', acymailing_translation('NO_SUBSCRIPTION'));
+		$this->values[] = acymailing_selectOption('2', acymailing_translation('PENDING_SUBSCRIPTION'));
+		$this->values[] = acymailing_selectOption('1', acymailing_translation('SUBSCRIBED'));
 	}
 
 	function display($map,$value){
 		static $i = 0;
-		return JHTML::_('acyselect.radiolist', $this->values, $map , 'class="radiobox" size="1"', 'value', 'text', (int) $value,'status'.$i++);
+		return acymailing_radio($this->values, $map , 'class="radiobox" size="1"', 'value', 'text', (int) $value,'status'.$i++);
 	}
 
 }

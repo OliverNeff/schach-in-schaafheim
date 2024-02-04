@@ -1,16 +1,18 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
-class colorType{
+class colorType extends acymailingClass{
 	function __construct(){
+		parent::__construct();
 
 		$this->values = array();
 
@@ -111,8 +113,7 @@ class colorType{
 
 		$js =  $this->jsScript;
 		$js .= 'function applyColorExample'.$id.'(){document.getElementById(\'colorexample'.$id.'\').style.backgroundColor = document.getElementById(\'color'.$id.'\').value; document.getElementById("colordiv'.$id.'").style.display = "none";}';
-		$doc = JFactory::getDocument();
-		$doc->addScriptDeclaration( $js );
+		acymailing_addScript(true, $js);
 
 
 		$text = '<table><tr>';

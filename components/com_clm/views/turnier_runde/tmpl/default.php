@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2017 CLM Team  All rights reserved
+ * @Copyright (C) 2008-2018 CLM Team  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -11,16 +11,13 @@
 */
 
 defined('_JEXEC') or die('Restricted access');
-//JHtml::_('behavior.tooltip', '.CLMTooltip', $params);
 JHtml::_('behavior.tooltip', '.CLMTooltip');
 
 
 // Konfigurationsparameter auslesen
-// $turnierid		= JRequest::getInt('turnier','1');
 $itemid = JRequest::getVar( 'Itemid' );
 $config = clm_core::$db->config();
 $commentParse = $config->tourn_comment_parse;
-// $pdf_melde = $config->pdf_meldelisten;
 $pgn		= JRequest::getInt('pgn','0'); 
 
 // Userkennung holen
@@ -28,52 +25,12 @@ $user	=JFactory::getUser();
 $jid	= $user->get('id');
 
   if ($pgn == 1) { 
-	$nl = "\n";
-	$file_name = utf8_decode($this->turnier->name).'_'.utf8_decode(JText::_('TOURNAMENT_ROUND')."_".$this->round->nr);
-	$file_name = strtr($file_name,' ./','___');
-	$file_name .= '.pgn'; 
-	$pdatei = fopen($file_name,"wt");
-	// alle Matches durchgehen
-	foreach ($this->matches as $value) {
-		if ( ($value->spieler != 0 AND $value->gegner != 0) OR $value->ergebnis != NULL) {
-			$gtmarker = "*";
-			$resulthint = "";
-			fputs($pdatei, '[Event "'.utf8_decode($this->turnier->name).'"]'.$nl);
-			fputs($pdatei, '[Site "?"]'.$nl);
-			fputs($pdatei, '[Date "'.JHTML::_('date',  $this->round->datum, JText::_('Y.m.d')).'"]'.$nl);
-			fputs($pdatei, '[Round "'.$this->round->nr.'"]'.$nl);
-			fputs($pdatei, '[Board "'.$value->brett.'"]'.$nl);
-			fputs($pdatei, '[White "'.utf8_decode($value->wname).'"]'.$nl);
-			fputs($pdatei, '[Black "'.utf8_decode($value->sname).'"]'.$nl);
-			fputs($pdatei, '[WhiteTeam "'.utf8_decode($value->wverein).'"]'.$nl);
-			fputs($pdatei, '[BlackTeam "'.utf8_decode($value->sverein).'"]'.$nl);
-			fputs($pdatei, '[WhiteElo "'.$value->welo.'"]'.$nl);
-			fputs($pdatei, '[BlackElo "'.$value->selo.'"]'.$nl);
-			fputs($pdatei, '[WhiteDWZ "'.$value->wdwz.'"]'.$nl);
-			fputs($pdatei, '[BlackDWZ "'.$value->sdwz.'"]'.$nl);
-			if ($value->ergebnis == "2") { fputs($pdatei, '[Result "1/2-1/2"]'.$nl); $gtmarker = "1/2-1/2"; }
-			elseif ($value->ergebnis == "0") { fputs($pdatei, '[Result "0-1"]'.$nl); $gtmarker = "0-1"; }
-			elseif ($value->ergebnis == "1") { fputs($pdatei, '[Result "1-0"]'.$nl); $gtmarker = "1-0"; }
-			elseif ($value->ergebnis == "5") { fputs($pdatei, '[Result "1-0"]'.$nl); $resulthint = "{".utf8_decode('Weiß gewinnt kampflos')."}"; $gtmarker = "1-0"; }
-			elseif ($value->ergebnis == "4") { fputs($pdatei, '[Result "0-1"]'.$nl); $resulthint = "{Schwarz gewinnt kampflos}"; $gtmarker = "0-1"; }
-			elseif ($value->ergebnis == "6") { fputs($pdatei, '[Result "*"]'.$nl); $resulthint = "{beide verlieren kampflos}"; $gtmarker = "*"; }
-			else fputs($pdatei, '[Result "'.$value->ergebnis.'"]'.$nl);		
-			fputs($pdatei, '[PlyCount "0"]'.$nl);
-			fputs($pdatei, '[EventDate "'.JHTML::_('date',  $this->turnier->dateStart, JText::_('Y.m.d')).'"]'.$nl);
-			fputs($pdatei, '[SourceDate "'.JHTML::_('date',  $this->round->datum, JText::_('Y.m.d')).'"]'.$nl);
-			fputs($pdatei, ' '.$nl);
-			fputs($pdatei, $resulthint.' '.$gtmarker.$nl);
-			fputs($pdatei, ' '.$nl);
-		}
-	}
-	fclose($pdatei);
-    header('Content-Disposition: attachment; filename='.$file_name);
-		header('Content-type: text/html');
-		header('Cache-Control:');
-		header('Pragma:');
-		readfile($file_name);
-		flush();
-		JFactory::getApplication()->close();
+	$result = clm_core::$api->db_pgn_template($this->turnier->id,$this->round->dg,$this->round->nr,$pgn,false);
+	JRequest::setVar('pgn',0);
+	if (!$result[1]) $msg = JText::_(strtoupper($result[1])).'<br><br>'; else $msg = '';
+	$link = 'index.php?option='.$option.'&view=turnier_runde&liga='.$this->turnier->id.'&dg='.$$this->round->dg.'&runde='.$this->round->nr.'&pgn=0';
+	if ($itemid != 0) $link .= '&Itemid='.$itemid;
+	$mainframe->redirect( $link, $msg );
   }	
 
 // Stylesheet laden
@@ -83,11 +40,15 @@ require_once(JPATH_COMPONENT.DS.'includes'.DS.'css_path.php');
 echo "<div id='clm'><div id='turnier_runde'>";
 
 	$heading = $this->turnier->name;
-	//$heading .= ": ".JText::_('TOURNAMENT_ROUND')." ".$this->round->nr;
 	$heading .= ": ".$this->round->name;
 	
+$archive_check = clm_core::$api->db_check_season_user($this->turnier->sid);
+if (!$archive_check) {
+	echo CLMContent::componentheading($heading);
+	require_once(JPATH_COMPONENT.DS.'includes'.DS.'submenu_t.php');
+	echo CLMContent::clmWarning(JText::_('NO_ACCESS')."<br/>".JText::_('NOT_REGISTERED'));
 // Turnier unveröffentlicht?
-if ( $this->turnier->published == 0) { 
+} elseif ( $this->turnier->published == 0) { 
 	echo CLMContent::componentheading($heading);
 	echo CLMContent::clmWarning(JText::_('TOURNAMENT_NOTPUBLISHED')."<br/>".JText::_('TOURNAMENT_PATIENCE'));
 
@@ -105,7 +66,7 @@ if ( $this->turnier->published == 0) {
 // Turnier/Runde kann ausgegeben werden
 } else {
 	$turParams = new clm_class_params($this->turnier->params);
-	if ($this->round->datum != "0000-00-00" AND $turParams->get('displayRoundDate', 1) == 1) {
+	if ($this->round->datum != "0000-00-00" AND $this->round->datum != "1970-01-01" AND $turParams->get('displayRoundDate', 1) == 1) {
 		$heading .=  ',&nbsp;'.JHTML::_('date',  $this->round->datum, JText::_('DATE_FORMAT_CLM_F')); 
 		if(isset($this->round->startzeit) and $this->round->startzeit != '00:00:00') { $heading .= '  '.substr($this->round->startzeit,0,5).' Uhr'; }
 	}

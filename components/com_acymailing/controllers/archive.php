@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -17,7 +18,7 @@ class ArchiveController extends acymailingController{
 		$statsClass->countReturn = false;
 		$statsClass->saveStats();
 
-		$printEnabled = JRequest::getVar('print', 0);
+		$printEnabled = acymailing_getVar('none', 'print', 0);
 		if($printEnabled){
 			$js = "setTimeout(function(){
 					if(document.getElementById('iframepreview')){
@@ -27,11 +28,10 @@ class ArchiveController extends acymailingController{
 						window.print();
 					}
 				},2000);";
-			$doc = JFactory::getDocument();
-			$doc->addScriptDeclaration($js);
+			acymailing_addScript(true, $js);
 		}
 
-		JRequest::setVar('layout', 'view');
+		acymailing_setVar('layout', 'view');
 		return parent::display();
 	}
 

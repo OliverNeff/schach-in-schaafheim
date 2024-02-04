@@ -1,25 +1,16 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><div id="page-acl">
-	<?php
-	if(ACYMAILING_J16 && JFactory::getUser()->authorise('core.admin', 'com_acymailing')){
-		$return = urlencode(base64_encode((string)JUri::getInstance()));
-		?>
-		<div class="onelineblockoptions">
-			<span class="acyblocktitle"><?php echo acymailing_translation('ACY_JOOMLA_PERMISSIONS'); ?></span>
-			<a class="acymailing_button_grey" style="color:#666;" target="_blank" href="index.php?option=com_config&view=component&component=com_acymailing&path=&return=<?php echo $return; ?>"><?php echo acymailing_translation('JTOOLBAR_OPTIONS'); ?></a><br/>
-		</div>
-	<?php } ?>
 	<div class="onelineblockoptions">
-		<span class="acyblocktitle"><?php echo acymailing_translation('ACY_ACL'); ?></span>
-		<?php
+		<?php echo acymailing_cmsACL();
 		if(!acymailing_level(3)){
 			echo '<a target="_blank" href="'.ACYMAILING_REDIRECT.'acymailing-features#mail">'.acymailing_translation('ONLY_FROM_ENTERPRISE').'</a>';
 		}else{ ?>

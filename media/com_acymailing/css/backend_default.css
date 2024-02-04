@@ -1,13 +1,17 @@
 /**
  * @package    AcyMailing for Joomla!
- * @version    5.7.0
+ * @version    5.10.2
  * @author     acyba.com
- * @copyright  (C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright  (C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license    GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
 
 @import "acyicon.css";
+@import "acymessages.css";
 
+#acymenu_top a, #acy_content a {
+	text-decoration: none;
+}
 
 
 .com_acymailing .subhead-collapse{
@@ -60,6 +64,9 @@
 	font-size: 12px;
 }
 
+#acy_content table{
+	border-spacing: 0;
+}
 
 .acytoolbarmenu{
 	background-color: #728fbd;
@@ -176,15 +183,16 @@
 	min-height: 700px;
 }
 
-.acyallcontent .acytoolbarmenu.acyaffix{
+
+.acytoolbarmenu.acyaffix{
 	width: 100%;
 	position: fixed;
 	top: 30px;
 	right: 0px;
-	z-index: 10;
+	z-index: 9;
 }
 
-.m .acyallcontent .acytoolbarmenu.acyaffix{
+.m .acytoolbarmenu.acyaffix{
 	top: 0px;
 	margin-right: 11px;
 	width: auto;
@@ -196,21 +204,25 @@
 	margin: 0px 10px;
 }
 
-.acyallcontent.iconsonly .acyaffix .acytoolbartitle{
+.iconsonly .acyaffix .acytoolbartitle{
 	padding-left: 90px;
 }
 
-.acyallcontent .acyaffix .acytoolbartitle{
+.acyaffix .acytoolbartitle{
 	padding-left: 270px;
 }
 
-.acyallcontent #acymenu_leftside.acyaffix{
+.wrapper.closed .acyaffix .acytoolbartitle{
+	padding-left: 50px;
+}
+
+#acymenu_leftside.acyaffix{
 	position: fixed;
 	top: 30px;
 	z-index: 12;
 }
 
-.m .acyallcontent #acymenu_leftside.acyaffix{
+.m #acymenu_leftside.acyaffix{
 	top: 0px;
 	left: 10px;
 }
@@ -227,7 +239,6 @@
 	border: 1px dashed silver;
 	padding: 10px;
 }
-
 
 .roundsubscrib{
 	height: 16px;
@@ -280,7 +291,6 @@
 	border-radius: 100px;
 }
 
-
 #importlists .rounddisp, #exportlists .rounddisp{
 	margin-right: 10px;
 }
@@ -311,7 +321,6 @@
 	width: 100%;
 }
 
-
 #fieldListing.acymailing_table thead th{
 	padding: 10px 5px;
 	vertical-align: bottom;
@@ -329,7 +338,6 @@
 	display: block;
 	float: none;
 }
-
 
 #newsletterLeftColumn{
 	float: left;
@@ -368,7 +376,6 @@
 	margin-bottom: 0px;
 }
 
-
 #templateListing .template_thumbnail{
 	background-color: #ffffff;
 	border: 1px solid #dddddd;
@@ -381,11 +388,6 @@
 	margin: 0px !important;
 	width: 600px;
 }
-
-#acystylesheettextarea{
-	width: 650px !important
-}
-
 
 .acymailing_table{
 	width: 100%;
@@ -428,7 +430,7 @@
 	background-color: #fff;
 }
 
-.acymailing_table thead tr, .acymailing_table thead tr:hover{
+.acymailing_table thead:not(.calendar-header) tr, .acymailing_table thead:not(.calendar-header) tr:hover{
 	background-color: #91acd7;
 	color: #fff;
 	font-style: normal;
@@ -535,6 +537,10 @@
 .acymailing_table_options .filter-search input{
 	border: none;
 	padding: 4px 15px;
+}
+
+.acymailing_table_options .filter-search button{
+	cursor: pointer;
 }
 
 .tablegroup_options{
@@ -652,7 +658,6 @@
 	color: #3e843e;
 }
 
-
 #acy_content #alllists span input, #acy_content #alllists span label{
 	float: none;
 	display: inline-block;
@@ -684,7 +689,6 @@
 .acystatsummary a .statnumber{
 	font-size: 16px
 }
-
 
 .acyblockoptions{
 	background-color: #fff;
@@ -718,7 +722,6 @@
 	color: #4c6da2;
 	font-size: 12px;
 }
-
 
 #mailer_method_config{
 	margin-left: 20px;
@@ -759,10 +762,20 @@
 	color: #fff;
 }
 
+ul.acynavigationtabs.nav.nav-tabs{
+    background-color: white;
+    padding: 10px 15px 0px 15px !important;
+    margin: 0 !important;
+}
+
+.acynavigationtabs li{
+    display: inline-block;
+    margin-bottom: 0;
+}
 
 
-#page-acl .acymailing_smalltable td input[type="checkbox"]{
-	width: 100%;
+#page-acl .acymailing_smalltable td.checkfield{
+	text-align: center;
 }
 
 .acymailing_smalltable{
@@ -799,7 +812,6 @@
 	padding: 4px;
 }
 
-
 .acymailing_table .acyicon-delete{
 	color: #d75c55;
 }
@@ -807,7 +819,6 @@
 .acymailing_table .acyicon-delete:hover{
 	color: #bb4039;
 }
-
 
 .acymailing_table .pagination a{
 	font-style: normal;
@@ -869,11 +880,22 @@
 	border: none;
 }
 
+body.com_acymailing .wrapper #content{
+	margin-top: 10px;
+}
+
+body.com_acymailing .nav-tabs+.tab-content{
+	border: none;
+}
 
 
-.acytabsystem ul{
-	padding: 0px;
-	margin: 0px 0px 9px 0px;
+.acytabsystem ul.nav-tabs{
+	padding: 0px !important;
+	margin: 0px 0px 9px 0px !important;
+	list-style-type: none !important;
+	box-shadow: none;
+	border: none;
+	border-bottom: 1px solid #ddd;
 }
 
 .nav-tabs{
@@ -902,10 +924,11 @@
 	line-height: 18px;
 	border: 1px solid transparent;
 	border-radius: 4px 4px 0 0;
+	text-decoration: none;
 }
 
-.acytabsystem .nav > li > a:hover, .acytabsystem .nav > li > a:focus, #template_css.nav > li > a:hover, #template_css.nav > li > a:focus{
-	background-color: #b1c7ea;
+.acytabsystem .nav > li > a:hover, #template_css.nav > li > a:hover{
+	background-color: #b1c7ea !important;
 	color: #fff;
 	border-color: #b1c7ea #b1c7ea #dddddd;
 	text-decoration: none;
@@ -921,16 +944,34 @@
 	background-color: #fff;
 }
 
+.acytabsystem .tab-content .tab-pane, #template_css .tab-content .tab-pane{
+	display: none;
+}
+
+.acytabsystem .tab-content .tab-pane.active, #template_css .tab-content .tab-pane.active{
+	display: block;
+}
+
+.acytabsystem .nav > li > a {
+	display: block;
+}
+
 #template_css.nav-tabs > li > a{
 	background-color: #fff;
 	border: 1px solid #eee;
 	border-bottom: 1px solid #ddd;
 }
 
-
 #acy_content input[type="radio"], #acy_content input[type="checkbox"]{
-	float: left;
 	margin: 0px 10px;
+}
+
+#acy_content #allfilters input[type="checkbox"]{
+	float: none;
+}
+
+#acy_content #allfilters label{
+	display: inline-block;
 }
 
 .m #page-subscription input[type="checkbox"], .m #config_interface input[type="checkbox"]{
@@ -941,11 +982,9 @@
 	padding-right: 20px;
 }
 
-
 .body-overlayed #sbox-window{
 	padding: 0px;
 }
-
 
 #dashboard_mainview h1{
 	color: #666;
@@ -1205,42 +1244,6 @@
 
 }
 
-@-webkit-keyframes stepcomplete{
-	0%{
-		width: 0;
-	}
-	100%{
-		width: 100%;
-	}
-}
-
-@-moz-keyframes stepcomplete{
-	0%{
-		width: 0;
-	}
-	100%{
-		width: 100%;
-	}
-}
-
-@-ms-keyframes stepcomplete{
-	0%{
-		width: 0;
-	}
-	100%{
-		width: 100%;
-	}
-}
-
-@-o-keyframes stepcomplete{
-	0%{
-		width: 0;
-	}
-	100%{
-		width: 100%;
-	}
-}
-
 @keyframes stepcomplete{
 	0%{
 		width: 0;
@@ -1322,7 +1325,6 @@
 #acy_stepbystep #user_name:hover, #acy_stepbystep #user_email:hover{
 	background-color: #fff;
 }
-
 
 
 .acycircles{
@@ -1460,52 +1462,7 @@
 	}
 }
 
-@-moz-keyframes deploy{
-	from{
-		max-height: 0px;
-	}
-	to{
-		max-height: 800px;
-	}
-}
-
-@-webkit-keyframes deploy{
-	from{
-		max-height: 0px;
-	}
-	to{
-		max-height: 800px;
-	}
-}
-
-@-ms-keyframess deploy{
-	from{
-		max-height: 0px;
-	}
-
-	to{
-		max-height: 800px;
-	}
-}
-
-@-o-keyframes deploy{
-	from{
-		max-height: 0px;
-	}
-	to{
-		max-height: 800px;
-	}
-}
-
 .acygraph #userStatisticDetails, .acygraph #listStatisticDetails, .acygraph #newsletterStatisticDetails, .acymailing_deploy{
-	-moz-animation-duration: 2s;
-	-moz-animation-name: deploy;
-	-ms-animation-name: deploy;
-	-ms-animation-duration: 2s;
-	-o-animation-name: deploy;
-	-o-animation-duration: 2s;
-	-webkit-animation-name: deploy;
-	-webkit-animation-duration: 2s;
 	animation-name: deploy;
 	animation-duration: 2s;
 	overflow: hidden;
@@ -1528,8 +1485,7 @@ h1.acy_graphtitle:after{
 }
 
 
-
-@keyframes deployhelp{
+@keyframes deployslide{
 	from{
 		max-height: 0px;
 	}
@@ -1538,53 +1494,28 @@ h1.acy_graphtitle:after{
 	}
 }
 
-@-moz-keyframes deployhelp{
+@keyframes retractslide{
 	from{
-		max-height: 0px;
+		max-height: 450px;
 	}
 	to{
-		max-height: 450px;
+		max-height: 0px;
+		display: none;
 	}
 }
 
-@-webkit-keyframes deployhelp{
-	from{
-		max-height: 0px;
-	}
-	to{
-		max-height: 450px;
-	}
+.slide_close{
+	animation: retractslide 1s forwards;
+	overflow: hidden;
+	background-color: #fff;
+	height: 350px;
+	box-shadow: 0px 1px 5px #eee;
+	padding: 5px;
+	margin-bottom: 20px;
 }
 
-@-ms-keyframes deployhelp{
-	from{
-		max-height: 0px;
-	}
-	to{
-		max-height: 450px;
-	}
-}
-
-@-o-keyframes deployhelp{
-	from{
-		max-height: 0px;
-	}
-	to{
-		max-height: 450px;
-	}
-}
-
-.help_open{
-	-ms-animation-name: deployhelp;
-	-ms-animation-duration: 2s;
-	-o-animation-name: deployhelp;
-	-o-animation-duration: 2s;
-	-moz-animation-name: deployhelp;
-	-moz-animation-duration: 2s;
-	-webkit-animation-name: deployhelp;
-	-webkit-animation-duration: 2s;
-	animation-name: deployhelp;
-	animation-duration: 2s;
+.slide_open{
+	animation: deployslide 2s forwards;
 	overflow: hidden;
 	background-color: #fff;
 	height: 350px;
@@ -1596,7 +1527,6 @@ h1.acy_graphtitle:after{
 .contentpane h1.title{
 	font-size: 12px !important;
 }
-
 
 
 .acymailing_button{
@@ -1620,6 +1550,9 @@ h1.acy_graphtitle:after{
 	text-decoration: none;
 	transition: background 0.3s ease;
 	border: none;
+}
+
+.acymailing_button:hover, .acymailing_button:focus{
 	border-bottom: 1px solid #95afd8;
 }
 
@@ -1663,6 +1596,7 @@ a.acyupload.acymailing_button_grey{
 	text-align: center;
 	text-shadow: 0 1px 1px rgba(255, 255, 255, 0.75);
 	vertical-align: middle;
+	text-decoration: none;
 }
 
 .acyupload.acymailing_button_grey{
@@ -1683,7 +1617,6 @@ a.acyupload.acymailing_button_grey{
 }
 
 
-
 ul.buttonOptions{
 	background-color: #5d7bab;
 	box-shadow: 0 5px 6px #516890 inset;
@@ -1691,6 +1624,7 @@ ul.buttonOptions{
 	border-bottom-left-radius: 4px !important;
 	list-style: none;
 	padding-bottom: 2px;
+	padding-left: 0px;
 	min-width: 120px;
 }
 
@@ -1806,47 +1740,6 @@ ul.buttonOptions{
 	display: none;
 }
 
-
-#acymailing_messages_warning a{
-	color: #c4872f;
-}
-
-#system-message-container{
-	margin: 0px;
-	height: 0px;
-}
-
-.alert p{
-	margin: 0;
-}
-
-.alert{
-	padding: 8px !important;
-	margin-bottom: 18px;
-	text-shadow: 0 1px 0 rgba(255, 255, 255, 0.5);
-	background-color: #fcf8e3;
-	border: 1px solid #fbeed5;
-	border-radius: 4px;
-	margin: 10px;
-}
-
-.alert .close{
-	right: 0px !important;
-}
-
-.alert-success{
-	background-color: #dff0d8;
-	border-color: #d6e9c6;
-	color: #468847;
-}
-
-.alert-info{
-	background-color: #d9edf7;
-	border-color: #bce8f1;
-	color: #3a87ad;
-}
-
-
 .acymailing_campaigns_listing .acystatsbutton .acyicon-statistic{
 	font-size: 14px;
 	color: #8eb0dd;
@@ -1874,16 +1767,15 @@ ul.buttonOptions{
 }
 
 
-
 .acymailing_table .titleorder{
-	width: 140px
+	width: 18px
 }
 
 .acymailing_table .titleorder i{
 	display: inline;
 }
 
-.donotprint input{
+.donotprint input:not([type='checkbox']):not([type='radio']){
 	padding-right: 40px !important;
 }
 
@@ -1895,7 +1787,6 @@ ul.buttonOptions{
 	top: 4px;
 }
 
-
 #acy_exportchartlegend .acyicon-export{
 	margin-left: 15px;
 }
@@ -1903,7 +1794,6 @@ ul.buttonOptions{
 #acy_exportchartlegend.acymailing_button{
 	margin-top: 15px;
 }
-
 
 
 #acy_content textarea, #acy_content input[type="text"], #acy_content input[type="password"], #acy_content input[type="datetime"], #acy_content input[type="datetime-local"], #acy_content input[type="date"], #acy_content input[type="month"], #acy_content input[type="time"], #acy_content input[type="week"], #acy_content input[type="number"], #acy_content input[type="email"], #acy_content input[type="url"], #acy_content input[type="search"], #acy_content input[type="tel"], #acy_content input[type="color"], #acy_content select, #acy_content .uneditable-input, .acymailing_table_options #category{
@@ -1936,7 +1826,6 @@ ul.buttonOptions{
 }
 
 
-
 #toolbar-box{
 	display: none;
 }
@@ -1949,10 +1838,6 @@ ul.buttonOptions{
 #element-box, div#element-box div.m{
 	padding: 0px !important;
 	margin: 0px !important;
-}
-
-.header{
-	display: none;
 }
 
 #allfilters .plugarea, #allactions .plugarea{
@@ -1979,6 +1864,9 @@ ul.buttonOptions{
 	float: none;
 }
 
+#acy_content label{
+	display: inline-block;
+}
 
 
 #content-box .border .padding{
@@ -2061,9 +1949,6 @@ ul.buttonOptions{
 	background-image: none;
 	width: 25px;
 }
-
-
-
 
 div.acytagpopup .familymenu a{
 	background: #eee;
@@ -2158,8 +2043,9 @@ div.acytagpopup table.acymailing_table tr.selectedrow td, div.acytagpopup table.
 	padding: 5px;
 }
 
-
-
+.contentpane{
+	padding: 0px !important;
+}
 
 #dateDetails{
 	background-color: #f5f5f5;
@@ -2196,6 +2082,10 @@ div.acyfilterarea{
 	clear: both;
 }
 
+.acy_filter_mail #filtersblock input, .acy_filter_mail #filtersblock select{
+	max-width: 100%;
+}
+
 #executed_actions_block div.acyfilterarea{
 	margin: 10px 0px 10px 10px;
 	padding: 10px 5px 10px 10px;
@@ -2204,9 +2094,6 @@ div.acyfilterarea{
 #actionlisting td{
 	text-align: center;
 }
-
-
-
 
 #acy_content input[type=checkbox], #wysija input, #wysija select{
 	padding: 0px;
@@ -2273,9 +2160,7 @@ div#wysija{
 	.acyaffix .acytoolbartitle, .acyaffix-top .acytoolbartitle{
 		display: none;
 	}
-
 }
-
 
 .acyplugformat .formatbox{
 	width: 235px;
@@ -2366,7 +2251,6 @@ div#wysija{
 }
 
 
-
 span.onload{
 	background-image: url(../images/spinner.gif);
 	background-repeat: no-repeat;
@@ -2424,10 +2308,6 @@ div.onload{
 	float: none;
 	margin-bottom: 0px;
 	clear: none;
-}
-
-#modal-action iframe.iframe{
-	width: 100%;
 }
 
 #acy_content .clr{
@@ -2492,7 +2372,6 @@ span.acy_stat_date{
 	font-weight: bold;
 }
 
-
 .acymaincontent_action #actionsarea{
 	margin-top: 10px;
 }
@@ -2500,7 +2379,6 @@ span.acy_stat_date{
 .acymaincontent_action #actionsarea select{
 	margin-top: 5px;
 }
-
 
 .tree{
 	position: absolute;
@@ -2630,6 +2508,16 @@ span.acy_stat_date{
 	cursor: pointer;
 }
 
+.acy_selected_attachment{
+	max-width: 50%;
+	width: 200px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    display: inline-block;
+    margin-left: 5px;
+    vertical-align: middle;
+}
+
 #confirmBoxAttach{
 	width: 370px;
 	background: rgba(255, 255, 255, 0.8);
@@ -2656,7 +2544,6 @@ span.acy_stat_date{
 	color: #5e93c0
 }
 
-
 #acy_media_browser .drag-resize:hover{
 	cursor: nw-resize;
 }
@@ -2679,7 +2566,7 @@ span.acy_stat_date{
 	top: 0;
 	right: 0;
 	height: 100%;
-	padding: 25px;
+	padding: 0px 25px;
 	background-color: #ECECEC;
 	border-left: solid 1px #DCDCDC;
 	width: 190px;
@@ -2698,7 +2585,6 @@ span.acy_stat_date{
 .acydashboard_specialcontent{
 	margin-top: 30px;
 }
-
 
 #tagfieldcontainer{
 	display: inline-block;
@@ -2751,6 +2637,7 @@ span.acy_stat_date{
 #tagul #searchbartag{
 	border: none;
 	box-shadow: none;
+	min-width: 175px;
 }
 
 #tagul .searchtag{
@@ -2766,7 +2653,7 @@ span.acy_stat_date{
 	border-top: 0;
 	background: #fff;
 	box-shadow: 0 4px 5px rgba(0, 0, 0, 0.15);
-	width: 298px;
+	width: 248px;
 }
 #existingtags ul{
 	margin: 0px;
@@ -2789,37 +2676,9 @@ span.acy_stat_date{
 	vertical-align: top;
 }
 
-
-#clicks_overview a{
-	position: relative;
+.onelineblockoptions #tagfilter{
+	vertical-align: middle;
 }
-
-.overviewbubble{
-	font-weight: normal;
-	color: white;
-	width: 22px;
-	height: 22px;
-	position: absolute;
-	text-align: center;
-	top: -10px;
-	left: -10px;
-	border-radius: 50%;
-	line-height: 24px;
-	font-size: 10px;
-	border: 2px solid rgba(255,255,255,0.5);
-	transform: scale(0);
-
-	animation: bubbleappear 1s 1 1s forwards;
-}
-
-@keyframes bubbleappear {
-	0%{
-		transform: scale(0);
-	}100%{
-		transform: scale(1);
-	}
-}
-
 
 .installacysms #meter {
 	background: #555;
@@ -2918,4 +2777,71 @@ span.acy_stat_date{
 	text-overflow: ellipsis;
 	max-width: 350px;
 	overflow: hidden;
+}
+
+.icon-16-refuse{
+	 background-image: url(../images/icons/icon-16-refuse.png);
+	 background-repeat: no-repeat;
+	 width: 16px !important;
+	 height: 16px !important;
+	 float: left;
+	 margin: 3px;
+}
+
+.acypagination li{
+	display: inline-block;
+	width: 40px;
+	height: 30px;
+	line-height: 30px;
+	border: 1px solid #ddd;
+	border-left-width: 0;
+	font-family: 'acyicon';
+}
+
+.acypagination li.selectedPage{
+	width: 200px;
+}
+
+.acypagination li input{
+	width: 35px;
+}
+
+.acypagination li:first-child{
+	border-left-width: 1px;
+	border-radius: 3px 0px 0px 3px;
+}
+
+.acypagination li:last-child{
+	border-radius: 0px 3px 3px 0px;
+}
+
+.acypagination_counter, .acypagination{
+	text-align: center;
+	margin-left: 0;
+}
+
+.acypagination li span {
+	cursor: pointer;
+	display: block;
+	line-height: 30px;
+	height: 100%;
+}
+
+.acypagination li span.acypaginactive{
+	opacity: 0.5;
+	cursor: default;
+}
+
+.acypagination li span:not(.acypaginactive):hover{
+	background-color: #e8e8e8;
+}
+
+.acypagination .selectedPage #acypagination{
+	vertical-align: baseline;
+}
+
+.deleteFilter{
+	cursor: pointer;
+	margin-left: 10px;
+	width: 20px;
 }

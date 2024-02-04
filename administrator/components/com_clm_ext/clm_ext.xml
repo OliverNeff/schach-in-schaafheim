@@ -1,0 +1,52 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!DOCTYPE install SYSTEM "http://dev.joomla.org/xml/1.5/component-install.dtd">
+<extension type="component" version="1.6.0" method="upgrade">
+	<name>clm_ext</name>
+	<creationDate>26.11.2018</creationDate>
+	<author>CLM Projekt</author>
+	<copyright>(C) Copyright 2009-2017 by CLM Project</copyright>
+	<license>GPL</license>
+	<authorEmail>fishpoke@fishpoke.de</authorEmail>
+	<authorUrl>www.chessleaguemanager.de</authorUrl>
+	<version>3.4.0</version>
+	<description>
+		<![CDATA[
+		 <h3>CLM Extern Komponente :</h3>
+		 <p>Die Komponente erlaubt die Darstellung von Daten aus dem Ligamanager CLM auf einer Seite ohne CLM !</p>
+		 <p><a target="_blank" href="http://www.chessleaguemanager.de">Projekt Homepage</a></p>
+		 <p>&copy; Thomas Schwietert [<a target="_blank" href="http://www.sboo.de">www.sboo.de</a>]</p>
+			 ]]>
+	</description>
+	
+	<files folder="site">
+		<filename>clm_ext.php</filename>
+		<filename>controller.php</filename>
+		<filename>index.html</filename>
+		<filename>clm_content.css</filename>
+		<filename>submenu.css</filename>
+		<filename>submenu.js</filename>
+		<folder>images</folder>
+		<folder>models</folder>
+		<folder>views</folder>
+
+	</files>
+
+	<administration>
+		<menu>COM_CLM_EXTERN</menu>
+	
+	<files folder="admin">
+		<filename>clm_ext.php</filename>
+		<filename>index.html</filename>
+		<filename>changelog.txt</filename>
+
+		<folder>controllers</folder>
+		<folder>views</folder>
+	</files>
+		<languages folder="admin/languages">
+			<language tag="de-DE">de-DE.com_clm_ext.sys.ini</language>
+			<language tag="en-GB">en-GB.com_clm_ext.sys.ini</language>
+		</languages>
+	</administration>
+	 
+</extension>
+ 

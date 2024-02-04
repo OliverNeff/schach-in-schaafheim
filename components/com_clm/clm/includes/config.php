@@ -1,4 +1,10 @@
 <?php
+/**
+ * @ Chess League Manager (CLM) Component 
+ * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
 defined('clm') or die('Restricted access');
 // aus clm_function_make_valid entnommen
 // 0 -> Ganzzahl
@@ -70,9 +76,9 @@ $config["fe_display_lose_by_default"]=array(52,9,0,array(0,1));
 $config["googlemaps"]=array(53,9,0,array(0,1));
 $config["googlemaps_api"]=array(54,8,"",null);
 $config["googlemaps_rtype"]=array(55,9,0,array(0,1,2,3));
-$config["googlemaps_ver"]=array(56,9,1,array(0,1));
+$config["googlemaps_ver"]=array(56,9,1,array(0,1,3));
 $config["googlemaps_vrout"]=array(57,9,1,array(0,1));
-$config["googlemaps_msch"]=array(58,9,1,array(0,1));
+$config["googlemaps_msch"]=array(58,9,1,array(0,1,3));
 $config["googlemaps_mrout"]=array(59,9,1,array(0,1));
 $config["googlecharts"]=array(60,9,0,array(0,1));
 $config["tourn_linkclub"]=array(61,9,1,array(0,1));
@@ -135,5 +141,8 @@ $config["fe_runde_subuml"]=array(120,9,0,array(0,1));
 $config["email_type"]=array(121,9,1,array(0,1));
 $config["upload_pgn"]=array(122,9,0,array(0,1));
 $config["import_pgn"]=array(123,9,0,array(0,1));
+$config["test_button"]=array(124,9,0,array(0,1)); 
+$config["view_archive"]=array(125,9,0,array(0,1));
+$config["user_member"]=array(126,9,0,array(0,1)); 
 
 ?>

@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -15,35 +16,44 @@ class plgSystemRegacymailing extends JPlugin{
 
 	function __construct(&$subject, $config){
 		parent::__construct($subject, $config);
+	}
+
+	function initAcy(){
+		if(!include_once(rtrim(JPATH_ADMINISTRATOR, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_acymailing'.DIRECTORY_SEPARATOR.'helpers'.DIRECTORY_SEPARATOR.'helper.php')) return false;
+
 		if(!isset($this->params)){
 			$plugin = JPluginHelper::getPlugin('system', 'regacymailing');
-			$this->params = new JParameter($plugin->params);
+			$this->params = new acyParameter($plugin->params);
 		}
+
+		return true;
 	}
 
 	function onAfterRoute(){
 		if(!empty($_POST['option']) && $_POST['option'] == 'com_virtuemart' && !empty($_POST['func']) && $_POST['func'] == 'shopperupdate'){
+			if($this->initAcy() === false) return true;
 			$this->_updateVM();
 		}
 
 		if(!empty($_REQUEST['option']) && $_REQUEST['option'] == 'com_community' && !empty($_REQUEST['task']) && ($_REQUEST['task'] == 'register_save' || $_REQUEST['task'] == 'save')){
+			if($this->initAcy() === false) return true;
 			$this->_saveInSession();
 		}
 
 		if(!empty($_REQUEST['option']) && $_REQUEST['option'] == 'com_jblance' && !empty($_REQUEST['layout']) && in_array($_REQUEST['layout'], array('showfront', 'planadd'))){
+			if($this->initAcy() === false) return true;
 			$this->_saveInSession();
 		}
 
 		if(!empty($_REQUEST['option']) && in_array($_REQUEST['option'], array('com_user', 'com_users')) && !empty($_REQUEST['view']) && in_array($_REQUEST['view'], array('register', 'registration', 'profile', 'user'))){
-			require_once(JPATH_ADMINISTRATOR.DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_acymailing'.DIRECTORY_SEPARATOR.'helpers'.DIRECTORY_SEPARATOR.'helper.php');
+			if($this->initAcy() === false) return true;
 			$fieldsClass = acymailing_get('class.fields');
 			$fieldsClass->origin = 'joomla';
 			$user = new stdClass();
-			$app = JFactory::getApplication();
 
 			$taskVar = ACYMAILING_J16 ? 'layout' : 'task';
 
-			if($app->isAdmin()){
+			if(acymailing_isAdmin()){
 				if($_REQUEST['view'] == 'user' && !empty($_REQUEST[$taskVar]) && $_REQUEST[$taskVar] == 'edit'){
 					$extraFields = $fieldsClass->getFields('joomlaprofile', $user);
 				}
@@ -66,42 +76,40 @@ class plgSystemRegacymailing extends JPlugin{
 	}
 
 	private function _saveInSession(){
-		$acysub = JRequest::getVar('acysub', array(), '', 'array');
+		$acysub = acymailing_getVar('array', 'acysub', array(), '');
 		$session = JFactory::getSession();
 		if(!empty($acysub)){
 			$session->set('acysub', $acysub);
 		}
 
-		$acysubhidden = JRequest::getString('acysubhidden');
+		$acysubhidden = acymailing_getVar('string', 'acysubhidden');
 		if(!empty($acysubhidden)){
 			$session->set('acysubhidden', $acysubhidden);
 		}
 
-		$regacy = JRequest::getVar('regacy', array(), '', 'array');
+		$regacy = acymailing_getVar('array', 'regacy', array(), '');
 		if(!empty($regacy)){
 			$session->set('regacy', $regacy);
 		}
 	}
 
 	private function _updateVM(){
-		$user = JFactory::getUser();
-		if(empty($user->id)) return;
+		$currentUserid = acymailing_currentUserId();
+		if(empty($currentUserid)) return;
 
-		$acylistsdisplayed = JRequest::getString('acylistsdisplayed_dispall').','.JRequest::getString('acylistsdisplayed_onecheck');
+		$acylistsdisplayed = acymailing_getVar('string', 'acylistsdisplayed_dispall').','.acymailing_getVar('string', 'acylistsdisplayed_onecheck');
 		if(strlen($acylistsdisplayed) < 2) return;
 		$listsDisplayed = explode(',', $acylistsdisplayed);
 		acymailing_arrayToInteger($listsDisplayed);
 		if(empty($listsDisplayed)) return;
 
-		if(!include_once(rtrim(JPATH_ADMINISTRATOR, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_acymailing'.DIRECTORY_SEPARATOR.'helpers'.DIRECTORY_SEPARATOR.'helper.php')) return;
-
 		$userClass = acymailing_get('class.subscriber');
 
-		$subid = $userClass->subid($user->id);
+		$subid = $userClass->subid($currentUserid);
 		if(empty($subid)) return; //The user should already be there
 
-		$visiblelistschecked = JRequest::getVar('acysub', array(), '', 'array');
-		$acySubHidden = JRequest::getString('acysubhidden');
+		$visiblelistschecked = acymailing_getVar('array', 'acysub', array(), '');
+		$acySubHidden = acymailing_getVar('string', 'acysubhidden');
 		if(!empty($acySubHidden)){
 			$visiblelistschecked = array_merge($visiblelistschecked, explode(',', $acySubHidden));
 		}
@@ -135,11 +143,10 @@ class plgSystemRegacymailing extends JPlugin{
 	}
 
 	function onAfterRender(){
-		$helperFile = rtrim(JPATH_ADMINISTRATOR, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_acymailing'.DIRECTORY_SEPARATOR.'helpers'.DIRECTORY_SEPARATOR.'helper.php';
-		if(!file_exists($helperFile) || !include_once($helperFile)) return;
+		if($this->initAcy() === false) return true;
 
-		$option = JRequest::getCmd('option', '', 'GET');
-		if(empty($option)) $option = JRequest::getCmd('option');
+		$option = acymailing_getVar('cmd', 'option', '', 'GET');
+		if(empty($option)) $option = acymailing_getVar('cmd', 'option');
 
 		if(empty($option)) return;
 		$this->option = $option;
@@ -171,12 +178,10 @@ class plgSystemRegacymailing extends JPlugin{
 		$this->components['com_virtuemart'] = array('view' => $vmViews, 'displayLoggedin' => true, 'viewvar' => 'page', 'lengthafter' => 500, 'acysubscribestyle' => 'style="clear:both"');
 
 		if($option == 'com_rsform'){
-			$formId = JRequest::getCmd('formId', '', 'GET');
-			if(empty($formId)) $formId = JRequest::getCmd('formId');
-			$db = JFactory::getDBO();
-			if(!empty($formId) && in_array($db->getPrefix().'rsform_registration', $db->getTableList())){
-				$db->setQuery('SELECT * FROM #__rsform_registration WHERE form_id = '.intval($formId).' AND published = 1');
-				$registration = $db->loadObject();
+			$formId = acymailing_getVar('cmd', 'formId', '', 'GET');
+			if(empty($formId)) $formId = acymailing_getVar('cmd', 'formId');
+			if(!empty($formId) && in_array(acymailing_getPrefix().'rsform_registration', acymailing_getTableList())){
+				$registration = acymailing_loadObject('SELECT * FROM #__rsform_registration WHERE form_id = '.intval($formId).' AND published = 1');
 				if(!empty($registration)){
 					$regVar = empty($registration->reg_merge_vars) ? 'vars' : 'reg_merge_vars';
 					$registrationVars = unserialize($registration->$regVar);
@@ -196,33 +201,32 @@ class plgSystemRegacymailing extends JPlugin{
 		if(!isset($this->components[$option])) return;
 		$viewVar = (isset($this->components[$option]['viewvar']) ? $this->components[$option]['viewvar'] : 'view');
 		if(!is_array($viewVar)){
-			if(!in_array(JRequest::getString($viewVar, JRequest::getString('task', JRequest::getString('view'))), $this->components[$option]['view'])) return;
-			$this->view = JRequest::getString($viewVar, JRequest::getString('task', JRequest::getString('view')));
+			if(!in_array(acymailing_getVar('string', $viewVar, acymailing_getVar('string', 'task', acymailing_getVar('string', 'view'))), $this->components[$option]['view'])) return;
+			$this->view = acymailing_getVar('string', $viewVar, acymailing_getVar('string', 'task', acymailing_getVar('string', 'view')));
 		}else{
 			$isvalid = false;
 			foreach($viewVar as $oneVar){
-				if(in_array(JRequest::getString($oneVar, JRequest::getString('task', JRequest::getString('view'))), $this->components[$option]['view'])){
+				if(in_array(acymailing_getVar('string', $oneVar, acymailing_getVar('string', 'task', acymailing_getVar('string', 'view'))), $this->components[$option]['view'])){
 					$isvalid = true;
-					$this->view = JRequest::getString($oneVar, JRequest::getString('task', JRequest::getString('view')));
+					$this->view = acymailing_getVar('string', $oneVar, acymailing_getVar('string', 'task', acymailing_getVar('string', 'view')));
 					break;
 				}
 			}
 			if(!$isvalid) return;
 		}
 
-		if(isset($this->components[$option]['layout']) && !in_array(JRequest::getString('layout'), $this->components[$option]['layout'])) return;
+		if(isset($this->components[$option]['layout']) && !in_array(acymailing_getVar('string', 'layout'), $this->components[$option]['layout'])) return;
 
 		if(empty($this->components[$option]['displayBackend'])){
-			$app = JFactory::getApplication();
-			if($app->isAdmin()) return;
+			if(acymailing_isAdmin()) return;
 		}
 		if(empty($this->components[$option]['displayLoggedin'])){
-			$user = JFactory::getUser();
-			if(!empty($user->id)) return;
+			$currentUserid = acymailing_currentUserId();
+			if(!empty($currentUserid)) return;
 		}
 
 
-		if($option == 'com_community' && in_array(JRequest::getString('task'), array('registerAvatar', 'registerProfile'))) return;
+		if($option == 'com_community' && in_array(acymailing_getVar('string', 'task'), array('registerAvatar', 'registerProfile'))) return;
 
 		$this->_addFields();
 		$this->_addLists();
@@ -236,8 +240,7 @@ class plgSystemRegacymailing extends JPlugin{
 
 		if(empty($this->components[$option]['lengthaftermin'])) $this->components[$option]['lengthaftermin'] = 0;
 
-		$app = JFactory::getApplication();
-		if($app->isAdmin()){
+		if(acymailing_isAdmin()){
 			$area = 'joomlaprofile';
 		}elseif(!empty($this->components[$option]['edittasks']) && in_array($this->view, $this->components[$option]['edittasks'])){
 			$area = 'frontjoomlaprofile';
@@ -314,12 +317,12 @@ class plgSystemRegacymailing extends JPlugin{
 			$fieldsClass->labelClass = $this->components[$option]['labelclass'];
 		}
 
-		if($app->isAdmin()){
+		if(acymailing_isAdmin()){
 			$jversion = preg_replace('#[^0-9\.]#i', '', JVERSION);
 			if(version_compare($jversion, '1.6.0', '>=')){
-				$currentUserId = JRequest::getint('id', 0);
+				$currentUserId = acymailing_getVar('int', 'id', 0);
 			}else{
-				$currentUserIdArray = JRequest::getVar('cid', array());
+				$currentUserIdArray = acymailing_getVar('array', 'cid', array());
 				if(is_array($currentUserIdArray) && !empty($currentUserIdArray)){
 					$currentUserId = array_shift($currentUserIdArray);
 				}else{
@@ -327,14 +330,13 @@ class plgSystemRegacymailing extends JPlugin{
 				}
 			}
 		}else{
-			$user = JFactory::getUser();
-			$currentUserId = $user->id;
+			$currentUserId = acymailing_currentUserId();
 		}
 
 		if(!empty($this->components[$option]['edittasks']) && in_array($this->view, $this->components[$option]['edittasks']) && $currentUserId != 0){
 			$userClass = acymailing_get('class.subscriber');
 			$acyUserData = $userClass->get($userClass->subid($currentUserId));
-			if(!empty($acyUserData->email)) $fieldsClass->currentUser = $acyUserData;
+			$fieldsClass->currentUserEmail = empty($acyUserData->email) ? '' : $acyUserData->email;
 		}
 
 		foreach($newOrdering as $fieldName){
@@ -348,12 +350,12 @@ class plgSystemRegacymailing extends JPlugin{
 			if(!empty($allFormats[$currentFormat]['tagfieldvalue'])) $text .= '</'.$allFormats[$currentFormat]['tagfieldvalue'].'>';
 			if(!empty($allFormats[$currentFormat]['tagfield'])) $text .= '</'.$allFormats[$currentFormat]['tagfield'].'>';
 		}
-
-		if($app->isAdmin()){
+		$currentUserid = acymailing_currentUserId();
+		if(acymailing_isAdmin()){
 			if(ACYMAILING_J25){
 				$formid = 'user-form';
 			}else $formid = 'adminForm';
-		}elseif(empty($user->id)){
+		}elseif(empty($currentUserid)){
 			if(ACYMAILING_J25){
 				$formid = 'member-registration';
 			}else $formid = 'josForm';
@@ -404,7 +406,7 @@ class plgSystemRegacymailing extends JPlugin{
 			}
 			if(!empty($script)){
 
-				if($app->isAdmin()){
+				if(acymailing_isAdmin()){
 					$script = 'if(arguments[0] != "user.cancel"){' . $script . '}';
 					if (strpos($body, 'Joomla.submitbutton =') === false) {
 
@@ -417,7 +419,8 @@ class plgSystemRegacymailing extends JPlugin{
 						$body = preg_replace('#(Joomla\.submitbutton =[^{]+\{)#Uis', '$1' . $script, $body, 1);
 					}
 				}else {
-					if (empty($user->id) && ACYMAILING_J30) {
+					$currentUserid = acymailing_currentUserId();
+					if (empty($currentUserid) && ACYMAILING_J30) {
 						$script = 'var regform = document.getElementById("' . $formid . '");
 								if(!regform) regform = document.getElementsByName("' . $formid . '")[0];
 								var submitbutton = regform.querySelector(\'button[type="submit"]\');
@@ -453,13 +456,9 @@ class plgSystemRegacymailing extends JPlugin{
 		$js = '';
 		foreach($fields as $oneField){
 			if($oneField->type == 'date'){
-				if(ACYMAILING_J30){
-					$js .= 'jQuery(document).ready(function($) {Calendar.setup({';
-				}else{
-					$js .= 'window.addEvent(\'domready\', function() {Calendar.setup({';
-				}
 				if(empty($oneField->options['format'])) $oneField->options['format'] = "%Y-%m-%d";
-				$js .= 'inputField: "field_'.$oneField->namekey.'",
+				$js .= 'document.addEventListener("DOMContentLoaded", function(){Calendar.setup({
+						inputField: "field_'.$oneField->namekey.'",
 						ifFormat: "'.$oneField->options['format'].'",
 						button: "field_'.$oneField->namekey.'_img",
 						align: "Tl",
@@ -472,7 +471,6 @@ class plgSystemRegacymailing extends JPlugin{
 	}
 
 	private function _addLists(){
-		$app = JFactory::getApplication();
 		$option = $this->option;
 
 		$visibleLists = $this->params->get('lists', 'None');
@@ -485,7 +483,7 @@ class plgSystemRegacymailing extends JPlugin{
 			$allLists = $listsClass->onlyCurrentLanguage($allLists);
 		}
 
-		$isAdmin = $app->isAdmin();
+		$isAdmin = acymailing_isAdmin();
 		if(strpos($visibleLists, ',') OR is_numeric($visibleLists)){
 			$allvisiblelists = explode(',', $visibleLists);
 			foreach($allLists as $oneList){
@@ -504,18 +502,18 @@ class plgSystemRegacymailing extends JPlugin{
 		$checkedLists = $this->params->get('listschecked', 'All');
 		$userClass = acymailing_get('class.subscriber');
 
-		if($app->isAdmin()){
+		if(acymailing_isAdmin()){
 			$jversion = preg_replace('#[^0-9\.]#i', '', JVERSION);
 			if(version_compare($jversion, '1.6.0', '>=')){
-				$currentUserId = JRequest::getint('id', 0);
+				$currentUserId = acymailing_getVar('int', 'id', 0);
 			}else{
-				$currentUserIdArray = JRequest::getVar('cid', array());
+				$currentUserIdArray = acymailing_getVar('array', 'cid', array());
 				if(is_array($currentUserIdArray) && !empty($currentUserIdArray)) $currentUserId = array_shift($currentUserIdArray);
 			}
 		}else{
-			$loggedinUser = JFactory::getUser();
-			if(!empty($loggedinUser->id)){
-				$currentUserId = $loggedinUser->id;
+			$currentid = acymailing_currentUserId();
+			if(!empty($currentid)){
+				$currentUserId = $currentid;
 			}
 		}
 
@@ -691,14 +689,13 @@ class plgSystemRegacymailing extends JPlugin{
 		if(empty($style) && version_compare($jversion, '1.6.0', '<')) return;
 
 		if(empty($style)){
-			$app = JFactory::getApplication();
 			$stylestring = '<style type="text/css">'."\n";
 			if(version_compare($jversion, '3.0.0', '>=')){
-				$stylestring .= '.acyregfield label, .acysubscribe label {float:left; width:160px; '.(!$app->isAdmin() ? 'text-align:right;' : '').'}'."\n";
+				$stylestring .= '.acyregfield label, .acysubscribe label {float:left; width:160px; '.(!acymailing_isAdmin() ? 'text-align:right;' : '').'}'."\n";
 				$stylestring .= '.acyregfield span label, .acysubscribe .acy_lists label {width:auto;}'."\n";
 				$stylestring .= '.acyregfield div:first-of-type, .acyregfield select:first-of-type, .acyregfield input, .acyregfield textarea, .acysubscribe input {margin-left:20px;}'."\n";
 				$stylestring .= '.acyregfield, .acysubscribe {clear:both; padding-top:18px;}'."\n";
-			}elseif(version_compare($jversion, '1.6.0', '>=') && $app->isAdmin()){
+			}elseif(version_compare($jversion, '1.6.0', '>=') && acymailing_isAdmin()){
 				$stylestring .= 'table.acy_lists{float:left;}'."\n";
 			}
 			$stylestring .= '</style>'."\n";
@@ -710,17 +707,18 @@ class plgSystemRegacymailing extends JPlugin{
 		JResponse::setBody($body);
 	}
 
-
 	function onUserBeforeSave($user, $isnew, $new){
+		if($this->initAcy() === false) return true;
+
 		return $this->onBeforeStoreUser($user, $isnew);
 	}
 
 	function plgVmOnAskQuestion($VendorEmail, $vars, $function){
+		if($this->initAcy() === false) return true;
+
 		$user = JFactory::getUser();
 
-		$db = JFactory::getDBO();
-		$db->setQuery('SELECT id FROM #__users WHERE email = '.$db->Quote($vars['user'][email]));
-		$id = $db->loadResult();
+		$id = acymailing_loadResult('SELECT id FROM #__users WHERE email = '.acymailing_escapeDB($vars['user'][email]));
 		if(empty($id)){
 			$isnew = true;
 			$user->id = 0;
@@ -736,6 +734,7 @@ class plgSystemRegacymailing extends JPlugin{
 	}
 
 	function onBeforeStoreUser($user, $isnew){
+		if($this->initAcy() === false) return true;
 
 		if(is_object($user)) $user = get_object_vars($user);
 
@@ -745,12 +744,13 @@ class plgSystemRegacymailing extends JPlugin{
 	}
 
 	function onAfterUserCreate(&$element){
-		$app = JFactory::getApplication();
-		$formData = JRequest::getVar('data', array(), '', 'array');
+		if($this->initAcy() === false) return true;
 
-		if(empty($element->user_email) || empty($formData['address']) || !empty($element->user_cms_id) || $app->isAdmin()) return;
+		$formData = acymailing_getVar('array', 'data', array(), '');
 
-		JRequest::setVar('acy_source', 'hikashop');
+		if(empty($element->user_email) || empty($formData['address']) || !empty($element->user_cms_id) || acymailing_isAdmin()) return;
+
+		acymailing_setVar('acy_source', 'hikashop');
 
 		$name = @$formData['address']['address_firstname'].(!empty($formData['address']['address_middle_name']) ? ' '.$formData['address']['address_middle_name'] : '').(!empty($formData['address']['address_lastname']) ? ' '.$formData['address']['address_lastname'] : '');
 		$user = array('id' => 0, 'block' => 0, 'email' => $element->user_email, 'name' => $name);
@@ -758,27 +758,26 @@ class plgSystemRegacymailing extends JPlugin{
 	}
 
 	function onUserAfterSave($user, $isnew, $success, $msg){
+		if($this->initAcy() === false) return true;
+
 		return $this->onAfterStoreUser($user, $isnew, $success, $msg);
 	}
 
 	function onAfterStoreUser($user, $isnew, $success, $msg){
+		if($this->initAcy() === false) return true;
 
 		if(is_object($user)) $user = get_object_vars($user);
 
 		if($success === false OR empty($user['email'])) return true;
 
-		$helperFile = rtrim(JPATH_ADMINISTRATOR, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_acymailing'.DIRECTORY_SEPARATOR.'helpers'.DIRECTORY_SEPARATOR.'helper.php';
-		if(!file_exists($helperFile) || !include_once($helperFile)) return true;
-
 		if(!isset($this->params)){
 			$plugin = JPluginHelper::getPlugin('system', 'regacymailing');
-			$this->params = new JParameter($plugin->params);
+			$this->params = new acyParameter($plugin->params);
 		}
 
-		if(!JRequest::getCmd('acy_source')) JRequest::setVar('acy_source', 'joomla');
+		if(!acymailing_getVar('cmd', 'acy_source')) acymailing_setVar('acy_source', 'joomla');
 
 		$config = acymailing_config();
-		$app = JFactory::getApplication();
 
 		$userClass = acymailing_get('class.subscriber');
 		$joomUser = new stdClass();
@@ -791,7 +790,7 @@ class plgSystemRegacymailing extends JPlugin{
 		$userHelper = acymailing_get('helper.user');
 		if(!$userHelper->validEmail($joomUser->email)) return true;
 
-		if(!$app->isAdmin()) $userClass->geolocRight = true;
+		if(!acymailing_isAdmin()) $userClass->geolocRight = true;
 
 		if(!$isnew AND !empty($this->oldUser['email']) AND $user['email'] != $this->oldUser['email']){
 			$joomUser->subid = $userClass->subid($this->oldUser['email']);
@@ -816,7 +815,7 @@ class plgSystemRegacymailing extends JPlugin{
 
 		$isnew = (bool)($isnew || empty($joomUser->subid));
 
-		$customValues = JRequest::getVar('regacy', array(), '', 'array');
+		$customValues = acymailing_getVar('array', 'regacy', array(), '');
 		$session = JFactory::getSession();
 		if(empty($customValues) && $session->get('regacy')){
 			$customValues = $session->get('regacy');
@@ -839,13 +838,13 @@ class plgSystemRegacymailing extends JPlugin{
 		}
 
 		$session = JFactory::getSession();
-		$visiblelistschecked = JRequest::getVar('acysub', array(), '', 'array');
+		$visiblelistschecked = acymailing_getVar('array', 'acysub', array(), '');
 		if(empty($visiblelistschecked) && $session->get('acysub')){
 			$visiblelistschecked = $session->get('acysub');
 			$session->set('acysub', null);
 		}
 
-		$acySubHidden = JRequest::getString('acysubhidden');
+		$acySubHidden = acymailing_getVar('string', 'acysubhidden');
 		if(empty($acySubHidden) && $session->get('acysubhidden')){
 			$acySubHidden = $session->get('acysubhidden');
 			$session->set('acysubhidden', null);
@@ -855,7 +854,7 @@ class plgSystemRegacymailing extends JPlugin{
 			$visiblelistschecked = array_merge($visiblelistschecked, explode(',', $acySubHidden));
 		}
 
-		$allvisiblelists = JRequest::getString('allVisibleLists');
+		$allvisiblelists = acymailing_getVar('string', 'allVisibleLists');
 		$allvisiblelistsArray = explode(',', $allvisiblelists);
 
 		$listsArray = array();
@@ -944,16 +943,17 @@ class plgSystemRegacymailing extends JPlugin{
 	}
 
 	function onUserAfterDelete($user, $success, $msg){
+		if($this->initAcy() === false) return true;
+
 		return $this->onAfterDeleteUser($user, $success, $msg);
 	}
 
 	function onAfterDeleteUser($user, $success, $msg){
+		if($this->initAcy() === false) return true;
+
 		if(is_object($user)) $user = get_object_vars($user);
 
 		if($success === false || empty($user['email'])) return true;
-
-		$helperFile = rtrim(JPATH_ADMINISTRATOR, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_acymailing'.DIRECTORY_SEPARATOR.'helpers'.DIRECTORY_SEPARATOR.'helper.php';
-		if(!file_exists($helperFile) || !include_once($helperFile)) return true;
 
 		$userClass = acymailing_get('class.subscriber');
 		$subid = $userClass->subid($user['email']);
@@ -961,9 +961,7 @@ class plgSystemRegacymailing extends JPlugin{
 			if($this->params->get('deletebehavior', '0') == 0){
 				$userClass->delete($subid);
 			}else{
-				$db = JFactory::getDBO();
-				$db->setQuery('UPDATE #__acymailing_subscriber SET `userid` = 0 WHERE subid = '.intval($subid));
-				$db->query();
+				acymailing_query('UPDATE #__acymailing_subscriber SET `userid` = 0 WHERE subid = '.intval($subid));
 			}
 		}
 
@@ -971,33 +969,31 @@ class plgSystemRegacymailing extends JPlugin{
 	}
 
 	function onExtregUserActivate($form_id = 0, $er_user = null){
+		if($this->initAcy() === false) return true;
+
 		if(empty($er_user->id)) return true;
-		include_once(rtrim(JPATH_ADMINISTRATOR, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_acymailing'.DIRECTORY_SEPARATOR.'helpers'.DIRECTORY_SEPARATOR.'helper.php');
 		$userClass = acymailing_get('class.subscriber');
 		$userSubid = $userClass->subid($er_user->id);
 		if(empty($userSubid)) return true;
 
 		if(!empty($er_user->approve)){
-			$db = JFactory::getDBO();
 			$query = 'UPDATE  #__acymailing_subscriber SET `enabled` = '.(int)$er_user->approve.' WHERE subid ='.intval($userSubid);
-			$db->setQuery($query);
-			$db->query();
+			acymailing_query($query);
 		}
 		$userClass->confirmSubscription($userSubid);
 		return true;
 	}
 
 	function onExtregUserApprove($form_id = 0, $er_user = null){
+		if($this->initAcy() === false) return true;
+
 		if(empty($er_user->id)) return true;
-		include_once(rtrim(JPATH_ADMINISTRATOR, DIRECTORY_SEPARATOR).DIRECTORY_SEPARATOR.'components'.DIRECTORY_SEPARATOR.'com_acymailing'.DIRECTORY_SEPARATOR.'helpers'.DIRECTORY_SEPARATOR.'helper.php');
 		$userClass = acymailing_get('class.subscriber');
 		$userSubid = $userClass->subid($er_user->id);
 		if(empty($userSubid)) return true;
 
-		$db = JFactory::getDBO();
 		$query = 'UPDATE  #__acymailing_subscriber SET `enabled` = "1" WHERE subid ='.intval($userSubid);
-		$db->setQuery($query);
-		$db->query();
+		acymailing_query($query);
 
 		return true;
 	}

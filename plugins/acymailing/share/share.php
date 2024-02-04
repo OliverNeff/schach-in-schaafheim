@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -22,8 +23,7 @@ class plgAcymailingShare extends JPlugin{
 
 	function acymailing_getPluginType(){
 
-		$app = JFactory::getApplication();
-		if($this->params->get('frontendaccess') == 'none' && !$app->isAdmin()) return;
+		if($this->params->get('frontendaccess') == 'none' && !acymailing_isAdmin()) return;
 		$onePlugin = new stdClass();
 		$onePlugin->name = acymailing_translation_sprintf('SOCIAL_SHARE', '...');
 		$onePlugin->function = 'acymailingtagshare_show';
@@ -33,11 +33,11 @@ class plgAcymailingShare extends JPlugin{
 	}
 
 	function _getPictures($folder){
-		$allFolders = JFolder::folders($folder);
+		$allFolders = acymailing_getFolders($folder);
 		foreach($allFolders as $oneFolder){
 			$this->_getPictures($folder.DS.$oneFolder);
 		}
-		$allFiles = JFolder::files($folder, $this->regex);
+		$allFiles = acymailing_getFiles($folder, $this->regex);
 		foreach($allFiles as $oneFile){
 			$this->pictresults[substr($oneFile, 0, 4)][$oneFile.filesize($folder.DS.$oneFile)] = $folder.DS.$oneFile;
 		}
@@ -45,16 +45,16 @@ class plgAcymailingShare extends JPlugin{
 
 	function acymailingtagshare_show(){
 		$uploadFolders = acymailing_getFilesFolder('upload', true);
-		$uploadFolder = JRequest::getString('currentFolder', $uploadFolders[0]);
-		$uploadPath = JPath::clean(ACYMAILING_ROOT.trim(str_replace('/', DS, trim($uploadFolder)), DS));
-		$uploadedFile = JRequest::getVar('socialfile', array(), 'files', 'array');
-
+		$uploadFolder = acymailing_getVar('string', 'currentFolder', $uploadFolders[0]);
+		$uploadPath = acymailing_cleanPath(ACYMAILING_ROOT.trim(str_replace('/', DS, trim($uploadFolder)), DS));
+		$uploadedFile = acymailing_getVar('array', 'socialfile', array(), 'files');
+		
 		if(!empty($uploadedFile) && !empty($uploadedFile['name'])){
-			$uploadedFile['name'] = JRequest::getString('socialchoice').substr($uploadedFile['name'], strrpos($uploadedFile['name'], '.'));
+			$uploadedFile['name'] = acymailing_getVar('string', 'socialchoice').substr($uploadedFile['name'], strrpos($uploadedFile['name'], '.'));
 			acymailing_importFile($uploadedFile, $uploadPath, true, 150);
 		}
-
-
+		
+		
 		$networks = array();
 		$networks['facebook'] = 'Facebook';
 		$networks['linkedin'] = 'LinkedIn';
@@ -63,16 +63,16 @@ class plgAcymailingShare extends JPlugin{
 		$networks['print'] = acymailing_translation('ACY_PRINT');
 
 		$k = 0;
-		jimport('joomla.filesystem.folder');
+		
 		$this->regex = '('.implode('|', array_keys($networks)).').*(png|gif|jpeg|jpg)';
 		$this->_getPictures(ACYMAILING_MEDIA);
 
 		$socialList = array();
-		$socialList[] = JHTML::_('select.option', 'facebook', 'Facebook');
-		$socialList[] = JHTML::_('select.option', 'linkedIn', 'LinkedIn');
-		$socialList[] = JHTML::_('select.option', 'twitter', 'Twitter');
-		$socialList[] = JHTML::_('select.option', 'google', 'Google+');
-		$socialChoice = JHTML::_('select.genericlist', $socialList, 'socialchoice', 'size="1" style="width:100px;"');
+		$socialList[] = acymailing_selectOption('facebook', 'Facebook');
+		$socialList[] = acymailing_selectOption('linkedIn', 'LinkedIn');
+		$socialList[] = acymailing_selectOption('twitter', 'Twitter');
+		$socialList[] = acymailing_selectOption('google', 'Google+');
+		$socialChoice = acymailing_select($socialList, 'socialchoice', 'size="1" style="width:100px;"');
 ?>
 		<br style="clear:both;">
 
@@ -118,6 +118,7 @@ class plgAcymailingShare extends JPlugin{
 	}
 
 	function acymailing_replacetags(&$email, $send = true){
+		if(acymailing_getVar('none', 'task', '') == 'replacetags') return;
 		$this->_print($email, $send);
 		$this->_shareButtons($email, $send);
 	}

@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2017 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2019 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -22,14 +22,14 @@ $spRang		= JRequest::getVar( 'spRang' ,0);	//Sonderranglisten
 
 $pgn		= JRequest::getInt('pgn','0'); 
 $option 	= JRequest::getCmd( 'option' );
+$mainframe	= JFactory::getApplication();
 if ($pgn == 1 AND $spRang == 0) { 
 	$result = clm_core::$api->db_pgn_export($this->turnier->id,false);
-	JFactory::getApplication()->close();
+	//JFactory::getApplication()->close();
 	JRequest::setVar('pgn',0);
 	if (!$result[0]) $msg = JText::_(strtoupper($result[1])).'<br><br>'; else $msg = '';
 	$link = 'index.php?option='.$option.'&view=turnier_rangliste&turnier='.$this->turnier->id.'&pgn=0';
 	if ($itemid != 0) $link .= '&Itemid='.$itemid;
-	$mainframe	= JFactory::getApplication();
 	$mainframe->redirect( $link, $msg );
 }
 
@@ -52,7 +52,12 @@ if($spRang != 0){			//Sonderranglisten
 	$heading = $this->turnier->name.": ".JText::_('TOURNAMENT_RANKING');
 }
 
-if ( $this->turnier->published == 0) { 
+$archive_check = clm_core::$api->db_check_season_user($this->turnier->sid);
+if (!$archive_check) {
+	echo CLMContent::componentheading($heading);
+	require_once(JPATH_COMPONENT.DS.'includes'.DS.'submenu_t.php');
+	echo CLMContent::clmWarning(JText::_('NO_ACCESS')."<br/>".JText::_('NOT_REGISTERED'));
+} elseif ( $this->turnier->published == 0) { 
 	echo CLMContent::componentheading($heading);
 	echo CLMContent::clmWarning(JText::_('TOURNAMENT_NOTPUBLISHED')."<br/>".JText::_('TOURNAMENT_PATIENCE'));
 
@@ -106,7 +111,8 @@ if ( $this->turnier->published == 0) {
 			echo '<div class="lefttable">';
 			
 			echo '<table cellpadding="0" cellspacing="0" id="lefttabletable"';
-			if ($fixth_tkreuz =="1") { echo 'class="tableWithFloatingHeader"'; };
+			if ($fixth_tkreuz =="1") { echo ' class="tableWithFloatingHeader"'; };
+			echo '>';
 
 			// header
 
@@ -169,7 +175,8 @@ if ( $this->turnier->published == 0) {
 			
 			// Table
 			echo '<table cellpadding="0" cellspacing="0" id="righttabletable_ch'.$rightcol.'"';
-			if ($fixth_tkreuz =="1") { echo 'class="tableWithFloatingHeader"'; };
+			if ($fixth_tkreuz =="1") { echo ' class="tableWithFloatingHeader"'; };
+			echo '>';
 			
 			// header
 
@@ -214,7 +221,8 @@ if ( $this->turnier->published == 0) {
 			echo '<div class="midtable_ch">';
 			
 			echo '<table cellpadding="0" cellspacing="0" id="midtabletable_ch"';
-			if ($fixth_tkreuz =="1") { echo 'class="tableWithFloatingHeader"'; };
+			if ($fixth_tkreuz =="1") { echo ' class="tableWithFloatingHeader"'; };
+			echo '>';
 			
 			// header
 

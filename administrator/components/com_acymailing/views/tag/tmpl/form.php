@@ -1,19 +1,20 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><div id="acy_content">
-	<form action="<?php echo JRoute::_('index.php?option=com_acymailing&tmpl=component'); ?>" method="post" name="adminForm" id="adminForm" autocomplete="off">
+	<form action="<?php echo acymailing_completeLink(acymailing_getVar('cmd', 'ctrl')); ?>" method="post" name="adminForm" id="adminForm" autocomplete="off">
 		<?php
 		$toolbar = acymailing_get('helper.toolbar');
 		$toolbar->help('plugin-'.$this->help);
 		$toolbar->divider();
-		$toolbar->custom('apply', acymailing_translation('ACY_SAVE', true), 'save');
+		$toolbar->custom('apply', acymailing_translation('ACY_SAVE', true), 'save', false);
 		$toolbar->topfixed = false;
 		$toolbar->setTitle(acymailing_translation('ACY_CUSTOMTEMPLATE'));
 		$toolbar->display();
@@ -40,10 +41,7 @@ defined('_JEXEC') or die('Restricted access');
 
 		<div class="clr"></div>
 
-		<input type="hidden" name="option" value="<?php echo ACYMAILING_COMPONENT; ?>"/>
-		<input type="hidden" name="ctrl" value="tag"/>
-		<input type="hidden" name="task" value="store"/>
 		<input type="hidden" name="plugin" value="<?php echo $this->plugin; ?>"/>
-		<?php echo JHTML::_('form.token'); ?>
+		<?php acymailing_formOptions(); ?>
 	</form>
 </div>

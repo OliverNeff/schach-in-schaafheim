@@ -1,20 +1,21 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><span class="acyblocktitle"><?php echo acymailing_translation('ACY_MATCH_DATA'); ?></span>
 <?php
 $config = acymailing_config();
 $encodingHelper = acymailing_get('helper.encoding');
-$filename = strtolower(JRequest::getCmd('filename'));
-$encoding = JRequest::getCmd('encoding');
-jimport('joomla.filesystem.file');
-$extension = '.'.JFile::getExt($filename);
+$filename = strtolower(acymailing_getVar('cmd', 'filename'));
+$encoding = acymailing_getVar('cmd', 'encoding');
+
+$extension = '.'.acymailing_fileGetExt($filename);
 $uploadPath = ACYMAILING_MEDIA.'import'.DS.str_replace(array('.', ' '), '_', substr($filename, 0, strpos($filename, $extension))).$extension;
 
 if(!file_exists($uploadPath)){
@@ -106,10 +107,8 @@ while(isset($this->lines[$i])){
 $this->lines = array_values($this->lines);
 $nbLines = count($this->lines);
 
-$app = JFactory::getApplication();
-
 ?>
-<table <?php echo $app->isAdmin() ? 'class="acymailing_table"' : 'class="adminlist"'; ?> cellspacing="10" cellpadding="10" align="center" id="importdata">
+<table <?php echo acymailing_isAdmin() ? 'class="acymailing_table"' : 'class="adminlist"'; ?> cellspacing="10" cellpadding="10" align="center" id="importdata">
 	<?php
 	if($noHeader || !isset($this->lines[1])){
 		$firstValueLine = $columnNames;
@@ -121,17 +120,17 @@ $app = JFactory::getApplication();
 	}
 
 	$fieldAssignment = array();
-	$fieldAssignment[] = JHTML::_('select.option', "0", '- - -');
-	$fieldAssignment[] = JHTML::_('select.option', "1", acymailing_translation('ACY_IGNORE'));
+	$fieldAssignment[] = acymailing_selectOption("0", '- - -');
+	$fieldAssignment[] = acymailing_selectOption("1", acymailing_translation('ACY_IGNORE'));
 	if(acymailing_isAllowed($this->config->get('acl_extra_fields_import', 'all'))){
-		$createField = JHTML::_('select.option', "2", acymailing_translation('ACY_CREATE_FIELD'));
+		$createField = acymailing_selectOption("2", acymailing_translation('ACY_CREATE_FIELD'));
 		if(!acymailing_level(3)){
 			$createField->disable = true;
 			$createField->text .= ' ('.acymailing_translation('ONLY_FROM_ENTERPRISE').')';
 		}
 		$fieldAssignment[] = $createField;
 	}
-	$separator = JHTML::_('select.option', "3", '-------------------------------------');
+	$separator = acymailing_selectOption("3", '-------------------------------------');
 	$separator->disable = true;
 	$fieldAssignment[] = $separator;
 
@@ -140,7 +139,7 @@ $app = JFactory::getApplication();
 	$fields[] = 'listname';
 
 	foreach($fields as $oneField){
-		$fieldAssignment[] = JHTML::_('select.option', $oneField, $oneField);
+		$fieldAssignment[] = acymailing_selectOption($oneField, $oneField);
 	}
 
 	$fields[] = '1';
@@ -151,7 +150,7 @@ $app = JFactory::getApplication();
 	foreach($columnNames as $key => &$oneColumn){
 		$oneColumn = strtolower(trim($oneColumn, '\'" '));
 		$customValue = '';
-		$default = JRequest::getCmd('fieldAssignment'.$key);
+		$default = acymailing_getVar('cmd', 'fieldAssignment'.$key);
 		if(empty($default) && $default !== 0){
 			$default = (in_array($oneColumn, $fields) ? $oneColumn : '0');
 
@@ -163,10 +162,10 @@ $app = JFactory::getApplication();
 			if(in_array($default, $alreadyFound)) $default = '0';
 			$alreadyFound[] = $default;
 		}elseif($default == 2){
-			$customValue = JRequest::getCmd('newcustom'.$key);
+			$customValue = acymailing_getVar('cmd', 'newcustom'.$key);
 		}
 
-		echo '<td align="center" valign="top">'.JHTML::_('select.genericlist', $fieldAssignment, 'fieldAssignment'.$key, 'size="1" onchange="checkNewCustom('.$key.')" style="width:180px;"', 'value', 'text', $default).'<br />';
+		echo '<td align="center" valign="top">'.acymailing_select($fieldAssignment, 'fieldAssignment'.$key, 'size="1" onchange="checkNewCustom('.$key.')" style="width:180px;"', 'value', 'text', $default).'<br />';
 
 		echo '<input style="width:170px;'.(empty($customValue) ? 'display:none;"' : '" value="'.$customValue.'" required').' type="text" id="newcustom'.$key.'" name="newcustom" placeholder="'.acymailing_translation('FIELD_COLUMN').'..."/></td>';
 	}

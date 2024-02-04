@@ -1,15 +1,16 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
-?><?php $app = JFactory::getApplication();
+?><?php
 $config = acymailing_config();
-$backend = $app->isAdmin(); ?>
+$backend = acymailing_isAdmin(); ?>
 <style type="text/css">
 	.respuserinfo{
 		float: left;
@@ -50,44 +51,28 @@ $backend = $app->isAdmin(); ?>
 	} ?>
 
 </style>
-<script language="javascript" type="text/javascript">
-	<?php if(!ACYMAILING_J16){ ?>
-	function submitbutton(pressbutton){
-		<?php }else{ ?>
-		Joomla.submitbutton = function(pressbutton){
-			<?php } ?>
-			var form = document.adminForm;
-			if(pressbutton != 'cancel' && form.email){
-				form.email.value = form.email.value.replace(/ /g, "");
-				<?php if($config->get('special_chars', 0) == 0){ ?>
-				var filter = /^([a-z0-9_'&\.\-\+=])+\@(([a-z0-9\-])+\.)+([a-z0-9]{2,10})+$/i;
-				<?php }else{ ?>
-				var filter = /\@/i;
-				<?php } ?>
-				if(!filter.test(form.email.value)){
-					alert("<?php echo acymailing_translation('VALID_EMAIL', true); ?>");
-					return false;
-				}
-			}
-			<?php if(!ACYMAILING_J16){ ?>
-			submitform(pressbutton);
-		}
-		<?php }else{ ?>
-		Joomla.submitform(pressbutton, form);
-	}
-	;
-	<?php } ?>
-</script>
-<?php if(!empty($this->geoloc)){ ?>
-	<script type="text/javascript" src="https://www.google.com/jsapi"></script>
-	<script language="JavaScript" type="text/javascript">
+<?php
+$config = acymailing_config();
+$google_map_api_key = $config->get('google_map_api_key');
+if(empty($google_map_api_key) && acymailing_isAdmin()){
+	acymailing_display('<a href="'.acymailing_completeLink('cpanel').'" onclick="localStorage.setItem(\'acyconfig_tab\', \'config_data\');">'.acymailing_translation('ACY_NEED_GOOGLE_MAP_API_KEY').'</a>', 'info');
+}
+
+if(!empty($this->geoloc) && !empty($google_map_api_key)){ ?>
+	<script type="text/javascript" src="https://www.gstatic.com/charts/loader.js"></script>
+	<script language="javascript" type="text/javascript">
+		google.charts.load('current', {
+			packages: ['geochart', 'corechart'],
+			mapsApiKey: '<?php echo $google_map_api_key; ?>'
+		});
+		google.charts.setOnLoadCallback(drawMarkersMap);
+
+		var chart;
+		var data;
+
 		var mapOptions = {
 			legend: 'none', displayMode: 'markers', sizeAxis: {minSize: 6, maxSize: 24, minValue: 1, maxValue: 10}, enableRegionInteractivity: 'true', region: '<?php echo $this->geoloc_region; ?>'
 		};
-		google.load('visualization', '1', {'packages': ['geochart']});
-		google.setOnLoadCallback(drawMarkersMap);
-		var chart;
-		var data;
 		function drawMarkersMap(){
 			data = new google.visualization.DataTable();
 			data.addColumn('string', 'Address');
@@ -103,29 +88,23 @@ $backend = $app->isAdmin(); ?>
 			}
 			echo "data.addRows([".implode(", ", $myData)."]);";
 			?>
-			chart = new google.visualization.GeoChart(document.getElementById('mapGeoloc_div'));
-			chart.draw(data, mapOptions);
-		}
-		;
 
+			chart = new google.visualization.GeoChart(document.getElementById('mapGeoloc_div'));
+		}
 	</script>
 <?php } ?>
 <div id="acy_content">
 	<div id="iframedoc"></div>
 
-	<form action="<?php echo JRoute::_('index.php?option='.ACYMAILING_COMPONENT.'&ctrl='.JRequest::getCmd('ctrl')); ?>" method="post" name="adminForm" id="adminForm" autocomplete="off" <?php if(!empty($this->fieldsClass->formoption)) echo $this->fieldsClass->formoption; ?> >
+	<form action="<?php echo acymailing_completeLink(acymailing_getVar('cmd', 'ctrl')); ?>" method="post" name="adminForm" id="adminForm" autocomplete="off" <?php if(!empty($this->fieldsClass->formoption)) echo $this->fieldsClass->formoption; ?> >
 		<input type="hidden" name="cid[]" value="<?php echo @$this->subscriber->subid; ?>"/>
-		<input type="hidden" name="option" value="<?php echo ACYMAILING_COMPONENT; ?>"/>
-		<input type="hidden" name="task" value=""/>
-		<input type="hidden" name="acy_source" value="<?php $app = JFactory::getApplication();
-		echo $app->isAdmin() ? 'management_back' : 'management_front'; ?>"/>
-		<input type="hidden" name="ctrl" value="<?php echo JRequest::getCmd('ctrl'); ?>"/>
-		<?php $selectedList = JRequest::getInt('filter_lists');
+		<input type="hidden" name="acy_source" value="<?php echo acymailing_isAdmin() ? 'management_back' : 'management_front'; ?>"/>
+		<?php $selectedList = acymailing_getVar('int', 'filter_lists');
 		if(!empty($selectedList)){ ?>
 			<input type="hidden" name="filter_lists" value="<?php echo $selectedList; ?>"/>
 		<?php }
 		if(!empty($this->Itemid)) echo '<input type="hidden" name="Itemid" value="'.$this->Itemid.'" />';
-		echo JHTML::_('form.token'); ?>
+		acymailing_formOptions(); ?>
 		<div class="<?php echo $this->isAdmin ? 'acyblockoptions' : 'onelineblockoptions'; ?>">
 			<span class="acyblocktitle"><?php echo acymailing_translation('USER_INFORMATIONS'); ?></span>
 
@@ -222,7 +201,7 @@ $backend = $app->isAdmin(); ?>
 							</label>
 						</td>
 						<td nowrap="nowrap">
-							<?php echo JHTML::_('acyselect.booleanlist', "data[subscriber][html]", '', $this->subscriber->html, acymailing_translation('HTML'), acymailing_translation('JOOMEXT_TEXT')); ?>
+							<?php echo acymailing_boolean("data[subscriber][html]", '', $this->subscriber->html, acymailing_translation('HTML'), acymailing_translation('JOOMEXT_TEXT')); ?>
 						</td>
 					</tr>
 					<tr id="trconfirmed">
@@ -232,7 +211,7 @@ $backend = $app->isAdmin(); ?>
 							</label>
 						</td>
 						<td>
-							<?php echo JHTML::_('acyselect.booleanlist', "data[subscriber][confirmed]", '', $this->subscriber->confirmed, acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO')); ?>
+							<?php echo acymailing_boolean("data[subscriber][confirmed]", '', $this->subscriber->confirmed, acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO')); ?>
 						</td>
 					</tr>
 					<tr id="trenabled">
@@ -242,7 +221,7 @@ $backend = $app->isAdmin(); ?>
 							</label>
 						</td>
 						<td>
-							<?php echo JHTML::_('acyselect.booleanlist', "data[subscriber][enabled]", '', $this->subscriber->enabled, acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO')); ?>
+							<?php echo acymailing_boolean("data[subscriber][enabled]", '', $this->subscriber->enabled, acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO')); ?>
 						</td>
 					</tr>
 					<tr id="traccept">
@@ -252,7 +231,7 @@ $backend = $app->isAdmin(); ?>
 							</label>
 						</td>
 						<td>
-							<?php echo JHTML::_('acyselect.booleanlist', "data[subscriber][accept]", '', $this->subscriber->accept, acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO')); ?>
+							<?php echo acymailing_boolean("data[subscriber][accept]", '', $this->subscriber->accept, acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO')); ?>
 						</td>
 					</tr>
 				</table>
@@ -263,14 +242,12 @@ $backend = $app->isAdmin(); ?>
 		</div>
 		<?php
 		if(!empty($this->extraFields)){
-			$app = JFactory::getApplication();
-			$this->fieldsClass->currentUser = $this->subscriber;
+			$this->fieldsClass->currentUserEmail = empty($this->subscriber->email) ? '' : $this->subscriber->email;
 			include(dirname(__FILE__).DS.'extrafields.'.basename(__FILE__));
 		} ?>
-		<div class="onelineblockoptions acytabsystem" style="clear:both;<?php echo $this->isAdmin ? '' : 'max-width:700px;'; ?>">
+		<div class="onelineblockoptions" style="clear:both;<?php echo $this->isAdmin ? '' : 'max-width:700px;'; ?>">
 			<div id="acysubscriberinfo">
 				<?php $tabs = acymailing_get('helper.acytabs');
-				$tabs->setOptions(array('useCookie' => true));
 
 				echo $tabs->startPane('user_tabs');
 				echo $tabs->startPanel(acymailing_translation('SUBSCRIPTION'), 'user_subscription');
@@ -340,7 +317,7 @@ $backend = $app->isAdmin(); ?>
 									<?php echo acymailing_tooltip($row->description, $row->name, 'tooltip.png', $row->name); ?>
 								</td>
 								<td align="center" style="text-align:center" nowrap="nowrap">
-									<?php echo $this->statusType->display('data[listsub]['.$row->listid.'][status]', (empty($this->subscriber->subid) && JRequest::getInt('filter_lists') == $row->listid) ? 1 : @$row->status); ?>
+									<?php echo $this->statusType->display('data[listsub]['.$row->listid.'][status]', (empty($this->subscriber->subid) && acymailing_getVar('int', 'filter_lists') == $row->listid) ? 1 : @$row->status); ?>
 								</td>
 								<td align="center" style="text-align:center">
 									<?php if(!empty($row->subdate)) echo acymailing_getDate($row->subdate); ?>
@@ -407,7 +384,7 @@ $backend = $app->isAdmin(); ?>
 
 							for($i = 0, $a = count($this->open); $i < $a; $i++){
 								$row =& $this->open[$i];
-								$row->subject = Emoji::Decode($row->subject);
+								$row->subject = acyEmoji::Decode($row->subject);
 								?>
 								<tr class="<?php echo "row$k"; ?>">
 									<td align="center" style="text-align:center">
@@ -418,12 +395,12 @@ $backend = $app->isAdmin(); ?>
 									</td>
 									<td>
 										<?php
-										if($app->isAdmin()){
+										if(acymailing_isAdmin()){
 											$link = acymailing_completeLink('queue&task=preview&mailid='.$row->mailid.'&subid='.$this->subscriber->subid, true);
-											echo '<a class="modal" rel="{handler: \'iframe\', size: {x: '.$width.', y: '.$height.'}}" href="'.$link.'">'.$row->subject.'</a>';
+											echo acymailing_popup($link, $row->subject, '', $width, $height);
 										}else{
 											$text = '<b>'.acymailing_translation('ACY_ID').' : </b>'.$row->mailid;
-											echo acymailing_tooltip( $text, $row->subject, '', $row->subject);
+											echo acymailing_tooltip($text, $row->subject, '', $row->subject);
 										}
 										?>
 									</td>
@@ -490,7 +467,7 @@ $backend = $app->isAdmin(); ?>
 
 							for($i = 0, $a = count($this->clicks); $i < $a; $i++){
 								$row =& $this->clicks[$i];
-								$row->subject = Emoji::Decode($row->subject);
+								$row->subject = acyEmoji::Decode($row->subject);
 								$id = 'urlclick'.$i;
 								?>
 								<tr class="<?php echo "row$k"; ?>" id="<?php echo $id; ?>">
@@ -557,7 +534,7 @@ $backend = $app->isAdmin(); ?>
 
 							for($i = 0, $a = count($this->queue); $i < $a; $i++){
 								$row =& $this->queue[$i];
-								$row->subject = Emoji::Decode($row->subject);
+								$row->subject = acyEmoji::Decode($row->subject);
 								$id = 'queue'.$i;
 								?>
 								<tr class="<?php echo "row$k"; ?>" id="<?php echo $id; ?>">
@@ -649,7 +626,7 @@ $backend = $app->isAdmin(); ?>
 											if(!empty($row->mailid)) echo '<b>'.acymailing_translation('NEWSLETTER').' : </b>'.$this->escape($row->subject).' ( '.acymailing_translation('ACY_ID').' : '.$row->mailid.' )<br />';
 											foreach($data as $value){
 												if(!strpos($value, '::')){
-													echo $value;
+													echo $value.'<br />';
 													continue;
 												}
 												list($part1, $part2) = explode("::", $value);
@@ -691,11 +668,9 @@ $backend = $app->isAdmin(); ?>
 					echo $tabs->endPanel();
 				}
 
-				if(!empty($this->geoloc)){
-					echo $tabs->startPanel('<span onclick="setTimeout(function(){chart.draw(data, mapOptions)},100);setTimeout(function(){chart.draw(data, mapOptions)},2000);">'.acymailing_translation('GEOLOCATION').'</span>', 'geoloc');
+				if(!empty($this->geoloc) && !empty($google_map_api_key)){
+					echo $tabs->startPanel('<span onclick="setTimeout(function(){chart.draw(data, mapOptions)},100);">'.acymailing_translation('GEOLOCATION').'</span>', 'geoloc');
 					?>
-
-
 					<div>
 						<div id="mapGeoloc_div" style="width:900px; max-width:100%; float:left; padding-right:20px;"></div>
 						<div style="float:left; min-width:400px; max-width:800px;">
@@ -795,7 +770,7 @@ $backend = $app->isAdmin(); ?>
 										<?php echo $this->escape($oneNeighbour->name); ?>
 									</td>
 									<td valign="top">
-										<?php echo '<a href="index.php?option=com_acymailing&ctrl=subscriber&task=edit&subid='.$oneNeighbour->subid.'" target="_blank">'.$this->escape($oneNeighbour->email).'</a>'; ?>
+										<?php echo '<a href="'.acymailing_completeLink('subscriber&task=edit&subid='.$oneNeighbour->subid).'" target="_blank">'.$this->escape($oneNeighbour->email).'</a>'; ?>
 									</td>
 									<td align="center" style="text-align:center" valign="top">
 										<?php echo $oneNeighbour->subid; ?>

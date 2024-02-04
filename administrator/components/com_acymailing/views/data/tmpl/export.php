@@ -1,19 +1,19 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><div id="acy_content">
 	<div id="iframedoc"></div>
-	<?php $app = JFactory::getApplication(); ?>
-	<form action="index.php?option=<?php echo ACYMAILING_COMPONENT ?>" method="post" name="adminForm" id="adminForm">
+	<form action="<?php echo acymailing_completeLink((acymailing_isAdmin() ? '' : 'front').'data', true); ?>" method="post" name="adminForm" id="adminForm">
 		<style>
 			#acy_content .oneBlock{
-			<?php if($app->isAdmin()){ ?> float: left;
+			<?php if(acymailing_isAdmin()){ ?> float: left;
 				width: 49%;
 				padding: 5px;
 				min-width: 500px;
@@ -35,7 +35,7 @@ defined('_JEXEC') or die('Restricted access');
 									<?php echo $fieldName ?>
 								</td>
 								<td align="center" style="text-align:center">
-									<?php echo JHTML::_('acyselect.booleanlist', "exportdata[".$fieldName."]", '', in_array($fieldName, $this->selectedfields) ? 1 : 0); ?>
+									<?php echo acymailing_boolean("exportdata[".$fieldName."]", '', in_array($fieldName, $this->selectedfields) ? 1 : 0); ?>
 								</td>
 							</tr>
 							<?php
@@ -51,7 +51,7 @@ defined('_JEXEC') or die('Restricted access');
 									<?php echo $fieldName ?>
 								</td>
 								<td align="center" style="text-align:center">
-									<?php echo JHTML::_('acyselect.booleanlist', "exportdataother[".$fieldName."]", '', in_array($fieldName, $this->selectedfields) ? 1 : 0, acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO'), str_replace('.', '_', $fieldName)); ?>
+									<?php echo acymailing_boolean("exportdataother[".$fieldName."]", '', in_array($fieldName, $this->selectedfields) ? 1 : 0, acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO'), str_replace('.', '_', $fieldName)); ?>
 								</td>
 							</tr>
 							<?php
@@ -66,7 +66,7 @@ defined('_JEXEC') or die('Restricted access');
 									<?php echo $fieldName ?>
 								</td>
 								<td align="center" style="text-align:center">
-									<?php echo JHTML::_('acyselect.booleanlist', "exportdatalist[".$fieldName."]", '', in_array($fieldName, $this->selectedfields) ? 1 : 0); ?>
+									<?php echo acymailing_boolean("exportdatalist[".$fieldName."]", '', in_array($fieldName, $this->selectedfields) ? 1 : 0); ?>
 								</td>
 							</tr>
 							<?php
@@ -81,8 +81,8 @@ defined('_JEXEC') or die('Restricted access');
 							</td>
 							<td align="center" style="text-align:center">
 								<?php
-								$values = array(JHTML::_('select.option', 'asc', acymailing_translation('SEPARATOR_FIRST_GEOL_SAVED')), JHTML::_('select.option', 'desc', acymailing_translation('ACYEXPORT_LAST_GEOL_SAVED')));
-								echo JHTML::_('acyselect.genericlist', $values, 'exportgeolocorder', '', 'value', 'text', $this->config->get('exportgeolocorder', 'asc')); ?>
+								$values = array(acymailing_selectOption('asc', acymailing_translation('SEPARATOR_FIRST_GEOL_SAVED')), acymailing_selectOption('desc', acymailing_translation('ACYEXPORT_LAST_GEOL_SAVED')));
+								echo acymailing_select($values, 'exportgeolocorder', '', 'value', 'text', $this->config->get('exportgeolocorder', 'asc')); ?>
 							</td>
 						</tr>
 						<?php
@@ -96,7 +96,7 @@ defined('_JEXEC') or die('Restricted access');
 									<?php echo $fieldName ?>
 								</td>
 								<td align="center" style="text-align:center">
-									<?php echo JHTML::_('acyselect.booleanlist', "exportdatageoloc[".$fieldName."]", '', in_array($fieldName, $this->selectedfields) ? 1 : 0); ?>
+									<?php echo acymailing_boolean("exportdatageoloc[".$fieldName."]", '', in_array($fieldName, $this->selectedfields) ? 1 : 0); ?>
 								</td>
 							</tr>
 							<?php
@@ -113,17 +113,25 @@ defined('_JEXEC') or die('Restricted access');
 							<?php echo $this->charset->display('exportformat', $this->config->get('export_format', 'UTF-8')); ?>
 						</td>
 					</tr>
-					<tr class="<?php echo "row$k"; ?>" id="userField_separator">
+					<tr class="<?php echo "row$k"; $k = 1 - $k; ?>" id="userField_separator">
 						<td>
 							<?php echo acymailing_translation('ACY_SEPARATOR'); ?>
 						</td>
 						<td align="center" nowrap="nowrap">
 							<?php
-							$values = array(JHTML::_('select.option', 'semicolon', acymailing_translation('SEPARATOR_SEMICOLON')), JHTML::_('select.option', 'comma', acymailing_translation('SEPARATOR_COMMA')));
+							$values = array(acymailing_selectOption('semicolon', acymailing_translation('SEPARATOR_SEMICOLON')), acymailing_selectOption('comma', acymailing_translation('SEPARATOR_COMMA')));
 							$data = str_replace(array(';', ','), array('semicolon', 'comma'), $this->config->get('export_separator', ';'));
 							if($data == 'colon') $data = 'comma';
-							echo JHTML::_('acyselect.radiolist', $values, 'exportseparator', '', 'value', 'text', $data);
+							echo acymailing_radio($values, 'exportseparator', '', 'value', 'text', $data);
 							?>
+						</td>
+					</tr>
+					<tr class="<?php echo "row$k"; ?>" id="userField_excel">
+						<td>
+							<?php echo acymailing_tooltip(acymailing_translation('ACY_EXCEL_SECURITY_DESC'), acymailing_translation('ACY_EXCEL_SECURITY'), '', acymailing_translation('ACY_EXCEL_SECURITY')); ?>
+						</td>
+						<td align="center" style="text-align:center">
+							<?php echo acymailing_boolean("export_excelsecurity", '', $this->config->get('export_excelsecurity', 0) == 1 ? 1 : 0); ?>
 						</td>
 					</tr>
 				</table>
@@ -137,7 +145,7 @@ defined('_JEXEC') or die('Restricted access');
 							<?php echo acymailing_translation('EXPORT_SUB_LIST'); ?>
 						</td>
 						<td align="center" nowrap="nowrap">
-							<?php echo JHTML::_('acyselect.booleanlist', "exportfilter[subscribed]", 'onchange="if(this.value == 1){document.getElementById(\'exportlists\').style.display = \'block\'; }else{document.getElementById(\'exportlists\').style.display = \'none\'; }"', (in_array('subscribed', $this->selectedFilters) || !empty($this->exportlist)) ? 1 : 0, acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO').' : '.acymailing_translation('ALL_USERS')); ?>
+							<?php echo acymailing_boolean("exportfilter[subscribed]", 'onchange="if(this.value == 1){document.getElementById(\'exportlists\').style.display = \'block\'; }else{document.getElementById(\'exportlists\').style.display = \'none\'; }"', (in_array('subscribed', $this->selectedFilters) || !empty($this->exportlist)) ? 1 : 0, acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO').' : '.acymailing_translation('ALL_USERS')); ?>
 						</td>
 					</tr>
 					<tr class="row1">
@@ -145,7 +153,7 @@ defined('_JEXEC') or die('Restricted access');
 							<?php echo acymailing_translation('EXPORT_REGISTERED'); ?>
 						</td>
 						<td align="center" style="text-align:center">
-							<?php echo JHTML::_('acyselect.booleanlist', "exportfilter[registered]", '', in_array('registered', $this->selectedFilters) ? 1 : 0, acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO').' : '.acymailing_translation('ALL_USERS')); ?>
+							<?php echo acymailing_boolean("exportfilter[registered]", '', in_array('registered', $this->selectedFilters) ? 1 : 0, acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO').' : '.acymailing_translation('ALL_USERS')); ?>
 						</td>
 					</tr>
 					<tr class="row0">
@@ -153,7 +161,7 @@ defined('_JEXEC') or die('Restricted access');
 							<?php echo acymailing_translation('EXPORT_CONFIRMED'); ?>
 						</td>
 						<td align="center" style="text-align:center">
-							<?php echo JHTML::_('acyselect.booleanlist', "exportfilter[confirmed]", '', in_array('confirmed', $this->selectedFilters) ? 1 : 0, acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO').' : '.acymailing_translation('ALL_USERS')); ?>
+							<?php echo acymailing_boolean("exportfilter[confirmed]", '', in_array('confirmed', $this->selectedFilters) ? 1 : 0, acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO').' : '.acymailing_translation('ALL_USERS')); ?>
 						</td>
 					</tr>
 					<tr class="row1">
@@ -161,7 +169,7 @@ defined('_JEXEC') or die('Restricted access');
 							<?php echo acymailing_translation('EXPORT_ENABLED'); ?>
 						</td>
 						<td align="center" style="text-align:center">
-							<?php echo JHTML::_('acyselect.booleanlist', "exportfilter[enabled]", '', in_array('enabled', $this->selectedFilters) ? 1 : 0, acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO').' : '.acymailing_translation('ALL_USERS')); ?>
+							<?php echo acymailing_boolean("exportfilter[enabled]", '', in_array('enabled', $this->selectedFilters) ? 1 : 0, acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO').' : '.acymailing_translation('ALL_USERS')); ?>
 						</td>
 					</tr>
 				</table>
@@ -199,12 +207,9 @@ defined('_JEXEC') or die('Restricted access');
 					</table>
 				<?php } ?>
 			</div>
-			<input type="hidden" name="option" value="<?php echo ACYMAILING_COMPONENT; ?>"/>
-			<input type="hidden" name="task" value=""/>
-			<input type="hidden" name="ctrl" value="<?php echo JRequest::getCmd('ctrl'); ?>"/>
-			<input type="hidden" name="sessionvalues" value="<?php echo empty($this->users) ? 0 : JRequest::getInt('sessionvalues'); ?>"/>
-			<input type="hidden" name="sessionquery" value="<?php echo empty($this->users) ? 0 : JRequest::getInt('sessionquery'); ?>"/>
-			<?php echo JHTML::_('form.token'); ?>
+			<input type="hidden" name="sessionvalues" value="<?php echo empty($this->users) ? 0 : acymailing_getVar('int', 'sessionvalues'); ?>"/>
+			<input type="hidden" name="sessionquery" value="<?php echo empty($this->users) ? 0 : acymailing_getVar('int', 'sessionquery'); ?>"/>
+			<?php acymailing_formOptions(); ?>
 	</form>
 	<div class="clr"></div>
 </div>

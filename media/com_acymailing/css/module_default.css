@@ -1,10 +1,14 @@
 /**
  * @package    AcyMailing for Joomla!
- * @version    5.7.0
+ * @version    5.10.2
  * @author     acyba.com
- * @copyright  (C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright  (C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license    GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
+.acymailing_form .grecaptcha-badge{
+	display: none;
+}
 
 div.acymailing_module, .acymailing_module div{
 	padding: 0 !important;
@@ -92,8 +96,48 @@ div.acymailing_module_success {
 	color: red;
 }
 
-.acymailing_fulldiv a.modal{position:static !important;margin:0 !important;width:auto !important;display:inline !important;}
-
 .hide {
 	display: none;
+}
+
+.slide_open{
+	animation: deployslide 0.5s forwards;
+	overflow: hidden;
+}
+
+@keyframes deployslide{
+	from{
+		max-height: 0px;
+	}
+	to{
+		max-height: 800px;
+	}
+}
+
+@keyframes retractslide{
+	from{
+		max-height: 800px;
+	}
+	to{
+		max-height: 0px;
+		display: none;
+	}
+}
+
+.slide_close{
+	animation: retractslide 0.5s forwards;
+	overflow: hidden;
+	background-color: #fff;
+	box-shadow: 0px 1px 5px #eee;
+	padding: 5px;
+	margin-bottom: 20px;
+}
+
+.slide_open{
+	animation: deployslide 0.5s forwards;
+	overflow: hidden;
+	background-color: #fff;
+	box-shadow: 0px 1px 5px #eee;
+	padding: 5px;
+	margin-bottom: 20px;
 }

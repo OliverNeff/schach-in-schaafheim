@@ -1,0 +1,127 @@
+<?xml version="1.0" encoding="utf-8"?>
+<form>
+
+	<field 
+		name="id" 
+		type="text" 
+		label="JGLOBAL_FIELD_ID_LABEL"
+		description="JGLOBAL_FIELD_ID_DESC" 
+		default="0" 
+		class="readonly"
+		readonly="true" 
+	/>
+
+	<field
+		name="name"
+		type="text"
+		label="COM_CLM_TURNIER_FIELD_NAME_LABEL"
+		description="COM_CLM_TURNIER_FIELD_NAME_DESC"
+		class="input-xxlarge input-large-text"
+		required="true"
+	 />
+
+	<field
+		name="typ"
+		type="list"
+		label="COM_CLM_TURNIER_FIELD_TYP_LABEL"
+		description="COM_CLM_TURNIER_FIELD_TYP_DESC"
+		class="input-xxlarge input-large-text"
+		required="true"
+	 >
+	 	<option value="">COM_CLM_TURNIER_FIELD_VALUE_SELECT</option>
+	 	<option value="1">COM_CLM_TURNIER_FIELD_VALUE_TYPE_1</option>
+	 	<option value="2">COM_CLM_TURNIER_FIELD_VALUE_TYPE_2</option>
+	 	<option value="3">COM_CLM_TURNIER_FIELD_VALUE_TYPE_3</option>
+	 </field>
+
+	<field
+		name="typ_calculation"
+		type="text"
+		label="COM_CLM_TURNIER_FIELD_TYP_CALCULATION_LABEL"
+		description="COM_CLM_TURNIER_FIELD_TYP_CALCULATION_DESC"
+		class="input-xxlarge input-large-text"
+	 />
+
+	<field name="use_tiebreak" 
+		type="radio" 
+		label="COM_CLM_TURNIER_FIELD_TIEBREAK_LABEL" 
+		description="COM_CLM_TURNIER_FIELD_TIEBREAK_DESC"
+		default="0" 
+		class="btn-group btn-group-yesno" 
+	>
+		<option value="1">JYES</option>
+		<option value="0">JNO</option>
+	</field>
+
+	<field
+		name="best_of"
+		type="text"
+		label="COM_CLM_TURNIER_FIELD_BEST_OF_LABEL"
+		description="COM_CLM_TURNIER_FIELD_BEST_OF_DESC"
+	/>		
+
+	<field
+		name="min_tournaments"
+		type="text"
+		label="COM_CLM_TURNIER_FIELD_MIN_TOURNAMENTS_LABEL"
+		description="COM_CLM_TURNIER_FIELD_MIN_TOURNAMENTS_DESC"
+	/>		
+
+	<field
+		name="num_tournaments"
+		type="text"
+		label="COM_CLM_TURNIER_FIELD_NUM_TOURNAMENTS_LABEL"
+		description="COM_CLM_TURNIER_FIELD_NUM_TOURNAMENTS_DESC"
+	/>		
+
+	<field
+		name="extra_points"
+		type="text"
+		label="COM_CLM_TURNIER_FIELD_EXTRA_POINTS_LABEL"
+		description="COM_CLM_TURNIER_FIELD_EXTRA_POINTS_DESC"
+	/>		
+
+	<field
+		name="precision"
+		type="text"
+		label="COM_CLM_TURNIER_FIELD_PRECISION_LABEL"
+		description="COM_CLM_TURNIER_FIELD_PRECISION_DESC"
+	/>		
+
+	<field 
+		name="col_header" 
+		type="radio" 
+		label="COM_CLM_TURNIER_FIELD_COL_HEADER_LABEL" 
+		description="COM_CLM_TURNIER_FIELD_COL_HEADER_DESC"
+		default="1" 
+		class="btn-group btn-group-yesno" 
+	>
+		<option value="1">JYES</option>
+		<option value="0">JNO</option>
+	</field>
+
+	<field
+		name="published"
+		type="list"
+		label="JPUBLISHED"
+		description="JFIELD_PUBLISHED_DESC"
+		default="1"
+		id="published"
+		class="chzn-color-state"
+		size="1"
+	>
+		<option value="1">JPUBLISHED</option>
+		<option value="0">JUNPUBLISHED</option>
+	</field>
+
+	<field
+		name="introduction"
+		type="editor"
+		label="COM_CLM_TURNIER_FIELD_INTRODUCTION_LABEL"
+		description="COM_CLM_TURNIER_FIELD_INTRODUCTION_DESC"
+		filter="JComponentHelper::filterText"
+		buttons="true"
+		hide="readmore,pagebreak"
+	/>
+
+</form>

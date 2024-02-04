@@ -21,3 +21,11 @@ CREATE TABLE IF NOT EXISTS `sgw_chess_records` (
   `summemp`         int(10) UNSIGNED NOT NULL default 0,
   PRIMARY KEY (`verein`)
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8;
+
+DROP TABLE IF EXISTS `sgw_chess_matches`;
+CREATE TABLE IF NOT EXISTS `sgw_chess_matches` (
+  `id`          MEDIUMINT NOT NULL AUTO_INCREMENT,
+  `division`    varchar(30)  NOT NULL,
+  `date`        varchar(10) NOT NULL,
+  PRIMARY KEY (`id`)
+) ENGINE=InnoDB DEFAULT CHARSET=utf8;

@@ -1,4 +1,10 @@
 <?php
+/**
+ * @ Chess League Manager (CLM) Component 
+ * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
 defined('clm') or die('Restricted access');
 // API mit Rechten versehen
 // array(0,"<ACCESS>",true/false)
@@ -43,6 +49,12 @@ $rights["db_report"]=array();
 $rights["db_report_save"]=array();
 $rights["db_report_overview"]=array();
 $rights["view_report"]=array();
+$rights["db_schedule"]=array();
+$rights["view_schedule"]=array();
+$rights["view_schedule_pdf"]=array();
+$rights["view_schedule_xls"]=array();
+$rights["db_paarungsliste"]=array();
+$rights["view_paarungsliste_xls"]=array();
 $rights["db_be_menu"]=array();
 $rights["view_be_menu"]=array();
 $rights["view_app_info"]=array();
@@ -77,4 +89,7 @@ $rights["db_tournament_player_del"]=array(2,"BE_tournament_edit_detail",0); // E
 $rights["db_ordering"]=array(); // Ordering ändern
 $rights["db_pgn_export"]=array(); // pgn-Datei erstellen
 $rights["db_pgn_template"]=array(); // pgn-Template erstellen
+$rights["db_swm_import"]=array(); // Swiss-Manager-Datei importieren
+$rights["db_dewis_user"]=array(); // Online Club Check für User
+$rights["db_check_season_user"]=array(); // Online Season Check für Ligen und Turniere
 ?>

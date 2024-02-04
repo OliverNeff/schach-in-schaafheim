@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><div class="acymailing_module<?php echo $params->get('moduleclass_sfx')?>" id="acymailing_module_<?php echo $formName; ?>">
 <?php
@@ -20,7 +21,7 @@ defined('_JEXEC') or die('Restricted access');
 	$styleString = empty($style) ? '' : 'style="'.implode(';',$style).'"';
 	?>
 	<div class="acymailing_fulldiv" id="acymailing_fulldiv_<?php echo $formName; ?>" <?php echo $styleString; ?> >
-		<form id="<?php echo $formName; ?>" action="<?php echo JRoute::_('index.php'); ?>" onsubmit="return submitacymailingform('optin','<?php echo $formName;?>')" method="post" name="<?php echo $formName ?>" <?php if(!empty($fieldsClass->formoption)) echo $fieldsClass->formoption; ?> >
+		<form id="<?php echo $formName; ?>" action="<?php echo acymailing_route('index.php'); ?>" onsubmit="return submitacymailingform('optin','<?php echo $formName;?>')" method="post" name="<?php echo $formName ?>" <?php if(!empty($fieldsClass->formoption)) echo $fieldsClass->formoption; ?> >
 		<div class="acymailing_module_form" >
 			<?php if(!empty($introText)) echo '<div class="acymailing_introtext">'.$introText.'</div>';
 
@@ -55,7 +56,7 @@ defined('_JEXEC') or die('Restricted access');
 							$listContent .= acymailing_tooltip($allLists[$myListId]->description,$allLists[$myListId]->name,'',$allLists[$myListId]->name,$archivelink);
 						}else{
 							if($params->get('link',1) AND $allLists[$myListId]->visible){
-								$listContent .= '<a href="'.$archivelink.'" alt="'.$allLists[$myListId]->alias.'"'.((JRequest::getCmd('tmpl') == 'component') ? 'target="_blank"' : '').' >';
+								$listContent .= '<a href="'.$archivelink.'" alt="'.$allLists[$myListId]->alias.'"'.((acymailing_getVar('cmd', 'tmpl') == 'component') ? 'target="_blank"' : '').' >';
 							}
 							$listContent .= $allLists[$myListId]->name;
 							if($params->get('link',1) AND $allLists[$myListId]->visible){
@@ -86,7 +87,7 @@ defined('_JEXEC') or die('Restricted access');
 							<?php
 						}elseif($oneField == 'html' AND empty($extraFields[$oneField])){
 							echo '<label>'.acymailing_translation('RECEIVE').'</label>';
-							echo '<span class="acyfield_'.$oneField.'">'.JHTML::_('select.booleanlist', "user[html]" ,'title="'.acymailing_translation('RECEIVE').'"',isset($identifiedUser->html) ? $identifiedUser->html : 1,acymailing_translation('HTML'),acymailing_translation('JOOMEXT_TEXT'),'user_html_'.$formName).'</span>';
+							echo '<span class="acyfield_'.$oneField.'">'.acymailing_boolean("user[html]" ,'title="'.acymailing_translation('RECEIVE').'"',isset($identifiedUser->html) ? $identifiedUser->html : 1,acymailing_translation('HTML'),acymailing_translation('JOOMEXT_TEXT'),'user_html_'.$formName).'</span>';
 						}elseif(!empty($extraFields[$oneField])){
 							if($extraFields[$oneField]->type == 'category'){
 								if(empty($extraFields[$oneField]->fieldcat) && !empty($tmpCatId)){
@@ -171,23 +172,28 @@ defined('_JEXEC') or die('Restricted access');
 					</p>
 				</div>
 			<?php
-			if(!empty($fieldsClass->excludeValue)){
-				$js = "\n"."acymailing['excludeValues".$formName."'] = Array();";
-				foreach($fieldsClass->excludeValue as $namekey => $value){
-					$js .= "\n"."acymailing['excludeValues".$formName."']['".$namekey."'] = '".$value."';";
-				}
-				$js .= "\n";
-				$doc = JFactory::getDocument();
-				if($params->get('includejs','header') == 'header'){
-					$doc->addScriptDeclaration( $js );
-				}else{
-					echo "<script type=\"text/javascript\">
-							<!--
-							$js
-							//-->
-							</script>";
-				}
+			if(empty($fieldsClass->excludeValue)){
+				$fieldsClass = new stdClass();
+				$fieldsClass->excludeValue = array();
+				$fieldsClass->excludeValue['name'] = $nameCaption;
+				$fieldsClass->excludeValue['email'] = $emailCaption;
 			}
+
+			$js = "\n"."acymailingModule['excludeValues".$formName."'] = Array();";
+			foreach($fieldsClass->excludeValue as $namekey => $value){
+				$js .= "\n"."acymailingModule['excludeValues".$formName."']['".$namekey."'] = '".$value."';";
+			}
+			$js .= "\n";
+			if($params->get('includejs','header') == 'header'){
+				acymailing_addScript(true, $js);
+			}else{
+				echo "<script type=\"text/javascript\">
+						<!--
+						$js
+						//-->
+						</script>";
+			}
+
 			if(!empty($postText)) echo '<div class="acymailing_finaltext">'.$postText.'</div>';
 			$ajax = ($params->get('redirectmode') == '3') ? 1 : 0;?>
 			<input type="hidden" name="ajax" value="<?php echo $ajax; ?>"/>
@@ -200,7 +206,7 @@ defined('_JEXEC') or die('Restricted access');
 			<?php if(!empty($identifiedUser->userid)){ ?><input type="hidden" name="visiblelists" value="<?php echo $visibleLists;?>"/><?php } ?>
 			<input type="hidden" name="hiddenlists" value="<?php echo $hiddenLists;?>"/>
 			<input type="hidden" name="acyformname" value="<?php echo $formName; ?>" />
-			<?php if(JRequest::getCmd('tmpl') == 'component'){ ?>
+			<?php if(acymailing_getVar('cmd', 'tmpl') == 'component'){ ?>
 				<input type="hidden" name="tmpl" value="component" />
 				<?php if($params->get('effect','normal') == 'mootools-box' AND !empty($redirectUrl)){ ?>
 					<input type="hidden" name="closepop" value="1" />
@@ -211,3 +217,4 @@ defined('_JEXEC') or die('Restricted access');
 	</div>
 	<?php if($params->get('effect','normal') == 'mootools-slide'){ ?> </div> <?php } ?>
 </div>
+

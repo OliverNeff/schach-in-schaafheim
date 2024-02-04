@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 if(empty($currentPage)) $currentPage = 'mail';
@@ -59,13 +60,11 @@ foreach($orderedList as $oneCategory){
 	$categorizedLists = array_merge($categorizedLists, $oneCategory);
 }
 
-$app = JFactory::getApplication();
-
 echo '<table class="acymailing_table" id="lists_choice"><tbody>';
 
-$filter_list = JRequest::getInt('filter_list');
-if(empty($filter_list)) $filter_list = JRequest::getInt('listid');
-$selectedLists = explode(',', JRequest::getString('listids'));
+$filter_list = acymailing_getVar('int', 'filter_list');
+if(empty($filter_list)) $filter_list = acymailing_getVar('int', 'listid');
+$selectedLists = explode(',', acymailing_getVar('string', 'listids'));
 
 foreach($categorizedLists as $row){
 	if(empty($row->category)) $row->category = acymailing_translation('ACY_NO_CATEGORY');
@@ -133,13 +132,13 @@ if(count($this->lists) > 3){ ?>
 			</script>
 			<?php
 			$selectList = array();
-			$selectList[] = JHTML::_('select.option', 'none', acymailing_translation('ACY_NONE'));
+			$selectList[] = acymailing_selectOption('none', acymailing_translation('ACY_NONE'));
 			foreach($languages as $oneLang => $values){
 				if($oneLang == 'all') continue;
-				$selectList[] = JHTML::_('select.option', $oneLang, ucfirst($oneLang));
+				$selectList[] = acymailing_selectOption($oneLang, ucfirst($oneLang));
 			}
-			$selectList[] = JHTML::_('select.option', 'all', acymailing_translation('ACY_ALL'));
-			echo JHTML::_('acyselect.radiolist', $selectList, "selectlists", 'onclick="updateStatus(this.value);"', 'value', 'text');
+			$selectList[] = acymailing_selectOption('all', acymailing_translation('ACY_ALL'));
+			echo acymailing_radio($selectList, "selectlists", 'onclick="updateStatus(this.value);"', 'value', 'text');
 			?>
 		</td>
 	</tr>

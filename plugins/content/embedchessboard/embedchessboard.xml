@@ -9,7 +9,7 @@
 	<authorEmail>pgn4web@casaschi.net</authorEmail>
 	<authorUrl>http://pgn4web.casaschi.net</authorUrl>
 	<description>PLG_CONTENT_EMBEDCHESSBOARD_XML_DESCRIPTION</description>
-	<version>3.03.00</version>
+	<version>3.04.00</version>
 	<scriptfile>scripts/postinstall-script.php</scriptfile>
 	<files>
 		<filename plugin="embedchessboard">embedchessboard.php</filename>

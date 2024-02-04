@@ -75,9 +75,9 @@ if ($abgabe[0]->id < 1) {
 			}
 	}	
 	if (!isset($abgabe[0]->params['deadline_roster']))  {   //Standardbelegung
-		$abgabe[0]->params['deadline_roster'] = '0000-00-00'; }
+		$abgabe[0]->params['deadline_roster'] = '1970-01-01'; }
 
-if ($abgabe[0]->liste > 0 AND $abgabe[0]->params['deadline_roster'] == '0000-00-00') {
+if ($abgabe[0]->liste > 0 AND ($abgabe[0]->params['deadline_roster'] == '0000-00-00' OR $abgabe[0]->params['deadline_roster'] == '1970-01-01')) {
 	$msg = JText::_( 'CLUB_LIST_ALREADY_EXIST' );
 	$link = "index.php?option=com_clm&view=info";
 	$mainframe->redirect( $link, $msg );
@@ -214,7 +214,7 @@ echo "<br>published ".$clmuser[0]->published;
 		<?php echo $spieler[$i]->name; ?>
 	</td>
 	<td>
-		<input class="inputbox" type="text" name="attr[<?php echo $spieler[$i]->id; ?>]" id="attr<?php echo $i+1; ?>" size="1" maxlength="5" value="<?php echo $spieler[$i]->attr; ?>" />
+		<input class="inputbox" type="text" name="attr[<?php echo $spieler[$i]->id; ?>]" id="attr<?php echo $i+1; ?>" size="1" maxlength="4" value="<?php echo $spieler[$i]->attr; ?>" />
 	</td>
 	<td>
 		<?php echo $spieler[$i]->dwz; ?>
@@ -232,7 +232,7 @@ echo "<br>published ".$clmuser[0]->published;
 		<?php if (isset($spieler[$j])) echo $spieler[$j]->name; ?>
 	</td>
 	<td>
-		<input class="inputbox" type="text" name="attr[<?php if (isset($spieler[$j])) echo $spieler[$j]->id; ?>]" id="attr<?php echo $j+1; ?>" size="1" maxlength="5" value="<?php if (isset($spieler[$j])) echo $spieler[$j]->attr; ?>" />
+		<input class="inputbox" type="text" name="attr[<?php if (isset($spieler[$j])) echo $spieler[$j]->id; ?>]" id="attr<?php echo $j+1; ?>" size="1" maxlength="4" value="<?php if (isset($spieler[$j])) echo $spieler[$j]->attr; ?>" />
 	</td>
 	<td>
 		<?php if (isset($spieler[$j])) echo $spieler[$j]->dwz; ?>

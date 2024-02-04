@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2017 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2019 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -282,7 +282,7 @@ class CLMForm {
 			$sql = "SELECT a.zps, v.Vereinname as name FROM #__clm_turniere_tlnr as a "
 				." LEFT JOIN #__clm_dwz_vereine as v ON v.sid= a.sid AND v.ZPS = a.zps"
 				." WHERE a.turnier = '$turnier'"
-				." GROUP BY a.zps";
+				." GROUP BY v.Vereinname, a.zps";
 
 		$vereine = clm_core::$db->loadObjectList($sql);
 
@@ -312,7 +312,7 @@ class CLMForm {
 		$resultlist[] = JHTML::_('select.option', '-1', CLMText::selectOpener(JText::_( 'SELECT_RESULT' ) ), 'eid', 'ergebnis' );
 		$resultlist[] = JHTML::_('select.option', '-2', JText::_( ' ---------------- ' ), 'eid', 'ergebnis');
 		
-		for ($r=0; $r<=10; $r++) {
+		for ($r=0; $r<=13; $r++) {
 			$resultlist[] = JHTML::_('select.option', $r, JText::_( 'RESULT_EID_'.$r ), 'eid', 'ergebnis' );
 		}
 	
@@ -358,7 +358,7 @@ class CLMForm {
 
  
 	public static function calendar($value, $name, $id, $format = '%Y-%m-%d', $attribs = null) {
-		if ($value == '0000-00-00') $value = '';
+		if ($value == '0000-00-00' OR $value == '1970-01-01') $value = '';
 	
 		return JHTML::_('calendar', $value, $name, $id, $format, $attribs);
 	}	

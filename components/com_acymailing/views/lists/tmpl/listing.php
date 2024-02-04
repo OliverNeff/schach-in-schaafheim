@@ -1,18 +1,18 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><div id="acylistslisting" >
 <h1 class="componentheading"><?php echo acymailing_translation('MAILING_LISTS'); ?></h1>
 <?php
 	if(!empty($this->listsintrotext)) echo '<div class="acymailing_listsintrotext" >'.$this->listsintrotext.'</div>';
 	$k = 0;
-	$my = JFactory::getUser();
 
 	foreach($this->rows as $i => $oneList){
 		$row =& $this->rows[$i];

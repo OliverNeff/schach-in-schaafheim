@@ -2,7 +2,7 @@
 
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2016 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -443,7 +443,7 @@ static function Ergebnis( $row, $runde, $heim, $hcount, $gast, $gcount, $bretter
 			<label for="name"><?php echo JText::_( 'RESULTS_DETAILS_DATE' ); ?></label>
 			</td>
 			<td>
-			<?php if ($runde[0]->zeit != "0000-00-00 00:00:00") {
+			<?php if ($runde[0]->zeit != "0000-00-00 00:00:00" AND $runde[0]->zeit != "1970-01-01 00:00:00") {
 				//echo JHtml::_('date',  $runde[0]->zeit, JText::_('DATE_FORMAT_LC2'));} 
 				echo clm_core::$cms->showDate($runde[0]->zeit);} 
 			else { echo JText::_('RESULTS_DETAILS_NOTHING'); } ?>
@@ -464,7 +464,7 @@ static function Ergebnis( $row, $runde, $heim, $hcount, $gast, $gcount, $bretter
 			<label for="name"><?php echo JText::_( 'RESULTS_DETAILS_DATE' ); ?></label>
 			</td>
 			<td>
-			<?php if ($runde[0]->edit_zeit != "0000-00-00 00:00:00") {
+			<?php if ($runde[0]->edit_zeit != "0000-00-00 00:00:00" AND $runde[0]->edit_zeit != "1970-01-01 00:00:00") {
 				//echo JHtml::_('date',  $runde[0]->edit_zeit, JText::_('DATE_FORMAT_LC2'));} 
 				echo clm_core::$cms->showDate($runde[0]->edit_zeit);} 
 			else { echo "---"; } ?>
@@ -484,7 +484,7 @@ static function Ergebnis( $row, $runde, $heim, $hcount, $gast, $gcount, $bretter
 			<label for="name"><?php echo JText::_( 'RESULTS_DETAILS_DATE' ); ?></label>
 			</td>
 			<td>
-			<?php if ($runde[0]->dwz_zeit != "0000-00-00 00:00:00") {echo JHtml::_('date',  $runde[0]->dwz_zeit, JText::_('DATE_FORMAT_LC2'));} 
+			<?php if ($runde[0]->dwz_zeit != "0000-00-00 00:00:00" AND $runde[0]->dwz_zeit != "1970-01-01 00:00:00") {echo JHtml::_('date',  $runde[0]->dwz_zeit, JText::_('DATE_FORMAT_LC2'));} 
 			else { echo JText::_('RESULTS_DETAILS_NOTHING'); } ?>
 			</td>
 		</tr>
@@ -540,7 +540,7 @@ public static function Wertung( &$row, $runde, $bretter, $ergebnis, $option, $li
 
 	<form action="index.php" method="post" name="adminForm" id="adminForm">
 
-	<div>
+<!--	<div> -->
 	<div class="width-60 fltlft">
 	<fieldset class="adminform">
 	<legend><?php 
@@ -553,7 +553,7 @@ public static function Wertung( &$row, $runde, $bretter, $ergebnis, $option, $li
 	</legend>
 	<table class="admintable">
 	<tr>
-		<td class="key" nowrap="nowrap" width="25">Brett</td>
+		<td class="key" nowrap="nowrap"><?php echo JText::_( 'RESULTS_DETAILS_BOARD' ); ?></td>
 		<td class="key" nowrap="nowrap"><?php echo $runde[0]->hname; ?></td>
 		<td class="key" nowrap="nowrap"><?php echo $runde[0]->gname; ?></td>
 		<td class="key" nowrap="nowrap"><?php echo JText::_( 'EVALUATION_RESULT'); ?></td>
@@ -598,9 +598,11 @@ public static function Wertung( &$row, $runde, $bretter, $ergebnis, $option, $li
 		<td class="key" nowrap="nowrap"><?php echo JText::_( 'EVALUATION_BRETTPUNKTE_MANUALLY'); //klkl ?>
 		</td>
 		<td class="key" nowrap="nowrap">
-		<?php echo $lists['weiss'].' - '.$lists['schwarz']; ?>
+		<?php //echo $lists['weiss'].' - '.$lists['schwarz']; ?>
+		<?php echo $lists['weiss']; ?>
 		</td>
 		<td class="key" nowrap="nowrap">
+		<?php echo ' - '.$lists['schwarz']; ?>
 		</td>
 	</tr>
 	<?php if ($runde[0]->b_wertung > 0) { 
@@ -614,11 +616,10 @@ public static function Wertung( &$row, $runde, $bretter, $ergebnis, $option, $li
 		<td class="key" nowrap="nowrap"><?php echo JText::_( 'EVALUATION_WERTPUNKTE_MANUALLY'); //klkl ?>
 		</td>
 		<td class="key" nowrap="nowrap">
-		<input class="inputbox" type="text" name="ww_erg" id="ww_erg" size="8" maxlength="8" value="<?php echo $ww_erg; ?>" />
-		<?php echo "   -   "; //klkl ?>
-		<input class="inputbox" type="text" name="sw_erg" id="sw_erg" size="8" maxlength="8" value="<?php echo $sw_erg; ?>" />
+		<?php echo $lists['weiss_w']; ?>
 		</td>
 		<td class="key" nowrap="nowrap">
+		<?php echo ' - '.$lists['schwarz_w']; ?>
 		</td>
 	</tr>
 	<?php } ?>
@@ -695,7 +696,7 @@ public static function Wertung( &$row, $runde, $bretter, $ergebnis, $option, $li
 			<label for="name"><?php echo JText::_( 'RESULTS_DETAILS_DATE' ); ?></label>
 			</td>
 			<td>
-			<?php if ($runde[0]->zeit != "0000-00-00 00:00:00") {echo JHtml::_('date',  $runde[0]->zeit, JText::_('DATE_FORMAT_LC2'));} 
+			<?php if ($runde[0]->zeit != "0000-00-00 00:00:00" AND $runde[0]->zeit != "1970-01-01 00:00:00") {echo JHtml::_('date',  $runde[0]->zeit, JText::_('DATE_FORMAT_LC2'));} 
 			else {  echo JText::_( 'RESULTS_DETAILS_NOTHING'); } ?>
 
 			</td>
@@ -714,7 +715,7 @@ public static function Wertung( &$row, $runde, $bretter, $ergebnis, $option, $li
 			<label for="name"><?php echo JText::_( 'am : ' ); ?></label>
 			</td>
 			<td>
-			<?php if ($runde[0]->edit_zeit != "0000-00-00 00:00:00") {echo JHtml::_('date',  $runde[0]->edit_zeit, JText::_('DATE_FORMAT_LC2'));} 
+			<?php if ($runde[0]->edit_zeit != "0000-00-00 00:00:00" AND $runde[0]->edit_zeit != "1970-01-01 00:00:00") {echo JHtml::_('date',  $runde[0]->edit_zeit, JText::_('DATE_FORMAT_LC2'));} 
 			else { echo "---"; } ?>
 			</td>
 		</tr>
@@ -732,7 +733,7 @@ public static function Wertung( &$row, $runde, $bretter, $ergebnis, $option, $li
 			<label for="name"><?php echo JText::_( 'RESULTS_DETAILS_DATE' ); ?></label>
 			</td>
 			<td>
-			<?php if ($runde[0]->dwz_zeit != "0000-00-00 00:00:00") {echo JHtml::_('date',  $runde[0]->dwz_zeit, JText::_('DATE_FORMAT_LC2'));} 
+			<?php if ($runde[0]->dwz_zeit != "0000-00-00 00:00:00" AND $runde[0]->dwz_zeit != "1970-01-01 00:00:00") {echo JHtml::_('date',  $runde[0]->dwz_zeit, JText::_('DATE_FORMAT_LC2'));} 
 			else { echo JText::_( 'RESULTS_DETAILS_NOTHING'); } ?>
 			</td>
 		</tr>
@@ -740,7 +741,7 @@ public static function Wertung( &$row, $runde, $bretter, $ergebnis, $option, $li
 		</table>
 		</fieldset>
 		</div>
-		</div>
+<!--		</div> -->
 	<div class="clr"></div>
 
 		<input type="hidden" name="section" value="ergebnisse" />

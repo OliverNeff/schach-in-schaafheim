@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2016 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2019 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -235,9 +235,11 @@ class CLMModelSWTLigaman extends JModelLegacy {
 			$dwzid		= JRequest::getVar ('dwzid_' . $i);
 			$spielerid	= JRequest::getVar ('spielerid_' . $i);
 			$name	= JRequest::getVar ('name_' . $i);
-			
-/*			echo "dwzid: $dwzid"; //DBG
-			echo "spielerid: $spielerid"; //DBG*/
+
+			if ($noOrgReference == 1) $dwzid = -1;			
+//echo "<br>dwzid: $dwzid"; //DBG
+//echo "spielerid: $spielerid"; //DBG
+//echo "name: $name"; //DBG
 			if (empty ($spielerid)) { // neuer Spieler, der nicht in der SWT-Datei aufgeführt ist
 //				echo "groesste_id: $groesste_id"; //DBG
 				$spielerid = $groesste_id + $neu;
@@ -361,6 +363,9 @@ class CLMModelSWTLigaman extends JModelLegacy {
 		
 		// ...
 		//$swt_data['liga_name'] = $this->_SWTReadName ($swt, 245, 60);
+
+		$gesp_runden		= CLMSWT::readInt ($swt, 3);
+		$ausgeloste_runden	= CLMSWT::readInt ($swt, 5);
 		
 		// schon gespeicherte SWT-Daten aus der DB holen
 		$swt_db_data = $this->getDataSWTdb ();
@@ -375,7 +380,10 @@ class CLMModelSWTLigaman extends JModelLegacy {
 		$offset_rundaten = $anz_spieler * $anz_durchgaenge * $anz_runden * 19;
 		$offset_mandaten = $anz_mannschaften * $anz_durchgaenge * $anz_runden * 19;
 		$offset_spldaten = $anz_spieler * 655;
-
+if ($ausgeloste_runden == 0) {
+		$offset_rundaten = 0;
+		$offset_mandaten = 0;
+}
 		// Mannschaft auslesen
 		$offset = 13384 + $offset_rundaten + $offset_mandaten + $offset_spldaten;	
 		$swt_data['man_name'] = '';

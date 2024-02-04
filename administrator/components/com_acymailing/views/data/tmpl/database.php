@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 $subfields = acymailing_getColumns('#__acymailing_subscriber');
@@ -31,7 +32,7 @@ $postFields = (array)@unserialize($config->get('import_db_fields', ''));
 				<?php echo acymailing_translation('IMPORT_CONFIRMED'); ?>
 			</td>
 			<td>
-				<?php echo JHTML::_('acyselect.booleanlist', "import_confirmed_database", '', JRequest::getInt('import_confirmed_database', 1), acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO')); ?>
+				<?php echo acymailing_boolean("import_confirmed_database", '', acymailing_getVar('int', 'import_confirmed_database', 1), acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO')); ?>
 			</td>
 		</tr>
 	<?php }

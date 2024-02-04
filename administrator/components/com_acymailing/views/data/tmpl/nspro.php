@@ -1,18 +1,16 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
-$db = JFactory::getDBO();
-$db->setQuery('SELECT count(id) FROM '.acymailing_table('nspro_subs', false));
-$resultUsers = $db->loadResult();
-$db->setQuery('SELECT count(id) FROM '.acymailing_table('nspro_lists', false));
-$resultLists = $db->loadResult();
+$resultUsers = acymailing_loadResult('SELECT count(id) FROM '.acymailing_table('nspro_subs', false));
+$resultLists = acymailing_loadResult('SELECT count(id) FROM '.acymailing_table('nspro_lists', false));
 ?>
 
 <table <?php echo $this->isAdmin ? 'class="acymailing_table"' : 'class="admintable table" cellspacing="1"' ?>>
@@ -30,7 +28,7 @@ $resultLists = $db->loadResult();
 			<?php echo acymailing_translation_sprintf('IMPORT_LIST_TOO', 'NS Pro'); ?>
 		</td>
 		<td>
-			<?php echo JHTML::_('acyselect.booleanlist', "nspro_lists"); ?>
+			<?php echo acymailing_boolean("nspro_lists"); ?>
 		</td>
 	</tr>
 </table>

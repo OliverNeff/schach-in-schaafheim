@@ -10,3 +10,4 @@
 -- Tabellenstruktur l�schen f�r Tabelle `sgw_chess_table`
 --
 DROP TABLE IF EXISTS `sgw_chess_records`;
+DROP TABLE IF EXISTS `sgw_chess_matches`;

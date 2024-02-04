@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -15,15 +16,14 @@ class TagController extends acymailingController
 
 	function __construct($config = array()){
 		parent::__construct($config);
-		JHTML::_('behavior.tooltip');
-		JRequest::setVar('tmpl','component');
+		acymailing_setNoTemplate();
 
 		$this->registerDefaultTask('tag');
 	}
 
 	function tag(){
 		if(!$this->isAllowed($this->aclCat,'view')) return;
-		JRequest::setVar( 'layout', 'tag'  );
+		acymailing_setVar( 'layout', 'tag'  );
 		return parent::display();
 	}
 
@@ -35,30 +35,30 @@ class TagController extends acymailingController
 	}
 
 	function customtemplate(){
-		JRequest::setVar('layout', 'form');
+		acymailing_setVar('layout', 'form');
 		return parent::display();
 	}
 
 	function store(){
-		JRequest::checkToken() or die('Invalid Token');
+		acymailing_checkToken();
 
-		$plugin = JRequest::getString('plugin');
+		$plugin = acymailing_getVar('string', 'plugin');
 		$plugin = preg_replace('#[^a-zA-Z0-9]#Uis', '', $plugin);
-		$body = JRequest::getVar('templatebody','','','string',JREQUEST_ALLOWRAW);
+		$body = acymailing_getVar('string', 'templatebody', '', '', ACY_ALLOWRAW);
 
-		if(empty($body)){ acymailing_display(acymailing_translation('FILL_ALL'),'error'); return; }
+		if(empty($body)){ acymailing_enqueueMessage(acymailing_translation('FILL_ALL'),'error'); return; }
 
 		$pluginsFolder = ACYMAILING_MEDIA.'plugins';
 		if(!file_exists($pluginsFolder)) acymailing_createDir($pluginsFolder);
 
 		try{
-			jimport('joomla.filesystem.file');
-			$status = JFile::write($pluginsFolder.DS.$plugin.'.php',$body);
+			
+			$status = acymailing_writeFile($pluginsFolder.DS.$plugin.'.php',$body);
 		}catch(Exception $e){
 			$status = false;
 		}
 
-		if($status) acymailing_display(acymailing_translation('JOOMEXT_SUCC_SAVED'),'success');
-		else acymailing_display(acymailing_translation_sprintf('FAIL_SAVE', $pluginsFolder.DS.$plugin.'.php'),'error');
+		if($status) acymailing_enqueueMessage(acymailing_translation('JOOMEXT_SUCC_SAVED'),'success');
+		else acymailing_enqueueMessage(acymailing_translation_sprintf('FAIL_SAVE', $pluginsFolder.DS.$plugin.'.php'),'error');
 	}
 }

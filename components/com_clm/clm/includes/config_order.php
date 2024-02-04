@@ -1,4 +1,10 @@
 <?php
+/**
+ * @ Chess League Manager (CLM) Component 
+ * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
 defined('clm') or die('Restricted access');
 
 $config_order = array(
@@ -16,6 +22,7 @@ $config_order = array(
 				array("googlemaps", 0, "googlemaps_api", "googlemaps_rtype", "googlemaps_ver", "googlemaps_vrout", "googlemaps_msch", "googlemaps_mrout"), 
 				array("googlecharts", 0, "googlecharts"),
 				array("exp", 0, "tourn_comment_parse", "tourn_seed")),
+			array("data_protection", 0, "view_archive", "user_member"),
 			array("template", 0, "template","lesehilfe", "isis", "isis_remove_sidebar", "div", "cellin_top", "cellin_right", "cellin_bottom", "cellin_left", "border_length", "border_style", "border_color", "favicon",
 				array("table", 0, "table_pageLength","table_fontSize", "button_style"),
 				array("fix", 0, "fixth_msch", "fixth_dwz", "fixth_tkreuz", "fixth_ttab", "fixth_ttln"),
@@ -25,6 +32,6 @@ $config_order = array(
 				array("pgn", 0, "fe_pgn_show", "fe_pgn_moveFont", "fe_pgn_commentFont", "fe_pgn_style"),
 				array("upDown", 0,"rang_auf","rang_auf_evtl", "rang_ab", "rang_ab_evtl"),
 				array("wrong", 0, "wrong1", "wrong2_length", "wrong2_style", "wrong2_color")),
-			array("developer", 0, "soap_safe", "log", "log_error", "log_warning", "log_notice", "log_unknown", "log_info")
+			array("developer", 0, "soap_safe", "log", "log_error", "log_warning", "log_notice", "log_unknown", "log_info", "test_button")
 		);
 ?>

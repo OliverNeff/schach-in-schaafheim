@@ -2,7 +2,7 @@
 /**
  * @package    Joomla.Language
  *
- * @copyright  Copyright (C) 2005 - 2017 Open Source Matters, Inc. All rights reserved.
+ * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -46,7 +46,7 @@ abstract class De_DELocalise
 	 *
 	 * @since   1.6
 	 *
-	 * @link    http://solariz.de/649/deutsche-stopwords.htm
+	 * @link    https://solariz.de/649/deutsche-stopwords.htm
 	 */
 	public static function getIgnoredSearchWords()
 	{

@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php if($this->mail->html){ ?>
 	<style type="text/css">
@@ -60,7 +61,7 @@ defined('_JEXEC') or die('Restricted access');
 		}
 	</style>
 
-	<div class="<?php echo (!isset($this->app) || $this->app->isAdmin()) ? 'acyblockoptions' : 'onelineblockoptions'; ?> acyblock_newsletter" width="100%" id="htmlfieldset" style="clear:both;">
+	<div class="<?php echo acymailing_isAdmin() ? 'acyblockoptions' : 'onelineblockoptions'; ?> acyblock_newsletter" width="100%" id="htmlfieldset" style="clear:both;">
 		<span class="acyblocktitle donotprint"> <?php echo acymailing_translation('HTML_VERSION'); ?></span>
 
 		<div style="float:right;width:340px;clear:both" id="acypreview_resize">
@@ -77,13 +78,13 @@ defined('_JEXEC') or die('Restricted access');
 <?php
 } ?>
 
-<div class="<?php echo (!isset($this->app) || $this->app->isAdmin()) ? 'acyblockoptions' : 'onelineblockoptions'; ?> acyblock_newsletter donotprint" id="textfieldset">
+<div class="<?php echo (acymailing_isAdmin() ? 'acyblockoptions' : 'onelineblockoptions'); ?> acyblock_newsletter donotprint" id="textfieldset">
 	<span class="acyblocktitle donotprint"><?php echo acymailing_translation('TEXT_VERSION'); ?></span>
 	<?php echo nl2br($this->escape($this->mail->altbody)); ?>
 </div>
 <?php
 if(!empty($this->mail->attachments)){
-	echo '<div class="'.((!isset($this->app) || $this->app->isAdmin()) ? 'acyblockoptions' : 'onelineblockoptions').' newsletter_attachments donotprint adminform">
+	echo '<div class="'.(acymailing_isAdmin() ? 'acyblockoptions' : 'onelineblockoptions').' newsletter_attachments donotprint adminform">
 		<span class="acyblocktitle">'.acymailing_translation('ATTACHMENTS').'</span>
 		<table>';
 	foreach($this->mail->attachments as $attachment){

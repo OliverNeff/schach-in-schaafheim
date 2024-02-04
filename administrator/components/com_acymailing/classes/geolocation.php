@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -15,6 +16,7 @@ class geolocationClass extends acymailingClass{
 
 	function saveGeolocation($geoloc_action, $subid){
 		$config = acymailing_config();
+
 		$geoloc_config = $config->get('geolocation');
 		if(stripos($geoloc_config, $geoloc_action) === false) return false;
 
@@ -27,6 +29,12 @@ class geolocationClass extends acymailingClass{
 		if(empty($geo_element->geolocation_subid) || empty($geo_element->geolocation_ip)) return false;
 
 		$geo_element = $this->getIpLocation($geo_element);
+
+		if($config->get('anonymous_tracking', 0) == 1){
+			$geo_element->geolocation_subid = 0;
+			$geo_element->geolocation_ip = '';
+		}
+
 		if($geo_element != false){
 			parent::save($geo_element);
 			return $geo_element;
@@ -80,8 +88,7 @@ class geolocationClass extends acymailingClass{
 	}
 
 	function getMostRecentDataByIp($ip){
-		$this->database->setQuery("SELECT * FROM #__acymailing_geolocation WHERE geolocation_ip=".$this->database->Quote($ip)." ORDER BY geolocation_created DESC");
-		return $this->database->loadObject();
+		return acymailing_loadObject("SELECT * FROM #__acymailing_geolocation WHERE geolocation_ip=".acymailing_escapeDB($ip)." ORDER BY geolocation_created DESC");
 	}
 
 	function testApiKey($apiKey){

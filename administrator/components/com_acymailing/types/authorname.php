@@ -1,25 +1,27 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
-class authornameType{
+class authornameType extends acymailingClass{
 	var $onclick = "updateTag();";
 	function __construct(){
+		parent::__construct();
 		$this->values = array();
-		$this->values[] = JHTML::_('select.option', "|author",acymailing_translation('JOOMEXT_YES'));
-		$this->values[] = JHTML::_('select.option', "",acymailing_translation('JOOMEXT_NO'));
+		$this->values[] = acymailing_selectOption("|author", acymailing_translation('JOOMEXT_YES'));
+		$this->values[] = acymailing_selectOption("", acymailing_translation('JOOMEXT_NO'));
 
 	}
 
 	function display($map,$value){
-		return JHTML::_('acyselect.radiolist', $this->values, $map , 'size="1" onclick="'.$this->onclick.'"', 'value', 'text', (string) $value);
+		return acymailing_radio($this->values, $map , 'size="1" onclick="'.$this->onclick.'"', 'value', 'text', (string) $value);
 	}
 
 }

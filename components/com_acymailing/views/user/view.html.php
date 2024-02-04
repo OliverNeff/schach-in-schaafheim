@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -15,42 +16,32 @@ class UserViewUser extends acymailingView{
 		$function = $this->getLayout();
 		if(method_exists($this, $function)) $this->$function();
 
+		global $Itemid;
+		$this->Itemid = $Itemid;
+		
 		parent::display($tpl);
 	}
 
 	function modify(){
-		global $Itemid;
-
-		$app = JFactory::getApplication();
-		$pathway = $app->getPathway();
-		$document = JFactory::getDocument();
 		$values = new stdClass();
 		$values->show_page_heading = 0;
 
 		$listsClass = acymailing_get('class.list');
 		$subscriberClass = acymailing_get('class.subscriber');
 
-		$jsite = JFactory::getApplication('site');
-		$menus = $jsite->getMenu();
-		$menu = $menus->getActive();
-
-		if(empty($menu) AND !empty($Itemid)){
-			$menus->setActive($Itemid);
-			$menu = $menus->getItem($Itemid);
-		}
+		$menu = acymailing_getMenu();
 
 		if(is_object($menu)){
-			jimport('joomla.html.parameter');
 			$menuparams = new acyParameter($menu->params);
 
 			if(!empty($menuparams)){
-				$this->assign('introtext', $menuparams->get('introtext'));
-				$this->assign('finaltext', $menuparams->get('finaltext'));
-				$this->assign('dropdown', $menuparams->get('dropdown'));
+				$this->introtext = $menuparams->get('introtext');
+				$this->finaltext = $menuparams->get('finaltext');
+				$this->dropdown = $menuparams->get('dropdown');
 
-				if($menuparams->get('menu-meta_description')) $document->setDescription($menuparams->get('menu-meta_description'));
-				if($menuparams->get('menu-meta_keywords')) $document->setMetadata('keywords', $menuparams->get('menu-meta_keywords'));
-				if($menuparams->get('robots')) $document->setMetadata('robots', $menuparams->get('robots'));
+				if($menuparams->get('menu-meta_description')) acymailing_addMetadata('description', $menuparams->get('menu-meta_description'));
+				if($menuparams->get('menu-meta_keywords')) acymailing_addMetadata('keywords', $menuparams->get('menu-meta_keywords'));
+				if($menuparams->get('robots')) acymailing_addMetadata('robots', $menuparams->get('robots'));
 				if($menuparams->get('page_title')) acymailing_setPageTitle($menuparams->get('page_title'));
 
 				$values->suffix = $menuparams->get('pageclass_sfx', '');
@@ -76,15 +67,15 @@ class UserViewUser extends acymailingView{
 				}
 			}
 
-			$pathway->addItem(acymailing_translation('SUBSCRIPTION'));
+			acymailing_addBreadcrumb(acymailing_translation('SUBSCRIPTION'));
 			if(empty($menu)) acymailing_setPageTitle(acymailing_translation('SUBSCRIPTION'));
 		}else{
 			$subscription = $subscriberClass->getSubscription($subscriber->subid, 'listid');
 
-			$pathway->addItem(acymailing_translation('MODIFY_SUBSCRIPTION'));
+			acymailing_addBreadcrumb(acymailing_translation('MODIFY_SUBSCRIPTION'));
 			if(empty($menu)) acymailing_setPageTitle(acymailing_translation('MODIFY_SUBSCRIPTION'));
 		}
-		if(!empty($subscriber->email) && version_compare(JVERSION, '3.1.2', '>=')) $subscriber->email = JStringPunycode::emailToUTF8($subscriber->email);
+		if(!empty($subscriber->email)) $subscriber->email = acymailing_punycode($subscriber->email, 'emailToUTF8');
 
 		acymailing_initJSStrings();
 
@@ -106,9 +97,9 @@ class UserViewUser extends acymailingView{
 		if(!acymailing_level(3)){
 			if(!empty($menuparams) && strtolower($menuparams->get('customfields', 'default')) != 'default'){
 				$fieldsToDisplay = strtolower($menuparams->get('customfields', 'default'));
-				$this->assignRef('fieldsToDisplay', $fieldsToDisplay);
+				$this->fieldsToDisplay = $fieldsToDisplay;
 			}else{
-				$this->assign('fieldsToDisplay', 'default');
+				$this->fieldsToDisplay = 'default';
 			}
 		}
 
@@ -137,7 +128,7 @@ class UserViewUser extends acymailingView{
 		}
 
 		$defaultSubscription = $subscription;
-		$forceLists = JRequest::getString('listid', '');
+		$forceLists = acymailing_getVar('string', 'listid', '');
 		if(!empty($forceLists)){
 			$subscription = array();
 			$forceLists = explode(',', $forceLists);
@@ -147,7 +138,7 @@ class UserViewUser extends acymailingView{
 				}
 			}
 		}
-		$forceHiddenLists = JRequest::getString('hiddenlist', '');
+		$forceHiddenLists = acymailing_getVar('string', 'hiddenlist', '');
 		if(!empty($forceHiddenLists)){
 			$forceHiddenLists = explode(',', $forceHiddenLists);
 			$tmpList = array();
@@ -168,25 +159,25 @@ class UserViewUser extends acymailingView{
 			}
 		}
 
-		$this->assignRef('hiddenlists', $hiddenLists);
-		$this->assignRef('values', $values);
-		$this->assign('status', acymailing_get('type.festatus'));
-		$this->assignRef('subscription', $subscription);
-		$this->assignRef('subscriber', $subscriber);
-		$this->assignRef('displayLists', $displayLists);
-		$this->assign('config', acymailing_config());
+		$this->hiddenlists = $hiddenLists;
+		$this->values = $values;
+		$this->status = acymailing_get('type.festatus');
+		$this->subscription = $subscription;
+		$this->subscriber = $subscriber;
+		$this->displayLists = $displayLists;
+		$this->config = acymailing_config();
 	}
 
 	function saveunsub(){
 		$subscriberClass = acymailing_get('class.subscriber');
 		$subscriber = $subscriberClass->identify();
-		$this->assignRef('subscriber', $subscriber);
+		$this->subscriber = $subscriber;
 
-		$listid = JRequest::getInt('listid');
+		$listid = acymailing_getVar('int', 'listid');
 		if(!empty($listid)){
 			$listClass = acymailing_get('class.list');
 			$mylist = $listClass->get($listid);
-			$this->assignRef('list', $mylist);
+			$this->list = $mylist;
 		}
 	}
 
@@ -195,27 +186,23 @@ class UserViewUser extends acymailingView{
 
 		$subscriberClass = acymailing_get('class.subscriber');
 		$config = acymailing_config();
-		$this->assignRef('config', $config);
+		$this->config = $config;
 
 		$subscriber = $subscriberClass->identify();
-		$this->assignRef('subscriber', $subscriber);
+		$this->subscriber = $subscriber;
 
-		$mailid = JRequest::getInt('mailid');
-		$this->assignRef('mailid', $mailid);
-
-		$db = JFactory::GetDBO();
+		$mailid = acymailing_getVar('int', 'mailid');
+		$this->mailid = $mailid;
 
 		$query = 'SELECT l.listid, l.name FROM '.acymailing_table('list').' as l';
-		$query .= ' JOIN '.acymailing_table('listsub').' AS ls ON ls.listid = l.listid AND ls.subid = '.JRequest::getInt('subid');
+		$query .= ' JOIN '.acymailing_table('listsub').' AS ls ON ls.listid = l.listid AND ls.subid = '.acymailing_getVar('int', 'subid');
 		$query .= ' WHERE l.type = \'list\' AND (ls.unsubdate < ls.subdate OR ls.unsubdate IS NULL) AND l.visible = 1 AND l.published = 1';
 		$query .= ' ORDER BY l.ordering ASC';
 
-		$db->setQuery($query);
-		$otherSubscriptions = $db->loadObjectList();
+		$otherSubscriptions = acymailing_loadObjectList($query);
 
-		$query = 'SELECT lm.listid FROM '.acymailing_table('mail').' AS m INNER JOIN '.acymailing_table('listmail').' AS lm ON m.mailid = lm.mailid WHERE m.mailid = '.JRequest::getInt('mailid');
-		$db->setQuery($query);
-		$listsToDeny = $db->loadObjectList();
+		$query = 'SELECT lm.listid FROM '.acymailing_table('mail').' AS m INNER JOIN '.acymailing_table('listmail').' AS lm ON m.mailid = lm.mailid WHERE m.mailid = '.acymailing_getVar('int', 'mailid');
+		$listsToDeny = acymailing_loadObjectList($query);
 
 		if(!empty($otherSubscriptions)){
 			$i = 0;
@@ -230,7 +217,7 @@ class UserViewUser extends acymailingView{
 			}
 		}
 
-		$this->assignRef('otherSubscriptions', $otherSubscriptions);
+		$this->otherSubscriptions = $otherSubscriptions;
 
 		$replace = array();
 		$replace['{list:name}'] = '';
@@ -242,7 +229,7 @@ class UserViewUser extends acymailingView{
 		if(!empty($mailid)){
 			$classListmail = acymailing_get('class.listmail');
 			$lists = $classListmail->getLists($mailid);
-			$this->assignRef('lists', $lists);
+			$this->lists = $lists;
 			if(!empty($lists)){
 				$oneList = reset($lists);
 				foreach($oneList as $oneProp => $oneVal){
@@ -262,15 +249,13 @@ class UserViewUser extends acymailingView{
 
 		$intro = str_replace('UNSUB_INTRO', acymailing_translation('UNSUB_INTRO'), $config->get('unsub_intro', 'UNSUB_INTRO'));
 		$intro = ' <div class="unsubintro" > '.nl2br(str_replace(array_keys($replace), $replace, $intro)).'</div> ';
-		$this->assignRef('intro', $intro);
+		$this->intro = $intro;
 
-		$this->assignRef('replace', $replace);
+		$this->replace = $replace;
 
 
 		$unsubtext = str_replace(array_keys($replace), $replace, acymailing_translation('UNSUBSCRIBE'));
-		$app = JFactory::getApplication();
-		$pathway = $app->getPathway();
-		$pathway->addItem($unsubtext);
+		acymailing_addBreadcrumb($unsubtext);
 
 		acymailing_setPageTitle($unsubtext);
 	}

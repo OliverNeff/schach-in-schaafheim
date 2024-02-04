@@ -1,16 +1,18 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
 
 class dataViewdata extends acymailingView{
+	
 	function display($tpl = null){
 		$function = $this->getLayout();
 		if(method_exists($this, $function)) $this->$function();
@@ -21,32 +23,30 @@ class dataViewdata extends acymailingView{
 	function genericimport(){
 		$this->chosen = false;
 
-		$app = JFactory::getApplication();
-
 		$isAdmin = false;
-		if($app->isAdmin()){
+		if(acymailing_isAdmin()){
 			$isAdmin = true;
 
-			$acyToolbar = acymailing::get('helper.toolbar');
+			$acyToolbar = acymailing_get('helper.toolbar');
 			$acyToolbar->custom('finalizeimport', acymailing_translation('IMPORT'), 'import', false, '');
 			$acyToolbar->link(acymailing_completeLink('subscriber'), acymailing_translation('ACY_CANCEL'), 'cancel');
 			$acyToolbar->divider();
-			$acyToolbar->help('data-import');
+			$acyToolbar->help('data-import', 'secondpage');
 			$acyToolbar->setTitle(acymailing_translation('IMPORT'), 'data&task=import');
 			$acyToolbar->display();
 		}
 
 		$config = acymailing_config();
-		$this->assignRef('config', $config);
+		$this->config = $config;
 
 		$selectedParams = array();
 		$selectedParams = explode(',', $config->get('import_params', 'import_confirmed,generatename'));
 
-		$this->assignRef('selectedParams', $selectedParams);
+		$this->selectedParams = $selectedParams;
 
-		$lists = JRequest::getVar('importlists', array());
+		$lists = acymailing_getVar('array', 'importlists', array());
 		$listClass = acymailing_get('class.list');
-		$allLists = $app->isAdmin() ? $listClass->getLists() : $listClass->getFrontendLists();
+		$allLists = acymailing_isAdmin() ? $listClass->getLists() : $listClass->getFrontendLists();
 
 		$listsName = array();
 		$unsubListsName = array();
@@ -55,27 +55,26 @@ class dataViewdata extends acymailingView{
 			if($lists[$oneList->listid] == 1) $listsName[] = $oneList->name;
 			if($lists[$oneList->listid] == 2) $listsName[] = $oneList->name.' + '.acymailing_translation('CAMPAIGN');
 		}
-		$createList = JRequest::getString('createlist');
+		$createList = acymailing_getVar('string', 'createlist');
 		if(!empty($createList)) $listsName[] = $createList;
-		if(!empty($listsName)) $this->assign('lists', implode(', ', $listsName));
-		if(!empty($unsubListsName)) $this->assign('unsublists', implode(', ', $unsubListsName));
+		if(!empty($listsName)) $this->lists = implode(', ', $listsName);
+		if(!empty($unsubListsName)) $this->unsublists = implode(', ', $unsubListsName);
 
-		$importFrom = JRequest::getCmd('importfrom');
-		$this->assignRef('type', $importFrom);
-		$this->assignRef('isAdmin', $isAdmin);
+		$importFrom = acymailing_getVar('cmd', 'importfrom');
+		$this->type = $importFrom;
+		$this->isAdmin = $isAdmin;
 	}
 
 	function import(){
 
 		$listClass = acymailing_get('class.list');
-		$app = JFactory::getApplication();
 		$config = acymailing_config();
 
 		$isAdmin = false;
-		if($app->isAdmin()){
+		if(acymailing_isAdmin()){
 			$isAdmin = true;
 
-			$acyToolbar = acymailing::get('helper.toolbar');
+			$acyToolbar = acymailing_get('helper.toolbar');
 			$acyToolbar->custom('doimport', acymailing_translation('IMPORT'), 'import', false, '');
 			$acyToolbar->link(acymailing_completeLink('subscriber'), acymailing_translation('ACY_CANCEL'), 'cancel');
 			$acyToolbar->divider();
@@ -84,9 +83,6 @@ class dataViewdata extends acymailingView{
 			$acyToolbar->display();
 		}
 
-
-		$db = JFactory::getDBO();
-
 		$importData = array();
 		$importData['textarea'] = acymailing_translation('IMPORT_TEXTAREA');
 		$importData['file'] = acymailing_translation('ACY_FILE');
@@ -94,35 +90,36 @@ class dataViewdata extends acymailingView{
 
 
 		$isAdmin = false;
-		if($app->isAdmin()){
+		if(acymailing_isAdmin()){
 			$isAdmin = true;
 			$importData['joomla'] = acymailing_translation('IMPORT_JOOMLA');
 			$importData['contact'] = 'com_contact';
 			$importData['database'] = acymailing_translation('DATABASE');
 			$importData['ldap'] = 'LDAP';
 			$importData['zohocrm'] = 'ZohoCRM';
+			if(acymailing_level(3)) $importData['fbleads'] = 'Facebook Leads';
 
 
 			$possibleImport = array();
-			$possibleImport[$db->getPrefix().'acajoom_subscribers'] = array('acajoom', 'Acajoom');
-			$possibleImport[$db->getPrefix().'ccnewsletter_subscribers'] = array('ccnewsletter', 'ccNewsletter');
-			$possibleImport[$db->getPrefix().'letterman_subscribers'] = array('letterman', 'Letterman');
-			$possibleImport[$db->getPrefix().'communicator_subscribers'] = array('communicator', 'Communicator');
-			$possibleImport[$db->getPrefix().'yanc_subscribers'] = array('yanc', 'Yanc');
-			$possibleImport[$db->getPrefix().'vemod_news_mailer_users'] = array('vemod', 'Vemod News Mailer');
-			$possibleImport[$db->getPrefix().'jnews_subscribers'] = array('jnews', 'jNews');
+			$possibleImport[acymailing_getPrefix().'acajoom_subscribers'] = array('acajoom', 'Acajoom');
+			$possibleImport[acymailing_getPrefix().'ccnewsletter_subscribers'] = array('ccnewsletter', 'ccNewsletter');
+			$possibleImport[acymailing_getPrefix().'letterman_subscribers'] = array('letterman', 'Letterman');
+			$possibleImport[acymailing_getPrefix().'communicator_subscribers'] = array('communicator', 'Communicator');
+			$possibleImport[acymailing_getPrefix().'yanc_subscribers'] = array('yanc', 'Yanc');
+			$possibleImport[acymailing_getPrefix().'vemod_news_mailer_users'] = array('vemod', 'Vemod News Mailer');
+			$possibleImport[acymailing_getPrefix().'jnews_subscribers'] = array('jnews', 'jNews');
 			$possibleImport['civicrm_email'] = array('civi', 'CiviCRM');
-			$possibleImport[$db->getPrefix().'sobipro_field'] = array('sobipro', 'SobiPro');
-			$possibleImport[$db->getPrefix().'nspro_subs'] = array('nspro', 'NS Pro');
+			$possibleImport[acymailing_getPrefix().'sobipro_field'] = array('sobipro', 'SobiPro');
+			$possibleImport[acymailing_getPrefix().'nspro_subs'] = array('nspro', 'NS Pro');
 
-			$tables = $db->getTableList();
+			$tables = acymailing_getTableList();
 			foreach($tables as $mytable){
 				if(isset($possibleImport[$mytable])){
 					$importData[$possibleImport[$mytable][0]] = $possibleImport[$mytable][1];
 				}
 			}
 
-			$this->assignRef('tables', $tables);
+			$this->tables = $tables;
 
 			$civifile = ACYMAILING_ROOT.'administrator'.DS.'components'.DS.'com_civicrm'.DS.'civicrm.settings.php';
 			if(empty($importData['civicrm_email']) && file_exists($civifile)){
@@ -133,32 +130,31 @@ class dataViewdata extends acymailingView{
 
 		$importvalues = array();
 		foreach($importData as $div => $name){
-			$importvalues[] = JHTML::_('select.option', $div, $name);
+			$importvalues[] = acymailing_selectOption($div, $name);
 		}
 		$js = 'var currentoption = \'textarea\';
 		function updateImport(newoption){document.getElementById(currentoption).style.display = "none";document.getElementById(newoption).style.display = \'block\';currentoption = newoption;}';
-		$doc = JFactory::getDocument();
 
-		$function = JRequest::getCmd('importfrom');
+		$function = acymailing_getVar('cmd', 'importfrom');
 		if(!empty($function)){
-			$js .= 'window.addEvent(\'load\', function(){ updateImport(\''.$function.'\'); });';
+			$js .= 'window.addEventListener("load", function(){ updateImport(\''.$function.'\'); });';
 		}
-		if($config->get('ldap_host') && $app->isAdmin()){
-			$js .= 'window.addEvent(\'load\', function(){ updateldap(); });';
+		if($config->get('ldap_host') && acymailing_isAdmin()){
+			$js .= 'window.addEventListener("load", function(){ updateldap(); });';
 		}
-		$doc->addScriptDeclaration($js);
+		acymailing_addScript(true, $js);
 
-		$this->assignRef('importvalues', $importvalues);
-		$this->assignRef('importdata', $importData);
+		$this->importvalues = $importvalues;
+		$this->importdata = $importData;
 
-		$lists = $app->isAdmin() ? $listClass->getLists() : $listClass->getFrontendLists();
+		$lists = acymailing_isAdmin() ? $listClass->getLists() : $listClass->getFrontendLists();
 
 		$subscribeOptions = array();
-		$subscribeOptions[] = JHTML::_('select.option', 0, acymailing_translation('JOOMEXT_NO'));
-		$subscribeOptions[] = JHTML::_('select.option', -1, acymailing_translation('UNSUBSCRIBE'));
-		$subscribeOptions[] = JHTML::_('select.option', 1, acymailing_translation('SUBSCRIBE'));
+		$subscribeOptions[] = acymailing_selectOption(0, acymailing_translation('JOOMEXT_NO'));
+		$subscribeOptions[] = acymailing_selectOption(-1, acymailing_translation('UNSUBSCRIBE'));
+		$subscribeOptions[] = acymailing_selectOption(1, acymailing_translation('SUBSCRIBE'));
 		$campaignValues = $subscribeOptions;
-		$campaignValues[] = JHTML::_('select.option', 2, acymailing_translation('JOOMEXT_YES_CAMPAIGN'));
+		$campaignValues[] = acymailing_selectOption(2, acymailing_translation('JOOMEXT_YES_CAMPAIGN'));
 		if(acymailing_level(3)){
 			$listsOfId = array();
 			foreach($lists as $oneList){
@@ -172,16 +168,15 @@ class dataViewdata extends acymailingView{
 			}
 		}
 
-		$this->assignRef('lists', $lists);
-		$this->assignRef('subscribeOptions', $subscribeOptions);
-		$this->assignRef('campaignValues', $campaignValues);
-		$this->assignRef('config', $config);
-		$this->assignRef('isAdmin', $isAdmin);
+		$this->lists = $lists;
+		$this->subscribeOptions = $subscribeOptions;
+		$this->campaignValues = $campaignValues;
+		$this->config = $config;
+		$this->isAdmin = $isAdmin;
 	}
 
 	function export(){
 		$listClass = acymailing_get('class.list');
-		$db = JFactory::getDBO();
 		$fields = acymailing_getColumns('#__acymailing_subscriber');
 		$fieldsList = array();
 		$fieldsList['listid'] = 'smallint unsigned';
@@ -192,13 +187,12 @@ class dataViewdata extends acymailingView{
 		$selectedLists = explode(',', $config->get('export_lists'));
 		$selectedFilters = explode(',', $config->get('export_filters', 'subscribed'));
 
-		$app = JFactory::getApplication();
 		$isAdmin = false;
-		if($app->isAdmin()){
+		if(acymailing_isAdmin()){
 			$isAdmin = true;
 
-			$acyToolbar = acymailing::get('helper.toolbar');
-			if(JRequest::getString('tmpl') == 'component'){
+			$acyToolbar = acymailing_get('helper.toolbar');
+			if(acymailing_isNoTemplate()){
 				$acyToolbar->custom('doexport', acymailing_translation('ACY_EXPORT'), 'export', false, '');
 				$acyToolbar->setTitle(acymailing_translation('ACY_EXPORT'));
 				$acyToolbar->topfixed = false;
@@ -213,22 +207,22 @@ class dataViewdata extends acymailingView{
 		}
 
 		$charsetType = acymailing_get('type.charset');
-		$this->assignRef('charset', $charsetType);
+		$this->charset = $charsetType;
 
-		if($app->isAdmin()){
+		if(acymailing_isAdmin()){
 			$lists = $listClass->getLists();
 		}else $lists = $listClass->getFrontendLists();
 
-		$this->assignRef('lists', $lists);
-		$this->assignRef('fields', $fields);
-		$this->assignRef('fieldsList', $fieldsList);
-		$this->assignRef('selectedfields', $selectedFields);
-		$this->assignRef('selectedlists', $selectedLists);
-		$this->assignRef('selectedFilters', $selectedFilters);
-		$this->assignRef('config', $config);
-		$this->assignRef('isAdmin', $isAdmin);
+		$this->lists = $lists;
+		$this->fields = $fields;
+		$this->fieldsList = $fieldsList;
+		$this->selectedfields = $selectedFields;
+		$this->selectedlists = $selectedLists;
+		$this->selectedFilters = $selectedFilters;
+		$this->config = $config;
+		$this->isAdmin = $isAdmin;
 
-		if(JRequest::getInt('sessionvalues')){
+		if(acymailing_getVar('int', 'sessionvalues')){
 			if(!empty($_SESSION['acymailing']['exportusers'])){
 				$i = 1;
 				$subids = array();
@@ -239,46 +233,62 @@ class dataViewdata extends acymailingView{
 				}
 
 				if(!empty($subids)){
-					$db->setQuery('SELECT DISTINCT `name`,`email` FROM `#__acymailing_subscriber` WHERE `subid` IN ('.implode(',', $subids).') LIMIT 10');
-					$users = $db->loadObjectList();
-					$this->assignRef('users', $users);
+					$users = acymailing_loadObjectList('SELECT DISTINCT `name`,`email` FROM `#__acymailing_subscriber` WHERE `subid` IN ('.implode(',', $subids).') LIMIT 10');
+					$this->users = $users;
 				}
 			}elseif(!empty($_SESSION['acymailing']['exportlist'])){
 				$filterList = $_SESSION['acymailing']['exportlist'];
-				$this->assignRef('exportlist', $filterList);
+				$this->exportlist = $filterList;
 				$filterListStatus = $_SESSION['acymailing']['exportliststatus'];
-				$this->assignRef('exportliststatus', $filterListStatus);
+				$this->exportliststatus = $filterListStatus;
 			}
 		}
 
-		if(JRequest::getInt('fieldfilters')) $this->assign('fieldfilters', true);
+		if(acymailing_getVar('int', 'fieldfilters')) $this->fieldfilters = true;
 
-		if(JRequest::getInt('sessionquery')){
-			$currentSession = JFactory::getSession();
-			$exportQuery = $currentSession->get('acyexportquery');
+		if(acymailing_getVar('int', 'sessionquery')){
+			acymailing_session();
+			$exportQuery = $_SESSION['acymailing']['acyexportquery'];
 			if(!empty($exportQuery)){
-				$db->setQuery('SELECT DISTINCT s.`name`,s.`email` '.$exportQuery.' LIMIT 10');
-				$users = $db->loadObjectList();
-				$this->assignRef('users', $users);
+				$users = acymailing_loadObjectList('SELECT DISTINCT s.`name`,s.`email` '.$exportQuery.' LIMIT 10');
+				$this->users = $users;
 
 				if(strpos($exportQuery, 'userstats')){
 					$otherFields = array('userstats.mailid','userstats.senddate', 'userstats.open', 'userstats.opendate', 'userstats.bounce', 'userstats.bouncerule', 'userstats.ip', 'userstats.html', 'userstats.fail', 'userstats.sent', 'userstats.browser', 'userstats.browser_version', 'userstats.is_mobile', 'userstats.mobile_os', 'userstats.user_agent');
-					$this->assignRef('otherfields', $otherFields);
+					$this->otherfields = $otherFields;
 				}
 				if(strpos($exportQuery, 'urlclick')){
 					$otherFields = array('url.name', 'url.url', 'urlclick.date', 'urlclick.ip', 'urlclick.click');
-					$this->assignRef('otherfields', $otherFields);
+					$this->otherfields = $otherFields;
 				}
 				if(strpos($exportQuery, 'history')){
 					$otherFields = array('hist.data', 'hist.date');
-					$this->assignRef('otherfields', $otherFields);
+					$this->otherfields = $otherFields;
 				}
 			}
 		}
 
 		if(acymailing_level(3)){
 			$geolocFields = acymailing_getColumns('#__acymailing_geolocation');
-			$this->assign('geolocfields', $geolocFields);
+			$this->geolocfields = $geolocFields;
 		}
+
+		$script = '
+			document.addEventListener("DOMContentLoaded", function(){
+				acymailing.submitbutton = function(pressbutton) {
+					if(pressbutton == \'doexport\'){
+						var selectedFields = document.querySelectorAll("input[name^=\"exportdata\"]:checked");
+						for(var i = 0 ; i < selectedFields.length ; i++){
+							if(selectedFields[i].value == 1) break;
+							if(i == selectedFields.length-1){
+								alert("'.acymailing_translation('ACY_EXPORT_SELECT_FIELD', true).'");
+								return false;
+							}
+						}
+					}
+					acymailing.submitform(pressbutton, document.adminForm);
+				};
+			 });';
+		acymailing_addScript(true, $script);
 	}
 }

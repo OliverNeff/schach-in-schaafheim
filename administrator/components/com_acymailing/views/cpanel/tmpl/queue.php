@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><div id="page-queue">
 	<div class="onelineblockoptions">
@@ -72,10 +73,10 @@ defined('_JEXEC') or die('Restricted access');
 				<td>
 					<?php
 					$ordering = array();
-					$ordering[] = JHTML::_('select.option', "subid,ASC", 'subid ASC');
-					$ordering[] = JHTML::_('select.option', "subid,DESC", 'subid DESC');
-					$ordering[] = JHTML::_('select.option', "rand", acymailing_translation('ACY_RANDOM'));
-					echo JHTML::_('select.genericlist', $ordering, 'config[sendorder]', 'size="1" style="width:150px;" onchange="if(this.value == \'rand\'){alert(\''.acymailing_translation('ACY_NO_RAND_FOR_MULTQUEUE').'\')}"', 'value', 'text', $this->config->get('sendorder', 'subid,ASC'));
+					$ordering[] = acymailing_selectOption("subid, ASC", 'subid ASC');
+					$ordering[] = acymailing_selectOption("subid, DESC", 'subid DESC');
+					$ordering[] = acymailing_selectOption("rand", acymailing_translation('ACY_RANDOM'));
+					echo acymailing_select($ordering, 'config[sendorder]', 'size="1" style="width:150px;" onchange="if(this.value == \'rand\'){alert(\''.acymailing_translation('ACY_NO_RAND_FOR_MULTQUEUE').'\')}"', 'value', 'text', $this->config->get('sendorder', 'subid,ASC'));
 					?>
 				</td>
 			</tr>
@@ -102,6 +103,21 @@ defined('_JEXEC') or die('Restricted access');
 					</td>
 					<td>
 						<input class="inputbox" type="text" name="config[priority_followup]" style="width:50px" value="<?php echo intval($this->config->get('priority_followup', 2)); ?>">
+					</td>
+				</tr>
+			</table>
+		</div>
+	<?php }
+	if(acymailing_level(1) && !empty($this->elements->cron_plugins)){ ?>
+		<div class="onelineblockoptions">
+			<span class="acyblocktitle"><?php echo acymailing_translation('PLUGINS'); ?></span>
+			<table class="acymailing_table" cellspacing="1">
+				<tr>
+					<td class="acykey">
+						<?php echo acymailing_tooltip(acymailing_translation('ACY_DAILY_HOUR_PLUGINS_DESC'), acymailing_translation('ACY_DAILY_HOUR_PLUGINS'), '', acymailing_translation('ACY_DAILY_HOUR_PLUGINS')); ?>
+					</td>
+					<td>
+						<?php echo $this->elements->cron_plugins; ?>
 					</td>
 				</tr>
 			</table>

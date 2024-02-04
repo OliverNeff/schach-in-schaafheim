@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2017 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2019 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -47,23 +47,14 @@ $option 	= JRequest::getCmd( 'option' );
 $mainframe	= JFactory::getApplication();
 $pgn		= JRequest::getInt('pgn','0'); 
   if (($pgn == 1) OR ($pgn == 2)) { 
-//echo "<br>lid:"; var_dump($lid); 	
-//echo "<br>runde:"; var_dump($runde); 	
-//echo "<br>dg:"; var_dump($dg); 	
-//echo "<br>pgn:"; var_dump($pgn); 	
 	$result = clm_core::$api->db_pgn_template($lid,$dg,$runde,$pgn,true);
-//echo '<br>result:'; var_dump($result);	
-//die();
 	JRequest::setVar('pgn',0);
 	if (!$result[1]) $msg = JText::_(strtoupper($result[1])).'<br><br>'; else $msg = '';
 	$link = 'index.php?option='.$option.'&view=runde&saison='.$sid.'&liga='.$lid.'&dg='.$dg.'&runde='.$runde.'&pgn=0';
 	if ($item != 0) $link .= '&Itemid='.$item;
 	if ($typeid != 0) $link .= '&typeid='.$typeid;
 	$mainframe->redirect( $link, $msg );
-
-//		JFactory::getApplication()->close();
   }	
-
 
 $attr = clm_core::$api->db_lineup_attr($lid);
 
@@ -77,7 +68,7 @@ $attr = clm_core::$api->db_lineup_attr($lid);
 		}
 	}	
 	if (!isset($params['pgntype'])) $params['pgntype']= 0;
-	if (!isset($params['dwz_date'])) $params['dwz_date'] = '0000-00-00';
+	if (!isset($params['dwz_date'])) $params['dwz_date'] = '1970-01-01';
 	if (!isset($params['round_date'])) $params['round_date'] = '0';
 	if (!isset($params['noBoardResults'])) $params['noBoardResults'] = '0';
 	if (!isset($params['ReportForm'])) $params['ReportForm'] = '0';
@@ -171,7 +162,7 @@ if ((isset($ok[0]->sl_ok)) AND ($ok[0]->sl_ok > 0)) $hint_freenew = JText::_('CH
 if ((isset($ok[0]->sl_ok)) AND ($ok[0]->sl_ok == 0)) $hint_freenew = JText::_('CHIEF_NOK');  
 if ((!isset($ok[0]->sl_ok))) $hint_freenew = JText::_('CHIEF_NOK');  
 
-if (isset($liga[$runde-1]->datum) AND $liga[$runde-1]->datum =='0000-00-00') {
+if (isset($liga[$runde-1]->datum) AND ($liga[$runde-1]->datum =='0000-00-00' OR $liga[$runde-1]->datum =='1970-01-01' )) {
 ?>
 
 <div class="componentheading"><?php echo $liga[0]->name.', '.$liga[$runde-1]->rname;      // JText::_('ROUND').' '.$runde; 
@@ -205,7 +196,7 @@ if (isset($liga[$runde-1]->datum) AND $liga[$runde-1]->datum =='0000-00-00') {
 	echo CLMContent::createPDFLink('runde', JText::_('PDF_ROUND'), array('saison' => $liga[0]->sid, 'layout' => 'runde', 'liga' => $liga[0]->id, 'runde' => $runde_orig, 'dg' => $dg));
 	?>
 	<?php if ($liga[0]->runden_modus != 4 OR (isset($liga[$runde-1]->datum) AND ($liga[$runde-1]->datum > '2014-05-31'))) { ?>
-		<div class="pdf"><a href="index.php?option=com_clm&view=runde&Itemid=<?php echo $item ?>&saison=<?php echo $liga[0]->sid ?>&liga=<?php echo $liga[0]->id ?>&runde=<?php echo $runde_orig ?>&dg=<?php echo $dg ?>&detail=<?php echo $detailp ?>"><img src="<?php echo CLMImage::imageURL('lupe.png') ?>" width="16" height="19" alt="PDF" class="CLMTooltip" title="<?php echo JText::_('Details ein/aus') ?>"  /></a>
+		<div class="pdf"><a href="index.php?option=com_clm&view=runde&Itemid=<?php echo $item ?>&saison=<?php echo $liga[0]->sid ?>&liga=<?php echo $liga[0]->id ?>&runde=<?php echo $runde_orig ?>&dg=<?php echo $dg ?>&detail=<?php echo $detailp ?>"><img src="<?php echo CLMImage::imageURL('lupe.png') ?>" width="16" height="19" alt="PDF" class="Tooltip" title="<?php echo JText::_('Details ein/aus') ?>"  /></a>
 		</div>
     <?php } ?>
 	</div>
@@ -214,12 +205,17 @@ if (isset($liga[$runde-1]->datum) AND $liga[$runde-1]->datum =='0000-00-00') {
 
 <?php require_once(JPATH_COMPONENT.DS.'includes'.DS.'submenu.php');
 
-//if (
-if ( !$liga OR $liga[0]->published == "0") { 
+$archive_check = clm_core::$api->db_check_season_user($sid);
+if (!$archive_check) {
+	echo "<div id='wrong'>".JText::_('NO_ACCESS')."<br>".JText::_('NOT_REGISTERED')."</div>";
+}
+// schon veröffentlicht
+elseif (!$liga OR $liga[0]->published == 0) {
+
 echo "<br>". CLMContent::clmWarning(JText::_('NOT_PUBLISHED').'<br>'.JText::_('GEDULD'))."<br>"; }
-else if ($liga[0]->rnd == 0){ 
+elseif ($liga[0]->rnd == 0){ 
 echo "<br>". CLMContent::clmWarning(JText::_('NO_ROUND_CREATED').'<br>'.JText::_('NO_ROUND_CREATED_HINT'))."<br>"; }
-else if ($liga[$runde - 1]->pub == 0){ 
+elseif ($liga[$runde - 1]->pub == 0){ 
 echo "<br>". CLMContent::clmWarning(JText::_('ROUND_UNPUBLISHED').'<br>'.JText::_('ROUND_UNPUBLISHED_HINT'))."<br>"; } 
 else {   ?>
 
@@ -237,7 +233,6 @@ $dwzgespielt=$this->dwzgespielt;
 $paar		=$this->paar;
  
 $summe		=$this->summe;
-//$ok=$this->ok;
 
 // Ergebnistext für flexibele Punktevergabe holen
 $erg_text = CLMModelRunde::punkte_text($liga[0]->id);
@@ -245,7 +240,7 @@ $erg_text = CLMModelRunde::punkte_text($liga[0]->id);
 // Array für DWZ Schnitt setzen
 $dwz = array();
 for ($y=1; $y< ($liga[0]->teil)+1; $y++){
-	if ($params['dwz_date'] == '0000-00-00') {
+	if ($params['dwz_date'] == '0000-00-00' OR $params['dwz_date'] == '1970-01-01') {
 		if(isset($dwzschnitt[($y-1)]->dwz)) {
 		$dwz[$dwzschnitt[($y-1)]->tlnr] = $dwzschnitt[($y-1)]->dwz; }
 	} else {
@@ -269,10 +264,10 @@ $col_h = (2 * $col_m) + 4;
         <?php // Wenn SL_OK dann Haken anzeigen (nur wenn Staffelleiter eingegeben ist)
          if (isset($liga[0]->mf_name)) {
          if (isset($ok[0]->sl_ok) AND ($ok[0]->sl_ok > 0)) { ?>
-            <div class="run_admit"><img  src="<?php echo CLMImage::imageURL('accept.png'); ?>" class="CLMTooltip" title="<?php echo $hint_freenew; 	//echo JText::_('CHIEF_OK'); ?>" /></div>
+            <div class="run_admit"><img  src="<?php echo CLMImage::imageURL('accept.png'); ?>" class="Tooltip" title="<?php echo $hint_freenew; 	//echo JText::_('CHIEF_OK'); ?>" /></div>
             <?php } 
          else { ?>
-            <div class="run_admit"><img  src="<?php echo CLMImage::imageURL('con_info.png'); ?>" class="CLMTooltip" title="<?php echo $hint_freenew; 	//echo JText::_('CHIEF_OK'); ?>" /></div>
+            <div class="run_admit"><img  src="<?php echo CLMImage::imageURL('con_info.png'); ?>" class="Tooltip" title="<?php echo $hint_freenew; 	//echo JText::_('CHIEF_OK'); ?>" /></div>
         <?php } } ?>
         <div class="run_titel">
             <a href="index.php?option=com_clm&amp;view=paarungsliste&amp;liga=<?php echo $liga[0]->id ?>&amp;saison=<?php echo $liga[0]->sid; ?>&amp;Itemid=<?php echo $item; ?>"><?php echo $liga[$runde-1]->rname; ?><img src="<?php echo CLMImage::imageURL('cancel_f2.png'); ?>" title="<?php echo JText::_('ROUND_BACK') ?>"/></a>
@@ -302,12 +297,12 @@ if (isset($paar[$y]->htln)) {  // Leere Begegnungen ausblenden
         $medit=0;
 		?> <div class=paarung> <?php	if ($liga[0]->rang == 0 AND $paar[$y]->hname != 'spielfrei' AND $paar[$y]->gname != 'spielfrei' AND $params['ReportForm'] != '0') {   // $jid != 0 AND 
 		?>
-            <div class="run_admit"><a href="index.php?option=com_clm&view=runde&saison=<?php echo $liga[0]->sid; ?>&liga=<?php echo $liga[0]->id; ?>&amp;layout=paarung&amp;runde=<?php echo $runde_orig; ?>&amp;dg=<?php echo $dg; ?>&amp;paarung=<?php echo ($y + 1); ?>&amp;format=pdf"><label for="name" class="hasTip"><img  src="<?php echo CLMImage::imageURL('pdf_button.png'); ?>"  class="CLMTooltip" title="<?php echo JText::_('PAIRING_PDF'); ?>" /></label></a>
+            <div class="run_admit"><a href="index.php?option=com_clm&view=runde&saison=<?php echo $liga[0]->sid; ?>&liga=<?php echo $liga[0]->id; ?>&amp;layout=paarung&amp;runde=<?php echo $runde_orig; ?>&amp;dg=<?php echo $dg; ?>&amp;paarung=<?php echo ($y + 1); ?>&amp;format=pdf"><label for="name" class="hasTip"><img  src="<?php echo CLMImage::imageURL('pdf_button.png'); ?>"  class="Tooltip" title="<?php echo JText::_('PAIRING_PDF'); ?>" /></label></a>
 			<?php } ?>
 		</div> <?php
         // Meldenden einfügen wenn Runde eingegeben wurde
         if (isset($einzel[$w]->paar) AND $einzel[$w]->paar == ($y+1)) { ?>
-            <div class="run_admit"><label for="name" class="hasTip"><img  src="<?php echo CLMImage::imageURL('edit_f2.png'); ?>"  class="CLMTooltip" title="<?php echo JText::_('REPORTED_BY').' '.$summe[$z2]->name; ?>" /></label>
+            <div class="run_admit"><label for="name" class="hasTip"><img  src="<?php echo CLMImage::imageURL('edit_f2.png'); ?>"  class="Tooltip" title="<?php echo JText::_('REPORTED_BY').' '.$summe[$z2]->name; ?>" /></label>
             </div>
         <?php }
         if (isset($paar[$y]->hpublished) AND $paar[$y]->hpublished == 1 AND $params['noBoardResults'] == '0') { ?>
@@ -378,7 +373,7 @@ for ($x=0; $x<$liga[0]->stamm; $x++) {
 			<a href="index.php?option=com_clm&view=spieler&saison=<?php echo $liga[0]->sid; ?>&zps=<?php echo $einzel[$w]->zps; ?>&mglnr=<?php echo $einzel[$w]->spieler; ?>&PKZ=<?php echo $einzel[$w]->PKZ; ?>&amp;Itemid=<?php echo $item; ?>"><?php echo $einzel[$w]->hname; } 
 		else echo $einzel[$w]->hname; } ?></div></td>
  
- <td class="paarung"><div><?php if ($params['dwz_date'] == '0000-00-00') echo $einzel[$w]->hdwz; else echo $einzel[$w]->hstart_dwz;?></div></td>
+ <td class="paarung"><div><?php if ($params['dwz_date'] == '0000-00-00' OR $params['dwz_date'] == '1970-01-01') echo $einzel[$w]->hdwz; else echo $einzel[$w]->hstart_dwz;?></div></td>
         <?php if ($einzel[$w]->dwz_edit !="") { $edit++; ?>
     <td class="paarung"><div><b><?php echo $einzel[$w]->dwz_text; ?><font size="1"><br>( <?php echo $erg_text[$einzel[$w]->ergebnis]->erg_text; ?> )</font></b></div></td>
         <?php } else { ?>
@@ -404,7 +399,7 @@ for ($x=0; $x<$liga[0]->stamm; $x++) {
     <td class="paarung2" colspan ="1"><div><?php if ($einzel[$w]->gzps =="ZZZZZ") {echo "N.N.";} else { 
 		if ($einzel[$w]->gzps != "-1") { ?><a href="index.php?option=com_clm&view=spieler&saison=<?php echo $liga[0]->sid; ?>&zps=<?php echo $einzel[$w]->gzps; ?>&mglnr=<?php echo $einzel[$w]->gegner; ?>&PKZ=<?php echo $einzel[$w]->gPKZ; ?>&amp;Itemid=<?php echo $item; ?>"><?php echo $einzel[$w]->gname; } 
 		else echo $einzel[$w]->gname; } ?></div></td>
-    <td class="paarung"><div><?php if ($params['dwz_date'] == '0000-00-00') echo $einzel[$w]->gdwz; else echo $einzel[$w]->gstart_dwz; ?></div></td>
+    <td class="paarung"><div><?php if ($params['dwz_date'] == '0000-00-00' OR $params['dwz_date'] == '1970-01-01') echo $einzel[$w]->gdwz; else echo $einzel[$w]->gstart_dwz; ?></div></td>
     </tr>
 <?php }
 $w++; }
@@ -665,13 +660,11 @@ if ($liga[0]->runden_modus == 3) {
 </table>
 
 
-<?php if ($diff == 1 AND $liga[0]->ab ==1 ) 
-	{echo JText::_(ROUND_NO_RELEGATED_TEAM); }
-	if ($diff == 1 AND $liga[0]->ab >1 ) 
-	{echo JText::_(ROUND_LESS_RELEGATED_TEAM); }
+<?php if ($diff == 1 AND $liga[0]->ab ==1 ) { echo JText::_('ROUND_NO_RELEGATED_TEAM'); }
+	//if ($diff == 1 AND $liga[0]->ab >1 ) { echo JText::_('ROUND_LESS_RELEGATED_TEAM'); }
 	?>
 </div>
-<?php }} // Ende Rangliste
+<?php } // Ende Rangliste
 ?>
 <?php // Wenn SL_OK dann Erklärung für Haken anzeigen (nur wenn Staffelleiter eingegeben ist)
  if (isset($liga[0]->mf_name)) {
@@ -683,7 +676,7 @@ if ($liga[0]->runden_modus == 3) {
 <br>
 <?php } ?>
 
-
+<?php } ?>
 <?php require_once(JPATH_COMPONENT.DS.'includes'.DS.'copy.php'); ?>
 
 <div class="clr"></div>

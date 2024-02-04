@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008 - 2017 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2019 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -20,7 +20,7 @@ require_once(JPATH_COMPONENT.DS.'includes'.DS.'css_path.php');
 // Konfigurationsparameter auslesen
 $itemid 		= JRequest::getVar( 'Itemid' );
 $config = clm_core::$db->config();
-// $pdf_melde = $config->pdf_meldelisten;
+$countryversion = $config->countryversion;
 $turParams = new clm_class_params($this->turnier->params);
 	
 // CLM-Container
@@ -30,7 +30,12 @@ echo '<div ><div id="turnier_player">';
 // Componentheading
 $heading = $this->turnier->name.": ".JText::_('TOURNAMENT_PARTICIPANTINFO');
 
-if ( $this->turnier->published == 0) { 
+$archive_check = clm_core::$api->db_check_season_user($this->turnier->sid);
+if (!$archive_check) {
+	echo CLMContent::componentheading($heading);
+	require_once(JPATH_COMPONENT.DS.'includes'.DS.'submenu_t.php');
+	echo CLMContent::clmWarning(JText::_('NO_ACCESS')."<br/>".JText::_('NOT_REGISTERED'));
+} elseif ( $this->turnier->published == 0) { 
 	echo CLMContent::componentheading($heading);
 	echo CLMContent::clmWarning(JText::_('TOURNAMENT_NOTPUBLISHED')."<br/>".JText::_('TOURNAMENT_PATIENCE'));
 } else { 
@@ -75,8 +80,12 @@ if ($this->playerPhoto != '') { ?>
 			if ($turParams->get('displayPlayerRating', 0) == 1) { ?>
 			<tr>
 				<td align="left" class="tp_col_1"><?php echo JText::_('TOURNAMENT_RATING') ?>:</td>
-				<?php  $mgl4 = ''.$this->player->mgl_nr; while (strlen($mgl4) < 4) { $mgl4 = '0'.$mgl4; } ?>
-				<td class="tp_col_data"><a href="http://schachbund.de/spieler.html?zps=<?php echo $this->player->zps; ?>-<?php echo $mgl4; ?>" target="_blank"><?php echo CLMText::formatRating($this->player->start_dwz) ?></td>
+				<?php 	if ($countryversion =="de") {
+							$mgl4 = ''.$this->player->mgl_nr; while (strlen($mgl4) < 4) { $mgl4 = '0'.$mgl4; } ?>
+					<td class="tp_col_data"><a href="http://schachbund.de/spieler.html?zps=<?php echo $this->player->zps; ?>-<?php echo $mgl4; ?>" target="_blank"><?php echo CLMText::formatRating($this->player->start_dwz) ?></td>
+				<?php 	} else { ?>
+					<td class="tp_col_data"><a href="http://www.ecfgrading.org.uk/new/player.php?PlayerCode=<?php echo $this->player->PKZ; ?>#top" target="_blank"><?php echo CLMText::formatRating($this->player->start_dwz) ?></td>
+				<?php } ?>
 			</tr>
 			<?php } ?>
 			
@@ -127,8 +136,15 @@ if ($this->playerPhoto != '') { ?>
 			<tr>
 				<td align="left" class="tp_col_1"><?php echo JText::_('TOURNAMENT_PLAYER_BIRTH_YEAR') ?>:</td>
 				<td class="tp_col_data"><?php echo $this->player->birthYear; ?></td>
-
-			</tr><?php } ?></table>
+			</tr>
+			<?php } ?>
+			<?php if (isset($this->player->s_punkte) AND $this->player->s_punkte != 0) { ?>
+			<tr>
+				<td align="left" class="tp_col_1"><?php echo JText::_('TOURNAMENT_SPECIAL_POINTS') ?>:</td>
+				<td class="tp_col_data"><?php echo $this->player->s_punkte; ?></td>
+			</tr>
+			<?php } ?>
+			</table>
 </div>
 <?php
 if ($this->playerPhoto != '') { ?>
@@ -144,7 +160,7 @@ if ($this->playerPhoto != '') { ?>
         </div>
  
 	<?php
-	if (count($this->matches) > 0) {
+	if (!is_null($this->matches) AND count($this->matches) > 0) {
 	?>
 	
 		<table cellpadding="0" cellspacing="0" class="turnier_rangliste">
@@ -182,13 +198,15 @@ if ($this->playerPhoto != '') { ?>
 					echo "</td>";
 					
 					// Gegner
+					if (isset($this->points[$value->gegner])) { $points = $this->points[$value->gegner]; }
+					else { $points = 0; }
 					echo '<td class="tp_col_3">';
 					  if (isset($value->gegner) AND $value->gegner > 0) {
 						$link = new CLMcLink();
 						$link->view = 'turnier_player';
 						$link->more = array('turnier' => $this->turnier->id, 'snr' => $value->gegner, 'Itemid' => $itemid );
 						$link->makeURL();
-						echo $link->makeLink($value->oppName);
+						echo $link->makeLink($value->oppName). " (".$points.")";
 					  }
 					echo "</td>";
 					

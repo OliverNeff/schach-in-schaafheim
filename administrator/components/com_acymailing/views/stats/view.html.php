@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -28,24 +29,20 @@ class StatsViewStats extends acymailingView{
 	}
 
 	function unsubchart(){
-		$mailid = JRequest::getInt('mailid');
+		$mailid = acymailing_getVar('int', 'mailid');
 		if(empty($mailid)) return;
 
-		$doc = JFactory::getDocument();
-		$doc->addStyleSheet(ACYMAILING_CSS.'acyprint.css?v='.filemtime(ACYMAILING_MEDIA.'css'.DS.'acyprint.css'), 'text/css', 'print');
+		acymailing_addStyle(false, ACYMAILING_CSS.'acyprint.css?v='.filemtime(ACYMAILING_MEDIA.'css'.DS.'acyprint.css'), 'text/css', 'print');
 
-		$db = JFactory::getDBO();
-		$db->setQuery('SELECT * FROM #__acymailing_history WHERE mailid = '.intval($mailid).' AND action="unsubscribed" LIMIT 10000');
-		$entries = $db->loadObjectList();
+		$entries = acymailing_loadObjectList('SELECT * FROM #__acymailing_history WHERE mailid = '.intval($mailid).' AND action="unsubscribed" LIMIT 10000');
 
 		if(empty($entries)){
 			acymailing_display("No data recorded for that Newsletter", 'warning');
 			return;
 		}
 
-		$app = JFactory::getApplication();
-		$acyToolbar = acymailing::get('helper.toolbar');
-		$acyToolbar->link(acymailing_completeLink(($app->isAdmin() ? '' : 'front').'stats&task=unsubchart&export=1&mailid='.JRequest::getInt('mailid'), true), acymailing_translation('ACY_EXPORT'), 'export');
+		$acyToolbar = acymailing_get('helper.toolbar');
+		$acyToolbar->link(acymailing_completeLink((acymailing_isAdmin() ? '' : 'front').'stats&task=unsubchart&export=1&mailid='.acymailing_getVar('int', 'mailid'), true), acymailing_translation('ACY_EXPORT'), 'export');
 		$acyToolbar->directPrint();
 		$acyToolbar->setTitle(acymailing_translation('ACTION_UNSUBSCRIBED'));
 		$acyToolbar->display();
@@ -78,14 +75,13 @@ class StatsViewStats extends acymailingView{
 
 		arsort($finalReasons);
 
-		$doc = JFactory::getDocument();
-		$doc->addScript("https://www.google.com/jsapi");
+		acymailing_addScript(false, "https://www.google.com/jsapi");
 
-		$this->assignRef('unsubreasons', $finalReasons);
+		$this->unsubreasons = $finalReasons;
 
-		if(JRequest::getCmd('export')){
+		if(acymailing_getVar('cmd', 'export')){
 			$exportHelper = acymailing_get('helper.export');
-			$exportHelper->exportOneData($finalReasons, 'unsub_'.JRequest::getInt('mailid'));
+			$exportHelper->exportOneData($finalReasons, 'unsub_'.acymailing_getVar('int', 'mailid'));
 		}
 	}
 
@@ -94,7 +90,6 @@ class StatsViewStats extends acymailingView{
 	}
 
 	function unsubscribed(){
-		$app = JFactory::getApplication();
 
 		$pageInfo = new stdClass();
 		$pageInfo->filter = new stdClass();
@@ -103,19 +98,17 @@ class StatsViewStats extends acymailingView{
 		$pageInfo->elements = new stdClass();
 
 		$paramBase = ACYMAILING_COMPONENT.'.'.$this->getName().$this->getLayout();
-		$pageInfo->filter->order->value = $app->getUserStateFromRequest($paramBase.".filter_order", 'filter_order', 'a.date', 'cmd');
-		$pageInfo->filter->order->dir = $app->getUserStateFromRequest($paramBase.".filter_order_Dir", 'filter_order_Dir', 'desc', 'word');
+		$pageInfo->filter->order->value = acymailing_getUserVar($paramBase.".filter_order", 'filter_order', 'a.date', 'cmd');
+		$pageInfo->filter->order->dir = acymailing_getUserVar($paramBase.".filter_order_Dir", 'filter_order_Dir', 'desc', 'word');
 		if(strtolower($pageInfo->filter->order->dir) !== 'desc') $pageInfo->filter->order->dir = 'asc';
-		$pageInfo->search = $app->getUserStateFromRequest($paramBase.".search", 'search', '', 'string');
-		$pageInfo->search = JString::strtolower(trim($pageInfo->search));
-		$selectedMail = $app->getUserStateFromRequest($paramBase."filter_mail", 'filter_mail', 0, 'int');
-		$pageInfo->limit->value = $app->getUserStateFromRequest($paramBase.'.list_limit', 'limit', $app->getCfg('list_limit'), 'int');
-		$pageInfo->limit->start = JRequest::getInt('start', $app->getUserStateFromRequest($paramBase.'.limitstart', 'limitstart', 0, 'int'));
-
-		$db = JFactory::getDBO();
+		$pageInfo->search = acymailing_getUserVar($paramBase.".search", 'search', '', 'string');
+		$pageInfo->search = strtolower(trim($pageInfo->search));
+		$selectedMail = acymailing_getUserVar($paramBase."filter_mail", 'filter_mail', 0, 'int');
+		$pageInfo->limit->value = acymailing_getUserVar($paramBase.'.list_limit', 'limit', acymailing_getCMSConfig('list_limit'), 'int');
+		$pageInfo->limit->start = acymailing_getVar('int', 'start', acymailing_getUserVar($paramBase.'.limitstart', 'limitstart', 0, 'int'));
 
 		$filters = array();
-		$filters[] = "a.action = ".$db->Quote($this->getLayout());
+		$filters[] = "a.action = ".acymailing_escapeDB($this->getLayout());
 
 		if(!empty($pageInfo->search)){
 			$searchVal = '\'%'.acymailing_getEscaped($pageInfo->search).'%\'';
@@ -134,8 +127,7 @@ class StatsViewStats extends acymailingView{
 
 		if(empty($pageInfo->limit->value)) $pageInfo->limit->value = 100;
 
-		$db->setQuery($query, $pageInfo->limit->start, $pageInfo->limit->value);
-		$rows = $db->loadObjectList();
+		$rows = acymailing_loadObjectList($query, '', $pageInfo->limit->start, $pageInfo->limit->value);
 
 		$queryCount = 'SELECT COUNT(*) FROM #__acymailing_history as a';
 		if(!empty($pageInfo->search)){
@@ -143,58 +135,52 @@ class StatsViewStats extends acymailingView{
 			$queryCount .= ' JOIN '.acymailing_table('subscriber').' as c on a.subid = c.subid';
 		}
 		$queryCount .= ' WHERE ('.implode(') AND (', $filters).')';
-		$db->setQuery($queryCount);
-		$pageInfo->elements->total = $db->loadResult();
-
+		
+		$pageInfo->elements->total = acymailing_loadResult($queryCount);
 		$pageInfo->elements->page = count($rows);
 
-		jimport('joomla.html.pagination');
-		$pagination = new JPagination($pageInfo->elements->total, $pageInfo->limit->start, $pageInfo->limit->value);
+		$pagination = new acyPagination($pageInfo->elements->total, $pageInfo->limit->start, $pageInfo->limit->value);
 
-		$query = 'SELECT DISTINCT a.mailid FROM `#__acymailing_history` as a WHERE a.action = '.$db->Quote($this->getLayout()).' AND a.mailid > 0';
-		$db->setQuery($query);
-		$allMailids = acymailing_loadResultArray($db);
+		$query = 'SELECT DISTINCT a.mailid FROM `#__acymailing_history` as a WHERE a.action = '.acymailing_escapeDB($this->getLayout()).' AND a.mailid > 0';
+		$allMailids = acymailing_loadResultArray($query);
 
 		$emails = array();
 		if(!empty($allMailids)){
 			if(!empty($selectedMail) && !in_array($selectedMail, $allMailids)) array_unshift($allMailids, $selectedMail);
 			$query = 'SELECT subject, mailid FROM `#__acymailing_mail` WHERE mailid IN ('.implode(',', $allMailids).') ORDER BY mailid DESC';
-			$db->setQuery($query);
-			$emails = $db->loadObjectList();
+			$emails = acymailing_loadObjectList($query);
 		}
 
 
 		$newsletters = array();
-		$newsletters[] = JHTML::_('select.option', '0', acymailing_translation('ALL_EMAILS'));
+		$newsletters[] = acymailing_selectOption('0', acymailing_translation('ALL_EMAILS'));
 		foreach($emails as $oneMail){
-			if(!empty($oneMail->subject)) $oneMail->subject = Emoji::Decode($oneMail->subject);
-			$newsletters[] = JHTML::_('select.option', $oneMail->mailid, $oneMail->subject);
+			if(!empty($oneMail->subject)) $oneMail->subject = acyEmoji::Decode($oneMail->subject);
+			$newsletters[] = acymailing_selectOption($oneMail->mailid, $oneMail->subject);
 		}
-		$filterMail = JHTML::_('select.genericlist', $newsletters, 'filter_mail', 'class="inputbox" size="1" onchange="document.adminForm.submit( );"', 'value', 'text', (int)$selectedMail);
+		$filterMail = acymailing_select($newsletters, 'filter_mail', 'class="inputbox" size="1" onchange="document.adminForm.submit( );"', 'value', 'text', (int)$selectedMail);
 
-		if($app->isAdmin() && JRequest::getString('tmpl') == 'component'){
-			$acyToolbar = acymailing::get('helper.toolbar');
-			if(!empty($rows)) $acyToolbar->custom('export'.ucfirst(JRequest::getCmd('task')), acymailing_translation('ACY_EXPORT'), 'export', false, '');
-			$acyToolbar->custom('', acymailing_translation('ACY_CANCEL'), 'cancel', false, 'location.href=\''.acymailing_completeLink('diagram&task=mailing&mailid='.JRequest::getInt('filter_mail'), true).'\';');
+		if(acymailing_isAdmin() && acymailing_isNoTemplate()){
+			$acyToolbar = acymailing_get('helper.toolbar');
+			if(!empty($rows)) $acyToolbar->custom('export'.ucfirst(acymailing_getVar('cmd', 'task')), acymailing_translation('ACY_EXPORT'), 'export', false, '');
+			$acyToolbar->custom('', acymailing_translation('ACY_CANCEL'), 'cancel', false, 'location.href=\''.acymailing_completeLink('diagram&task=mailing&mailid='.acymailing_getVar('int', 'filter_mail'), true).'\';');
 			$acyToolbar->setTitle(acymailing_translation($this->getLayout() == 'forward' ? 'FORWARDED' : 'UNSUBSCRIBECAPTION'));
 			$acyToolbar->topfixed = false;
 			$acyToolbar->display();
-		}elseif(JRequest::getCmd('tmpl') == 'component'){
-			$filterMail = '<input type="hidden" value="'.JRequest::getInt('mailid').'" name="mailid" />';
-			$filterMail .= '<input type="hidden" value="'.JRequest::getInt('filter_mail').'" name="filter_mail" />';
+		}elseif(acymailing_isNoTemplate()){
+			$filterMail = '<input type="hidden" value="'.acymailing_getVar('int', 'mailid').'" name="mailid" />';
+			$filterMail .= '<input type="hidden" value="'.acymailing_getVar('int', 'filter_mail').'" name="filter_mail" />';
 		}
 
-		$this->assign('app', $app);
-		$this->assignRef('filterMail', $filterMail);
-		$this->assignRef('rows', $rows);
-		$this->assignRef('pageInfo', $pageInfo);
-		$this->assignRef('pagination', $pagination);
+		$this->filterMail = $filterMail;
+		$this->rows = $rows;
+		$this->pageInfo = $pageInfo;
+		$this->pagination = $pagination;
 
 		$this->setLayout('unsubscribed');
 	}
 
 	function detaillisting(){
-		$app = JFactory::getApplication();
 
 		$pageInfo = new stdClass();
 		$pageInfo->filter = new stdClass();
@@ -204,19 +190,17 @@ class StatsViewStats extends acymailingView{
 		$config = acymailing_config();
 
 		$paramBase = ACYMAILING_COMPONENT.'.'.$this->getName().$this->getLayout();
-		$pageInfo->filter->order->value = $app->getUserStateFromRequest($paramBase.".filter_order", 'filter_order', 'a.senddate', 'cmd');
-		$pageInfo->filter->order->dir = $app->getUserStateFromRequest($paramBase.".filter_order_Dir", 'filter_order_Dir', 'desc', 'word');
+		$pageInfo->filter->order->value = acymailing_getUserVar($paramBase.".filter_order", 'filter_order', 'a.senddate', 'cmd');
+		$pageInfo->filter->order->dir = acymailing_getUserVar($paramBase.".filter_order_Dir", 'filter_order_Dir', 'desc', 'word');
 		if(strtolower($pageInfo->filter->order->dir) !== 'desc') $pageInfo->filter->order->dir = 'asc';
-		$pageInfo->search = $app->getUserStateFromRequest($paramBase.".search", 'search', '', 'string');
-		$pageInfo->search = JString::strtolower(trim($pageInfo->search));
-		$selectedMail = $app->getUserStateFromRequest($paramBase."filter_mail", 'filter_mail', 0, 'int');
-		$selectedStatus = $app->getUserStateFromRequest($paramBase."filter_status", 'filter_status', 0, 'string');
-		$selectedBounce = $app->getUserStateFromRequest($paramBase."filter_bounce", 'filter_bounce', 0, 'string');
+		$pageInfo->search = acymailing_getUserVar($paramBase.".search", 'search', '', 'string');
+		$pageInfo->search = strtolower(trim($pageInfo->search));
+		$selectedMail = acymailing_getUserVar($paramBase."filter_mail", 'filter_mail', 0, 'int');
+		$selectedStatus = acymailing_getUserVar($paramBase."filter_status", 'filter_status', 0, 'string');
+		$selectedBounce = acymailing_getUserVar($paramBase."filter_bounce", 'filter_bounce', 0, 'string');
 
-		$pageInfo->limit->value = $app->getUserStateFromRequest($paramBase.'.list_limit', 'limit', $app->getCfg('list_limit'), 'int');
-		$pageInfo->limit->start = $app->getUserStateFromRequest($paramBase.'.limitstart', 'limitstart', 0, 'int');
-
-		$database = JFactory::getDBO();
+		$pageInfo->limit->value = acymailing_getUserVar($paramBase.'.list_limit', 'limit', acymailing_getCMSConfig('list_limit'), 'int');
+		$pageInfo->limit->start = acymailing_getUserVar($paramBase.'.limitstart', 'limitstart', 0, 'int');
 
 		$filters = array();
 		if(!empty($pageInfo->search)){
@@ -232,7 +216,7 @@ class StatsViewStats extends acymailingView{
 			elseif($selectedStatus == 'notopen') $filters[] = 'a.open < 1';
 			elseif($selectedStatus == 'failed') $filters[] = 'a.fail > 0';
 		}
-		if(!empty($selectedStatus) && $selectedStatus == 'bounce' && !empty($selectedBounce)) $filters[] = 'a.bouncerule='.$database->Quote($selectedBounce);
+		if(!empty($selectedStatus) && $selectedStatus == 'bounce' && !empty($selectedBounce)) $filters[] = 'a.bouncerule='.acymailing_escapeDB($selectedBounce);
 
 		$extrajoin = '';
 
@@ -246,13 +230,12 @@ class StatsViewStats extends acymailingView{
 
 		if(empty($pageInfo->limit->value)) $pageInfo->limit->value = 100;
 
-		$database->setQuery($query, $pageInfo->limit->start, $pageInfo->limit->value);
-		$rows = $database->loadObjectList();
+		$rows = acymailing_loadObjectList($query, '', $pageInfo->limit->start, $pageInfo->limit->value);
 
 		if($rows === null){
-			acymailing_display(substr(strip_tags($database->getErrorMsg()), 0, 200).'...', 'error');
-			if(file_exists(ACYMAILING_BACK.'install.acymailing.php')){
-				include_once(ACYMAILING_BACK.'install.acymailing.php');
+			acymailing_display(substr(strip_tags(acymailing_getDBError()), 0, 200).'...', 'error');
+			if(file_exists(ACYMAILING_BACK.'install.joomla.php')){
+				include_once(ACYMAILING_BACK.'install.joomla.php');
 				$installClass = new acymailingInstall();
 				$installClass->fromVersion = '3.7.0';
 				$installClass->update = true;
@@ -267,23 +250,21 @@ class StatsViewStats extends acymailingView{
 		}
 		$queryCount .= $extrajoin;
 		if(!empty($filters)) $queryCount .= ' WHERE ('.implode(') AND (', $filters).')';
-		$database->setQuery($queryCount);
-		$pageInfo->elements->total = $database->loadResult();
-
+		
+		$pageInfo->elements->total = acymailing_loadResult($queryCount);
 		$pageInfo->elements->page = count($rows);
 
-		jimport('joomla.html.pagination');
-		$pagination = new JPagination($pageInfo->elements->total, $pageInfo->limit->start, $pageInfo->limit->value);
+		$pagination = new acyPagination($pageInfo->elements->total, $pageInfo->limit->start, $pageInfo->limit->value);
 
 		$toggleClass = acymailing_get('helper.toggle');
 
 		$maildetailstatstype = acymailing_get('type.detailstatsmail');
 		$deliverstatus = acymailing_get('type.deliverstatus');
 		$filtersType = new stdClass();
-		if(!$app->isAdmin()){
+		if(!acymailing_isAdmin()){
 			$filtersType->mail = '<input type="hidden" value="'.$selectedMail.'" name="filter_mail" />';
 			$mailClass = acymailing_get('class.mail');
-			$this->assign('mailing', $mailClass->get($selectedMail));
+			$this->mailing = $mailClass->get($selectedMail);
 		}else{
 			$filtersType->mail = $maildetailstatstype->display('filter_mail', $selectedMail);
 		}
@@ -294,11 +275,11 @@ class StatsViewStats extends acymailingView{
 			$filtersType->bounce = $detailstatsbouncetype->display('filter_bounce', $selectedBounce);
 		}else $filtersType->bounce = '';
 
-		if($app->isAdmin()){
-			$acyToolbar = acymailing::get('helper.toolbar');
-			if(JRequest::getString('tmpl') == 'component'){
+		if(acymailing_isAdmin()){
+			$acyToolbar = acymailing_get('helper.toolbar');
+			if(acymailing_isNoTemplate()){
 				if(acymailing_isAllowed($config->get('acl_subscriber_export', 'all'))) $acyToolbar->custom('export', acymailing_translation('ACY_EXPORT'), 'export', false);
-				$acyToolbar->custom('', acymailing_translation('ACY_CANCEL'), 'cancel', false, 'location.href=\''.acymailing_completeLink('diagram&task=mailing&mailid='.JRequest::getInt('filter_mail'), true).'\';');
+				$acyToolbar->custom('', acymailing_translation('ACY_CANCEL'), 'cancel', false, 'location.href=\''.acymailing_completeLink('diagram&task=mailing&mailid='.acymailing_getVar('int', 'filter_mail'), true).'\';');
 				$acyToolbar->setTitle(acymailing_translation('DETAILED_STATISTICS'));
 				$acyToolbar->topfixed = false;
 			}else{
@@ -312,21 +293,20 @@ class StatsViewStats extends acymailingView{
 			}
 			$acyToolbar->display();
 		}
-
-		if(JRequest::getCmd('tmpl') == 'component'){
-			$filtersType->mail = '<input type="hidden" value="'.JRequest::getInt('mailid').'" name="mailid" />';
-			$filtersType->mail .= '<input type="hidden" value="'.JRequest::getInt('filter_mail').'" name="filter_mail" />';
+		
+		if(acymailing_isNoTemplate()){
+			$filtersType->mail = '<input type="hidden" value="'.acymailing_getVar('int', 'mailid').'" name="mailid" />';
+			$filtersType->mail .= '<input type="hidden" value="'.acymailing_getVar('int', 'filter_mail').'" name="filter_mail" />';
 		}
 
-		$this->assignRef('filters', $filtersType);
-		$this->assignRef('toggleClass', $toggleClass);
-		$this->assignRef('rows', $rows);
-		$this->assignRef('pageInfo', $pageInfo);
-		$this->assignRef('pagination', $pagination);
+		$this->filters = $filtersType;
+		$this->toggleClass = $toggleClass;
+		$this->rows = $rows;
+		$this->pageInfo = $pageInfo;
+		$this->pagination = $pagination;
 	}
 
 	function listing(){
-		$app = JFactory::getApplication();
 		$pageInfo = new stdClass();
 		$pageInfo->filter = new stdClass();
 		$pageInfo->filter->order = new stdClass();
@@ -334,20 +314,16 @@ class StatsViewStats extends acymailingView{
 		$pageInfo->elements = new stdClass();
 		$config = acymailing_config();
 
-		JHTML::_('behavior.modal', 'a.modal');
-
 		$paramBase = ACYMAILING_COMPONENT.'.'.$this->getName().$this->getLayout();
-		$pageInfo->filter->order->value = $app->getUserStateFromRequest($paramBase.".filter_order", 'filter_order', 'a.senddate', 'cmd');
-		$pageInfo->filter->order->dir = $app->getUserStateFromRequest($paramBase.".filter_order_Dir", 'filter_order_Dir', 'desc', 'word');
+		$pageInfo->filter->order->value = acymailing_getUserVar($paramBase.".filter_order", 'filter_order', 'a.senddate', 'cmd');
+		$pageInfo->filter->order->dir = acymailing_getUserVar($paramBase.".filter_order_Dir", 'filter_order_Dir', 'desc', 'word');
 		if(strtolower($pageInfo->filter->order->dir) !== 'desc') $pageInfo->filter->order->dir = 'asc';
-		$pageInfo->search = $app->getUserStateFromRequest($paramBase.".search", 'search', '', 'string');
-		$pageInfo->search = JString::strtolower(trim($pageInfo->search));
-		$selectedTags = $app->getUserStateFromRequest($paramBase."filter_tags", 'filter_tags', array(), 'array');
+		$pageInfo->search = acymailing_getUserVar($paramBase.".search", 'search', '', 'string');
+		$pageInfo->search = strtolower(trim($pageInfo->search));
+		$selectedTags = acymailing_getUserVar($paramBase."filter_tags", 'filter_tags', array(), 'array');
 
-		$pageInfo->limit->value = $app->getUserStateFromRequest($paramBase.'.list_limit', 'limit', $app->getCfg('list_limit'), 'int');
-		$pageInfo->limit->start = $app->getUserStateFromRequest($paramBase.'.limitstart', 'limitstart', 0, 'int');
-
-		$database = JFactory::getDBO();
+		$pageInfo->limit->value = acymailing_getUserVar($paramBase.'.list_limit', 'limit', acymailing_getCMSConfig('list_limit'), 'int');
+		$pageInfo->limit->start = acymailing_getUserVar($paramBase.'.limitstart', 'limitstart', 0, 'int');
 
 		$filters = array();
 		if(!empty($pageInfo->search)){
@@ -356,46 +332,46 @@ class StatsViewStats extends acymailingView{
 		}
 
 		$listClass = acymailing_get('class.list');
-		if($app->isAdmin()) {
+		if(acymailing_isAdmin()) {
 			$lists = $listClass->getLists();
 		}else {
 			$lists = $listClass->getFrontendLists();
 		}
 		$msgType = array();
-		$msgType[] = JHTML::_('select.option', '0', acymailing_translation('ALL_EMAILS'));
-		$msgType[] = JHTML::_('select.option', '<OPTGROUP>', acymailing_translation('NEWSLETTER'));
-		if($app->isAdmin()) $msgType[] = JHTML::_('select.option', 'news', acymailing_translation('ALL_LISTS'));
+		$msgType[] = acymailing_selectOption('0', acymailing_translation('ALL_EMAILS'));
+		$msgType[] = acymailing_selectOption('<OPTGROUP>', acymailing_translation('NEWSLETTER'));
+		if(acymailing_isAdmin()) $msgType[] = acymailing_selectOption('news', acymailing_translation('ALL_LISTS'));
 		foreach($lists as $oneList){
-			$msgType[] = JHTML::_('select.option', 'list_'.$oneList->listid, $oneList->name);
+			$msgType[] = acymailing_selectOption('list_'.$oneList->listid, $oneList->name);
 		}
-		$msgType[] = JHTML::_('select.option', '</OPTGROUP>');
+		$msgType[] = acymailing_selectOption('</OPTGROUP>');
 
-		if($app->isAdmin()) {
-			$msgType[] = JHTML::_('select.option', 'notification', acymailing_translation('NOTIFICATIONS'));
+		if(acymailing_isAdmin()) {
+			$msgType[] = acymailing_selectOption('notification', acymailing_translation('NOTIFICATIONS'));
 			if (acymailing_level(1)) {
-				$msgType[] = JHTML::_('select.option', 'autonews', acymailing_translation('AUTONEW'));
-				$msgType[] = JHTML::_('select.option', 'joomlanotification', acymailing_translation('JOOMLA_NOTIFICATIONS'));
+				$msgType[] = acymailing_selectOption('autonews', acymailing_translation('AUTONEW'));
+				$msgType[] = acymailing_selectOption('joomlanotification', acymailing_translation('JOOMLA_NOTIFICATIONS'));
 			}
 			if (acymailing_level(3)) {
 				$listCampaign = acymailing_get('class.list');
 				$listCampaign->type = 'campaign';
 				$campaigns = $listCampaign->getLists();
-				$msgType[] = JHTML::_('select.option', '<OPTGROUP>', acymailing_translation('FOLLOWUP'));
-				$msgType[] = JHTML::_('select.option', 'followup', acymailing_translation('ACY_ALL_CAMPAIGNS'));
+				$msgType[] = acymailing_selectOption('<OPTGROUP>', acymailing_translation('FOLLOWUP'));
+				$msgType[] = acymailing_selectOption('followup', acymailing_translation('ACY_ALL_CAMPAIGNS'));
 				foreach ($campaigns as $oneCamp) {
-					$msgType[] = JHTML::_('select.option', 'camp_' . $oneCamp->listid, $oneCamp->name);
+					$msgType[] = acymailing_selectOption('camp_' . $oneCamp->listid, $oneCamp->name);
 				}
-				$msgType[] = JHTML::_('select.option', '</OPTGROUP>');
+				$msgType[] = acymailing_selectOption('</OPTGROUP>');
 			}
-			$msgType[] = JHTML::_('select.option', 'welcome', acymailing_translation('MSG_WELCOME'));
-			$msgType[] = JHTML::_('select.option', 'unsub', acymailing_translation('MSG_UNSUB'));
+			$msgType[] = acymailing_selectOption('welcome', acymailing_translation('MSG_WELCOME'));
+			$msgType[] = acymailing_selectOption('unsub', acymailing_translation('MSG_UNSUB'));
 			if (acymailing_level(3)) {
-				$msgType[] = JHTML::_('select.option', 'action', acymailing_translation('ACY_DISTRIBUTION'));
+				$msgType[] = acymailing_selectOption('action', acymailing_translation('ACY_DISTRIBUTION'));
 			}
 		}
 
-		$selectedMsgType = $app->getUserStateFromRequest($paramBase."filter_msg", 'filter_msg', 0, 'string');
-		$msgTypeChoice = JHTML::_('select.genericlist', $msgType, "filter_msg", 'class="inputbox" style="max-width: 200px;" onchange="document.adminForm.limitstart.value=0;document.adminForm.submit( );"', 'value', 'text', $selectedMsgType);
+		$selectedMsgType = acymailing_getUserVar($paramBase."filter_msg", 'filter_msg', 0, 'string');
+		$msgTypeChoice = acymailing_select($msgType, "filter_msg", 'class="inputbox" style="max-width: 200px;" onchange="document.adminForm.limitstart.value=0;document.adminForm.submit( );"', 'value', 'text', $selectedMsgType);
 		$extraJoin = '';
 
 		if(!empty($selectedMsgType)){
@@ -407,7 +383,7 @@ class StatsViewStats extends acymailingView{
 			}else{
 				$filters[] = " b.type = '".$selectedMsgType."'";
 			}
-		}elseif (!$app->isAdmin()) {
+		}elseif (!acymailing_isAdmin()) {
 			if (!empty($lists)) {
 				$frontListsIds = array();
 				foreach ($lists as $oneList) {
@@ -419,7 +395,7 @@ class StatsViewStats extends acymailingView{
 		}
 
 		if(!empty($selectedTags) && count($selectedTags) > 1){
-			$tagCondition = '';
+			$tagCondition = array();
 			foreach($selectedTags as $oneTag){
 				if(strpos($oneTag, '|') === false) continue;
 				$tag = explode('|', $oneTag);
@@ -443,13 +419,12 @@ class StatsViewStats extends acymailingView{
 			$query .= ' GROUP BY b.mailid ORDER BY '.$pageInfo->filter->order->value.' '.$pageInfo->filter->order->dir;
 		}
 
-		$database->setQuery($query, $pageInfo->limit->start, $pageInfo->limit->value);
-		$rows = $database->loadObjectList();
+		$rows = acymailing_loadObjectList($query, '', $pageInfo->limit->start, $pageInfo->limit->value);
 
 		if($rows === null){
-			acymailing_display(substr(strip_tags($database->getErrorMsg()), 0, 200).'...', 'error');
-			if(file_exists(ACYMAILING_BACK.'install.acymailing.php')){
-				include_once(ACYMAILING_BACK.'install.acymailing.php');
+			acymailing_display(substr(strip_tags(acymailing_getDBError()), 0, 200).'...', 'error');
+			if(file_exists(ACYMAILING_BACK.'install.joomla.php')){
+				include_once(ACYMAILING_BACK.'install.joomla.php');
 				$installClass = new acymailingInstall();
 				$installClass->fromVersion = '3.6.0';
 				$installClass->update = true;
@@ -464,24 +439,22 @@ class StatsViewStats extends acymailingView{
 		}
 		if(!empty($filters)) $queryCount .= ' WHERE ('.implode(') AND (', $filters).')';
 
-		$database->setQuery($queryCount);
-		$pageInfo->elements->total = $database->loadResult();
+		$pageInfo->elements->total = acymailing_loadResult($queryCount);
 		$pageInfo->elements->page = count($rows);
 
-		jimport('joomla.html.pagination');
-		$pagination = new JPagination($pageInfo->elements->total, $pageInfo->limit->start, $pageInfo->limit->value);
+		$pagination = new acyPagination($pageInfo->elements->total, $pageInfo->limit->start, $pageInfo->limit->value);
 
 		if(acymailing_level(3)) {
 			$tagfieldtype = acymailing_get('type.tagfield');
 			$tagfieldtype->onclick = 'document.adminForm.submit();';
 			$tagChoice = $tagfieldtype->display('filter_tags', 'listing', $selectedTags);
-			$this->assign('filterTag', $tagChoice);
+			$this->filterTag = $tagChoice;
 		}
 
 		$menuparams = new acyParameter();
 
-		if($app->isAdmin()) {
-			$acyToolbar = acymailing::get('helper.toolbar');
+		if(acymailing_isAdmin()) {
+			$acyToolbar = acymailing_get('helper.toolbar');
 
 			$acyToolbar->divider();
 			$acyToolbar->custom('compare', trim(acymailing_translation('ACY_COMPARE'), '.') . (empty($_SESSION['acycomparison']) ? '' : ' (' . count($_SESSION['acycomparison']) . ')'), 'detailed-stat', false);
@@ -508,34 +481,26 @@ class StatsViewStats extends acymailingView{
 				'id' => 1
 			));
 
-			$menus = $app->getMenu();
-			$menu = $menus->getActive();
+			$menu = acymailing_getMenu();
 
-			if (empty($menu) AND !empty($Itemid)) {
-				$menus->setActive($Itemid);
-				$menu = $menus->getItem($Itemid);
-			}
 			if(is_object($menu)){
-				jimport('joomla.html.parameter');
 				$menuparams = new acyParameter($menu->params);
 			}
 		}
 
-		$this->assignRef('menuparams', $menuparams);
-		$this->assignRef('app', $app);
-		$this->assignRef('config', $config);
-		$this->assignRef('rows', $rows);
-		$this->assignRef('pageInfo', $pageInfo);
-		$this->assignRef('pagination', $pagination);
-		$this->assign('filterMsg', $msgTypeChoice);
+		$this->menuparams = $menuparams;
+		$this->config = $config;
+		$this->rows = $rows;
+		$this->pageInfo = $pageInfo;
+		$this->pagination = $pagination;
+		$this->filterMsg = $msgTypeChoice;
 	}
 
 	function mailinglist($export = 0){
-		$mailid = JRequest::getInt('mailid');
+		$mailid = acymailing_getVar('int', 'mailid');
 		if(empty($mailid)) return;
 
-		$doc = JFactory::getDocument();
-		$doc->addStyleSheet(ACYMAILING_CSS.'acyprint.css?v='.filemtime(ACYMAILING_MEDIA.'css'.DS.'acyprint.css'), 'text/css', 'print');
+		acymailing_addStyle(false, ACYMAILING_CSS.'acyprint.css?v='.filemtime(ACYMAILING_MEDIA.'css'.DS.'acyprint.css'), 'text/css', 'print');
 
 		$mailClass = acymailing_get('class.mail');
 		$mailing = $mailClass->get($mailid);
@@ -543,28 +508,23 @@ class StatsViewStats extends acymailingView{
 		$mydata = array();
 		$isData = true;
 
-		$db = JFactory::getDBO();
-
 		if($mailing->type == 'followup'){
 			$query = 'SELECT l.listid, l.name, l.color FROM #__acymailing_list l';
 			$query .= ' JOIN #__acymailing_listcampaign lc ON l.listid = lc.listid';
 			$query .= ' JOIN #__acymailing_listmail lm ON lc.campaignid = lm.listid';
 			$query .= ' WHERE lm.mailid = '.intval($mailid).' ORDER BY l.ordering';
-			$db->setQuery($query);
-			$sqlRes = $db->loadObjectList();
+			$sqlRes = acymailing_loadObjectList($query);
 		}else{
 			$query = 'SELECT lm.listid, l.name, l.color FROM #__acymailing_list l';
 			$query .= ' JOIN #__acymailing_listmail lm ON l.listid=lm.listid';
 			$query .= ' WHERE lm.mailid='.intval($mailid).' ORDER BY l.ordering';
-			$db->setQuery($query);
-			$sqlRes = $db->loadObjectList();
+			$sqlRes = acymailing_loadObjectList($query);
 		}
 
 		if(empty($sqlRes)){
 			$query = 'SELECT listid, name, color FROM #__acymailing_list';
 			$query .= ' WHERE welmailid='.intval($mailid).' OR unsubmailid='.intval($mailid).' GROUP BY listid';
-			$db->setQuery($query);
-			$sqlRes = $db->loadObjectList();
+			$sqlRes = acymailing_loadObjectList($query);
 			if(empty($sqlRes)){
 				acymailing_display("This newsletter is not assigned to any list", 'warning');
 				$isData = false;
@@ -600,8 +560,7 @@ class StatsViewStats extends acymailingView{
 		$query = 'SELECT ls.listid, COUNT(*) as nbSent, SUM(IF(html=1, 1, 0)) as nbHtml, SUM(IF(open<>0, 1, 0)) as nbOpen, SUM(IF(bounce<>0, 1, 0)) as nbBounce ';
 		$query .= ' FROM #__acymailing_userstats us JOIN #__acymailing_listsub ls ON us.subid = ls.subid';
 		$query .= ' WHERE ls.listid IN ('.$listListes.') AND us.mailid='.intval($mailid).' GROUP BY ls.listid';
-		$db->setQuery($query);
-		$sqlRes = $db->loadObjectList();
+		$sqlRes = acymailing_loadObjectList($query);
 		$totalSent = 0;
 		if(!empty($sqlRes)){
 			foreach($sqlRes as $lineRes){
@@ -621,8 +580,7 @@ class StatsViewStats extends acymailingView{
 
 		$query = 'SELECT ls.listid, COUNT(DISTINCT(uc.subid)) AS nbClic FROM #__acymailing_urlclick as uc JOIN #__acymailing_listsub as ls ON uc.subid=ls.subid';
 		$query .= ' WHERE ls.listid IN ('.$listListes.') AND uc.mailid='.intval($mailid).' GROUP BY ls.listid';
-		$db->setQuery($query);
-		$sqlRes = $db->loadObjectList();
+		$sqlRes = acymailing_loadObjectList($query);
 		if(!empty($sqlRes)){
 			foreach($sqlRes as $lineRes){
 				$mydata[$lineRes->listid]['nbClic'] = $lineRes->nbClic;
@@ -633,8 +591,7 @@ class StatsViewStats extends acymailingView{
 		$query = 'SELECT ls.listid, SUM(IF(h.action=\'forward\', 1, 0)) as nbForward, SUM(IF(h.action=\'unsubscribed\', 1, 0)) as nbUnsub';
 		$query .= ' FROM #__acymailing_history as h JOIN #__acymailing_listsub ls ON h.subid=ls.subid';
 		$query .= ' WHERE ls.listid IN ('.$listListes.') AND h.mailid='.intval($mailid).' GROUP BY ls.listid';
-		$db->setQuery($query);
-		$sqlRes = $db->loadObjectList();
+		$sqlRes = acymailing_loadObjectList($query);
 		if(!empty($sqlRes)){
 			foreach($sqlRes as $lineRes){
 				$mydata[$lineRes->listid]['nbForward'] = $lineRes->nbForward;
@@ -643,28 +600,26 @@ class StatsViewStats extends acymailingView{
 			}
 		}
 
-		$app = JFactory::getApplication();
-		if($app->isAdmin() && JRequest::getString('tmpl') == 'component'){
-			$acyToolbar = acymailing::get('helper.toolbar');
-			$acyToolbar->custom('', acymailing_translation('ACY_EXPORT'), 'export', false, 'location.href=\''.acymailing_completeLink('stats&task=mailinglist&export=1&mailid='.JRequest::getInt('mailid'), true).'\';');
+		if(acymailing_isAdmin() && acymailing_isNoTemplate()){
+			$acyToolbar = acymailing_get('helper.toolbar');
+			$acyToolbar->custom('', acymailing_translation('ACY_EXPORT'), 'export', false, 'location.href=\''.acymailing_completeLink('stats&task=mailinglist&export=1&mailid='.acymailing_getVar('int', 'mailid'), true).'\';');
 			$acyToolbar->directPrint();
 			$acyToolbar->setTitle($mailing->subject);
 			$acyToolbar->topfixed = false;
 			$acyToolbar->display();
 		}
-		$this->assignRef('app', $app);
-		$this->assignRef('mydata', $mydata);
-		$this->assignRef('mailing', $mailing);
-		$this->assignRef('listColors', $listColors);
-		$this->assignRef('isData', $isData);
-		$this->assignRef('totalSent', $totalSent);
+		$this->mydata = $mydata;
+		$this->mailing = $mailing;
+		$this->listColors = $listColors;
+		$this->isData = $isData;
+		$this->totalSent = $totalSent;
 
-		if(JRequest::getCmd('export')){
+		if(acymailing_getVar('cmd', 'export')){
 			$exportHelper = acymailing_get('helper.export');
 			$config = acymailing_config();
 			$encodingClass = acymailing_get('helper.encoding');
 
-			$exportHelper->addHeaders('mailingList_'.JRequest::getInt('mailid'));
+			$exportHelper->addHeaders('mailingList_'.acymailing_getVar('int', 'mailid'));
 
 			$eol = "\r\n";
 			$before = '"';
@@ -690,25 +645,21 @@ class StatsViewStats extends acymailingView{
 	}
 
 	function compare(){
-		JHTML::_('behavior.modal', 'a.modal');
 		if(empty($_SESSION['acycomparison'])){
-			$app = JFactory::getApplication();
 			acymailing_enqueueMessage(acymailing_translation('ACY_MIN_COMPARE'), 'info');
-			$app->redirect(acymailing_completeLink('stats', false, true));
+			acymailing_redirect(acymailing_completeLink('stats', false, true));
 			return;
 		}
 
 		acymailing_arrayToInteger($_SESSION['acycomparison']);
 
-		$database = JFactory::getDBO();
-		$database->setQuery('SELECT stats.*, mail.subject, mail.alias 
+		$rows = acymailing_loadObjectList('SELECT stats.*, mail.subject, mail.alias 
 							FROM '.acymailing_table('stats').' AS stats 
 							JOIN '.acymailing_table('mail').' AS mail 
 								ON stats.mailid = mail.mailid 
 							WHERE stats.mailid IN ('.implode(',', $_SESSION['acycomparison']).')');
-		$rows = $database->loadObjectList();
 
-		$acyToolbar = acymailing::get('helper.toolbar');
+		$acyToolbar = acymailing_get('helper.toolbar');
 		$acyToolbar->custom('exportglobal', acymailing_translation('ACY_EXPORT'), 'export', false);
 		$acyToolbar->custom('resetcompare', acymailing_translation('JOOMEXT_RESET'), 'resetcompare', false);
 		$acyToolbar->cancel();
@@ -717,6 +668,6 @@ class StatsViewStats extends acymailingView{
 		$acyToolbar->setTitle(acymailing_translation('ACY_COMPARE_PAGE'), 'stats&task=compare');
 		$acyToolbar->display();
 
-		$this->assignRef('rows', $rows);
+		$this->rows = $rows;
 	}
 }

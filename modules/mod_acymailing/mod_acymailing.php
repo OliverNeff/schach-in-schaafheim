@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -14,9 +15,51 @@ if(!include_once(rtrim(JPATH_ADMINISTRATOR, DIRECTORY_SEPARATOR).DIRECTORY_SEPAR
 	return;
 };
 
-$doc = JFactory::getDocument();
+
+if(!function_exists('acymailing_getArticleURL')) {
+	function acymailing_getArticleURL($id, $params, $text)
+	{
+		if (is_numeric($id)) {
+			if (!ACYMAILING_J16) {
+				$query = 'SELECT a.id,a.alias,a.catid,a.sectionid, c.alias as catalias, s.alias as secalias FROM #__content as a ';
+				$query .= ' LEFT JOIN #__categories AS c ON c.id = a.catid ';
+				$query .= ' LEFT JOIN #__sections AS s ON s.id = a.sectionid ';
+				$query .= 'WHERE a.id = '.$id.' LIMIT 1';
+				$article = acymailing_loadObject($query);
+
+				$section = $article->sectionid.(!empty($article->secalias) ? ':'.$article->secalias : '');
+				$category = $article->catid.(!empty($article->catalias) ? ':'.$article->catalias : '');
+				$articleid = $article->id.(!empty($article->alias) ? ':'.$article->alias : '');
+				$url = ContentHelperRoute::getArticleRoute($articleid, $category, $section);
+			} else {
+				$query = 'SELECT a.id,a.alias,a.catid, c.alias as catalias FROM #__content as a ';
+				$query .= ' LEFT JOIN #__categories AS c ON c.id = a.catid ';
+				$query .= 'WHERE a.id = '.$id.' LIMIT 1';
+				$article = acymailing_loadObject($query);
+
+				$category = $article->catid.(!empty($article->catalias) ? ':'.$article->catalias : '');
+				$articleid = $article->id.(!empty($article->alias) ? ':'.$article->alias : '');
+
+				$url = ContentHelperRoute::getArticleRoute($articleid, $category);
+			}
+			$url .= (strpos($url, '?') ? '&' : '?').'tmpl=component';
+		} else {
+			$url = $id;
+		}
+
+		if ($params->get('showtermspopup', 1) == 1) {
+			$acypop = acymailing_get('helper.acypopup');
+			$url = $acypop->display(acymailing_translation($text), acymailing_translation($text, true), $url, $articleid, 0, 0, '', '', 'text');
+		} else {
+			$url = '<a title="'.acymailing_translation($text, true).'"  href="'.$url.'" target="_blank">'.acymailing_translation($text).'</a>';
+		}
+
+		return $url;
+	}
+}
+
 $config = acymailing_config();
-$overridedesign = preg_replace('#[^a-z0-9_]#i', '', JRequest::getCmd('design'));
+$overridedesign = preg_replace('#[^a-z0-9_]#i', '', acymailing_getVar('cmd', 'design'));
 if(!empty($overridedesign)){
 	if($overridedesign == 'popup') $overridedesign = '';
 	$params->set('effect', 'mootools-box');
@@ -44,27 +87,9 @@ switch($redirectMode){
 		if($params->get('effect', 'normal') == 'mootools-box') $redirectUrlUnsub = $redirectUrl = '';
 }
 
-$regex = trim(preg_replace('#[^a-z0-9\|\.]#i', '', $config->get('module_redirect')), '|');
-if($regex != 'all' && in_array($redirectMode, array(1,2))){
-	preg_match('#^(https?://)?(www.)?([^/]*)#i', $redirectUrl, $resultsurl);
-	$domainredirect = preg_replace('#[^a-z0-9\.]#i', '', @$resultsurl[3]);
-	preg_match('#^(https?://)?(www.)?([^/]*)#i', $redirectUrlUnsub, $resultsurl);
-	$domainredirectunsub = preg_replace('#[^a-z0-9\.]#i', '', @$resultsurl[3]);
-	$saveRedir = false;
-	if(!empty($domainredirect) && !preg_match('#^'.$regex.'$#i', $domainredirect)){
-		$regex .= '|'.$domainredirect;
-		$saveRedir = true;
-	}
-	if(!empty($domainredirectunsub) && !preg_match('#^'.$regex.'$#i', $domainredirectunsub)){
-		$regex .= '|'.$domainredirectunsub;
-		$saveRedir = true;
-	}
-	if($saveRedir){
-		$newConfig = new stdClass();
-		$newConfig->module_redirect = $regex;
-		$config->save($newConfig);
-	}
-}
+$subController = acymailing_get('controller_front.sub');
+$subController->_checkRedirectUrl($redirectUrl);
+$subController->_checkRedirectUrl($redirectUrlUnsub);
 
 $formName = acymailing_getModuleFormName();
 if(!empty($overridedesign)){
@@ -85,7 +110,7 @@ if(!empty($mootoolsIntro) && preg_match('#^[A-Z_]*$#', $mootoolsIntro)){
 }
 
 
-if($params->get('effect') == 'mootools-box' AND JRequest::getString('tmpl') != 'component'){
+if($params->get('effect') == 'mootools-box' AND acymailing_getVar('string', 'tmpl') != 'component'){
 	$mootoolsButton = $params->get('mootoolsbutton', '');
 	if(empty($mootoolsButton)){
 		$mootoolsButton = acymailing_translation('SUBSCRIBE');
@@ -97,25 +122,22 @@ if($params->get('effect') == 'mootools-box' AND JRequest::getString('tmpl') != '
 
 	$moduleCSS = $config->get('css_module', 'default');
 	if(!empty($moduleCSS)){
-		$doc->addStyleSheet(ACYMAILING_CSS.'module_'.$moduleCSS.'.css?v='.filemtime(ACYMAILING_MEDIA.'css'.DS.'module_'.$moduleCSS.'.css'));
+		acymailing_addStyle(false, ACYMAILING_CSS.'module_'.$moduleCSS.'.css?v='.filemtime(ACYMAILING_MEDIA.'css'.DS.'module_'.$moduleCSS.'.css'));
 	}
-	JHTML::_('behavior.modal', 'a.modal');
 	require(JModuleHelper::getLayoutPath('mod_acymailing', 'popup'));
 	return;
 }
-acymailing_initModule($params->get('includejs', 'header'), $params);
+acymailing_initModule($params);
 
 $userClass = acymailing_get('class.subscriber');
 $identifiedUser = null;
-$connectedUser = JFactory::getUser();
-if($params->get('loggedin', 1) && !empty($connectedUser->email)){
-	$identifiedUser = $userClass->get($connectedUser->email);
+$currentUserEmail = acymailing_currentUserEmail();
+if($params->get('loggedin', 1) && !empty($currentUserEmail)){
+	$identifiedUser = $userClass->get($currentUserEmail);
 }
 
-if(version_compare(JVERSION, '3.1.2', '>=')){
-	if(!empty($connectedUser->email)) $connectedUser->email = JStringPunycode::emailToUTF8($connectedUser->email);
-	if(!empty($identifiedUser->email)) $identifiedUser->email = JStringPunycode::emailToUTF8($identifiedUser->email);
-}
+if(!empty($currentUserEmail)) $currentUserEmail = acymailing_punycode($currentUserEmail, 'emailToUTF8');
+if(!empty($identifiedUser->email)) $identifiedUser->email = acymailing_punycode($identifiedUser->email, 'emailToUTF8');
 
 $visibleLists = trim($params->get('lists', 'None'));
 $hiddenLists = trim($params->get('hiddenlists', 'All'));
@@ -206,55 +228,39 @@ $extraFields = array();
 $fieldsize = $params->get('fieldsize', '80%');
 if(is_numeric($fieldsize)) $fieldsize .= 'px';
 
-if(!in_array('email', $fieldsToDisplay) && empty($connectedUser->id)) $fieldsToDisplay[] = 'email';
-
-if($params->get('loadmootools', '1') == 1 && ($params->get('effect') == 'mootools-slide' || $params->get('redirectmode', 0) == '3')){
-	acymailing_loadMootools($params->get('effect') == 'mootools-slide');
-}
+$currentUserid = acymailing_currentUserId();
+if(!in_array('email', $fieldsToDisplay) && empty($currentUserid)) $fieldsToDisplay[] = 'email';
 
 if($params->get('effect') == 'mootools-slide'){
 	$mootoolsButton = $params->get('mootoolsbutton', '');
 	if(empty($mootoolsButton)) $mootoolsButton = acymailing_translation('SUBSCRIBE');
+	
+	if (!isset($js)) {
+		$js = '';
+	}
+	
+	$js .= "document.addEventListener(\"DOMContentLoaded\", function(){
+				var acytogglemodule = document.getElementById('acymailing_togglemodule_$formName');
+				var module = document.getElementById('acymailing_fulldiv_$formName');
+				module.style.display = 'none';
 
-	$js = 'if (window.jQuery) {
-			jQuery(document).ready(function(){
-				jQuery("#acymailing_fulldiv_'.$formName.'").hide();
- 				jQuery("#acymailing_togglemodule_'.$formName.'").click(function(){
-					jQuery("#acymailing_fulldiv_'.$formName.'").slideToggle("fast");
-					jQuery("#acymailing_togglemodule_'.$formName.'").toggleClass("acyactive");
+				acytogglemodule.addEventListener('click', function(){
+					module.style.display = '';
+					if(acytogglemodule.className.indexOf('acyactive') > -1){
+						acytogglemodule.className = 'acymailing_togglemodule';
+						module.className = 'slide_close';
+					}else{
+						acytogglemodule.className = 'acymailing_togglemodule acyactive';
+						module.className = 'slide_open';
+					}
+					
 					return false;
 				});
 			});
-		} else{
-		';
-	$js .= "window.addEvent('domready', function(){
-				var mySlide = new Fx.Slide('acymailing_fulldiv_$formName');
-				mySlide.hide();
-				try{
-					var acytogglemodule = document.id('acymailing_togglemodule_$formName');
-				}catch(err){
-					var acytogglemodule = $('acymailing_togglemodule_$formName');
-				}
-
-				acytogglemodule.addEvent('click', function(e){
-					if(mySlide.wrapper.offsetHeight == 0){
-						acytogglemodule.className = 'acymailing_togglemodule acyactive';
-					}else{
-						acytogglemodule.className = 'acymailing_togglemodule';
-					}
-					mySlide.toggle();
-					try {
-						var evt = new Event(e);
-						evt.stop();
-					} catch(err) {
-						e.stop();
-					}
-				});
-			});
-		}";
-
+		";
+		
 	if($params->get('includejs', 'header') == 'header'){
-		$doc->addScriptDeclaration($js);
+		acymailing_addScript(true, $js);
 	}else{
 		echo "<script type=\"text/javascript\">
 			<!--
@@ -264,53 +270,31 @@ if($params->get('effect') == 'mootools-slide'){
 	}
 }
 
-if($params->get('overlay', 0)){
-	JHTML::_('behavior.tooltip');
-}
-
 if($params->get('showterms', false)){
 	require_once JPATH_SITE.DS.'components'.DS.'com_content'.DS.'helpers'.DS.'route.php';
 	$termsIdContent = $params->get('termscontent', 0);
-	if(empty($termsIdContent)){
+	$privacyIdContent = $params->get('privacypolicy', 0);
+
+	$termsURL = null;
+	$privacyURL = null;
+
+	if(!empty($termsIdContent)){
+		$termsURL = acymailing_getArticleURL($termsIdContent, $params, 'JOOMEXT_TERMS');
+	}
+
+	if(!empty($privacyIdContent)){
+		$privacyURL = acymailing_getArticleURL($privacyIdContent, $params, 'ACY_PRIVACY_POLICY');
+	}
+
+	if(empty($termsURL) && empty($privacyURL)){
 		$termslink = acymailing_translation('JOOMEXT_TERMS');
 	}else{
-		if(is_numeric($termsIdContent)){
-			$db = JFactory::getDBO();
-			if(!ACYMAILING_J16){
-				$query = 'SELECT a.id,a.alias,a.catid,a.sectionid, c.alias as catalias, s.alias as secalias FROM #__content as a ';
-				$query .= ' LEFT JOIN #__categories AS c ON c.id = a.catid ';
-				$query .= ' LEFT JOIN #__sections AS s ON s.id = a.sectionid ';
-				$query .= 'WHERE a.id = '.$termsIdContent.' LIMIT 1';
-				$db->setQuery($query);
-				$article = $db->loadObject();
-
-				$section = $article->sectionid.(!empty($article->secalias) ? ':'.$article->secalias : '');
-				$category = $article->catid.(!empty($article->catalias) ? ':'.$article->catalias : '');
-				$articleid = $article->id.(!empty($article->alias) ? ':'.$article->alias : '');
-				$url = ContentHelperRoute::getArticleRoute($articleid, $category, $section);
-			}else{
-				$query = 'SELECT a.id,a.alias,a.catid, c.alias as catalias FROM #__content as a ';
-				$query .= ' LEFT JOIN #__categories AS c ON c.id = a.catid ';
-				$query .= 'WHERE a.id = '.$termsIdContent.' LIMIT 1';
-				$db->setQuery($query);
-				$article = $db->loadObject();
-
-				$category = $article->catid.(!empty($article->catalias) ? ':'.$article->catalias : '');
-				$articleid = $article->id.(!empty($article->alias) ? ':'.$article->alias : '');
-
-				$url = ContentHelperRoute::getArticleRoute($articleid, $category);
-			}
-			$url .= (strpos($url, '?') ? '&' : '?').'tmpl=component';
+		if(empty($privacyURL)){
+			$termslink = acymailing_translation_sprintf('ACY_I_AGREE_TERMS', $termsURL);
+		}elseif(empty($termsURL)){
+			$termslink = acymailing_translation_sprintf('ACY_I_AGREE_PRIVACY', $privacyURL);
 		}else{
-			$url = $termsIdContent;
-		}
-
-		if($params->get('showtermspopup', 1) == 1){
-			$acypop = acymailing_get('helper.acypopup');
-			$acypop->useMootools = ($params->get('loadmootools', '1') == 1) ? true : false;
-			$termslink = $acypop->display(acymailing_translation('JOOMEXT_TERMS'), acymailing_translation('JOOMEXT_TERMS', true), $url, $articleid, 650, 375, '', '', 'text');
-		}else{
-			$termslink = '<a title="'.acymailing_translation('JOOMEXT_TERMS', true).'"  href="'.$url.'" target="_blank">'.acymailing_translation('JOOMEXT_TERMS').'</a>';
+			$termslink = acymailing_translation_sprintf('ACY_I_AGREE', $termsURL, $privacyURL);
 		}
 	}
 }
@@ -325,7 +309,8 @@ if($params->get('displaymode') == 'tableless'){
 	require(JModuleHelper::getLayoutPath('mod_acymailing'));
 }
 
-if(!empty($connectedUser->email)){
+$currentEmail = acymailing_currentUserEmail();
+if(!empty($currentEmail)){
 	echo '<span style="display:none">{emailcloak=off}</span>';
 }
 

@@ -1,58 +1,40 @@
 /**
  * @package    AcyMailing for Joomla!
- * @version    5.7.0
+ * @version    5.10.2
  * @author     acyba.com
- * @copyright  (C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright  (C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license    GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
 
-function tableOrdering(order, dir, task){
-	var form = document.adminForm;
-
-	form.filter_order.value = order;
-	form.filter_order_Dir.value = dir;
-	submitform(task);
-}
-
-function submitform(pressbutton){
-	if(pressbutton){
-		document.adminForm.task.value = pressbutton;
-	}
-	if(typeof document.adminForm.onsubmit == "function"){
-		document.adminForm.onsubmit();
-	}
-	document.adminForm.submit();
-}
-
-function checkChangeForm(acceptSpecialChars){
+function checkChangeForm(){
 	var varform = document['adminForm'];
 	nameField = varform.elements['data[subscriber][name]'];
-	if(nameField && typeof acymailing != 'undefined' && (((typeof acymailing['level'] == 'undefined' || acymailing['level'] != 'enterprise') && (nameField.value == acymailing['NAMECAPTION'] || nameField.value.replace(/ /g, "").length < 2)) || (typeof acymailing['level'] != 'undefined' && acymailing['level'] == 'enterprise' && typeof acymailing['reqFieldsComp'] != 'undefined' && acymailing['reqFieldsComp'].indexOf('name') >= 0 && (nameField.value == acymailing['NAMECAPTION'] || nameField.value.replace(/ /g, "").length < 2)))){
-		alert(acymailing['NAME_MISSING']);
+	if(nameField && typeof acymailingModule != 'undefined' && ((typeof acymailingModule['reqFieldsComp'] != 'undefined' && acymailingModule['reqFieldsComp'].indexOf('name') >= 0 && (nameField.value == acymailingModule['NAMECAPTION'] || nameField.value.replace(/ /g, "").length < 2)))){
+		alert(acymailingModule['NAME_MISSING']);
 		nameField.className = nameField.className + ' invalid';
 		return false;
 	}
 
 	var emailField = varform.elements['data[subscriber][email]'];
 	if(emailField){
-		if(typeof acymailing == 'undefined' || emailField.value != acymailing['EMAILCAPTION']) emailField.value = emailField.value.replace(/ /g, "");
-		if(acceptSpecialChars == 0) {
-			var filter = /^([a-z0-9_'&\.\-\+=])+\@(([a-z0-9\-])+\.)+([a-z0-9]{2,10})+$/i;
+		if(typeof acymailingModule == 'undefined' || emailField.value != acymailingModule['EMAILCAPTION']) emailField.value = emailField.value.replace(/ /g, "");
+		if(typeof acymailingModule != 'undefined') {
+			var filter = acymailingModule['emailRegex'];
 		}else{
 			var filter = /\@/i;
 		}
-		if(!emailField || (typeof acymailing != 'undefined' && emailField.value == acymailing['EMAILCAPTION']) || !filter.test(emailField.value)){
-			if(typeof acymailing != 'undefined'){
-				alert(acymailing['VALID_EMAIL']);
+		if(!emailField || (typeof acymailingModule != 'undefined' && emailField.value == acymailingModule['EMAILCAPTION']) || !filter.test(emailField.value)){
+			if(typeof acymailingModule != 'undefined'){
+				alert(acymailingModule['VALID_EMAIL']);
 			}
 			emailField.className = emailField.className + ' invalid';
 			return false;
 		}
 	}
 
-	if(typeof acymailing != 'undefined' && typeof acymailing['reqFieldsComp'] != 'undefined' && acymailing['reqFieldsComp'].length > 0){
-		for(var i = 0; i < acymailing['reqFieldsComp'].length; i++){
-			elementName = 'data[subscriber][' + acymailing['reqFieldsComp'][i] + ']';
+	if(typeof acymailingModule != 'undefined' && typeof acymailingModule['reqFieldsComp'] != 'undefined' && acymailingModule['reqFieldsComp'].length > 0){
+		for(var i = 0; i < acymailingModule['reqFieldsComp'].length; i++){
+			elementName = 'data[subscriber][' + acymailingModule['reqFieldsComp'][i] + ']';
 			elementToCheck = varform.elements[elementName];
 			if(elementToCheck){
 				var isValid = false;
@@ -78,7 +60,7 @@ function checkChangeForm(acceptSpecialChars){
 				}
 				if(!isValid){
 					elementToCheck.className = elementToCheck.className + ' invalid';
-					alert(acymailing['validFieldsComp'][i]);
+					alert(acymailingModule['validFieldsComp'][i]);
 					return false;
 				}
 			}else{
@@ -86,7 +68,7 @@ function checkChangeForm(acceptSpecialChars){
 					if(varform.elements[elementName + '[day]'] && varform.elements[elementName + '[day]'].value < 1) varform.elements[elementName + '[day]'].className = varform.elements[elementName + '[day]'].className + ' invalid';
 					if(varform.elements[elementName + '[month]'] && varform.elements[elementName + '[month]'].value < 1) varform.elements[elementName + '[month]'].className = varform.elements[elementName + '[month]'].className + ' invalid';
 					if(varform.elements[elementName + '[year]'] && varform.elements[elementName + '[year]'].value < 1902) varform.elements[elementName + '[year]'].className = varform.elements[elementName + '[year]'].className + ' invalid';
-					alert(acymailing['validFieldsComp'][i]);
+					alert(acymailingModule['validFieldsComp'][i]);
 					return false;
 				}
 
@@ -94,7 +76,7 @@ function checkChangeForm(acceptSpecialChars){
 					if((varform.elements[elementName + '[country]'] && varform.elements[elementName + '[country]'].parentElement.parentElement.style.display != 'none') || (varform.elements[elementName + '[num]'] && varform.elements[elementName + '[num]'].parentElement.parentElement.style.display != 'none')){
 						if(varform.elements[elementName + '[country]'] && varform.elements[elementName + '[country]'].value < 1) varform.elements[elementName + '[country]'].className = varform.elements[elementName + '[country]'].className + ' invalid';
 						if(varform.elements[elementName + '[num]'] && varform.elements[elementName + '[num]'].value < 3) varform.elements[elementName + '[num]'].className = varform.elements[elementName + '[num]'].className + ' invalid';
-						alert(acymailing['validFieldsComp'][i]);
+						alert(acymailingModule['validFieldsComp'][i]);
 						return false;
 					}
 				}
@@ -102,10 +84,10 @@ function checkChangeForm(acceptSpecialChars){
 		}
 	}
 
-	if(typeof acymailing != 'undefined' && typeof acymailing['checkFields'] != 'undefined' && acymailing['checkFields'].length > 0){
-		for(var i = 0; i < acymailing['checkFields'].length; i++){
-			elementName = 'data[subscriber][' + acymailing['checkFields'][i] + ']';
-			elementtypeToCheck = acymailing['checkFieldsType'][i];
+	if(typeof acymailingModule != 'undefined' && typeof acymailingModule['checkFields'] != 'undefined' && acymailingModule['checkFields'].length > 0){
+		for(var i = 0; i < acymailingModule['checkFields'].length; i++){
+			elementName = 'data[subscriber][' + acymailingModule['checkFields'][i] + ']';
+			elementtypeToCheck = acymailingModule['checkFieldsType'][i];
 			elementToCheck = varform.elements[elementName].value;
 			switch(elementtypeToCheck){
 				case 'number':
@@ -118,11 +100,11 @@ function checkChangeForm(acceptSpecialChars){
 					myregexp = new RegExp('^[0-9a-zA-Z\u00C0-\u017F ]*$');
 					break;
 				case 'regexp':
-					myregexp = new RegExp(acymailing['checkFieldsRegexp'][i]);
+					myregexp = new RegExp(acymailingModule['checkFieldsRegexp'][i]);
 					break;
 			}
 			if(!myregexp.test(elementToCheck)){
-				alert(acymailing['validCheckFields'][i]);
+				alert(acymailingModule['validCheckFields'][i]);
 				return false;
 			}
 		}
@@ -131,8 +113,8 @@ function checkChangeForm(acceptSpecialChars){
 	var captchaField = varform.elements['acycaptcha'];
 	if(captchaField){
 		if(captchaField.value.length < 1){
-			if(typeof acymailing != 'undefined'){
-				alert(acymailing['CAPTCHA_MISSING']);
+			if(typeof acymailingModule != 'undefined'){
+				alert(acymailingModule['CAPTCHA_MISSING']);
 			}
 			captchaField.className = captchaField.className + ' invalid';
 			return false;
@@ -306,7 +288,8 @@ function checkChangeForm(acceptSpecialChars){
 	};
 
 	var acymailing = {
-		submitFct: null, submitBox: function(data){
+		submitFct: null,
+		submitBox: function(data){
 			var t = this, d = document, w = window;
 			if(t.submitFct){
 				try{
@@ -464,6 +447,8 @@ function checkChangeForm(acceptSpecialChars){
 				return true;
 			}
 			return false;
+		}, submitbutton: function(pressbutton) {
+			acymailing.submitform(pressbutton);
 		}, submitform: function(task, form, extra){
 			var d = document;
 			if(typeof form == 'string'){
@@ -476,6 +461,11 @@ function checkChangeForm(acceptSpecialChars){
 				}
 				form = f;
 			}
+
+			if (!form) {
+				form = document.getElementById('adminForm');
+			}
+
 			if(task){
 				form.task.value = task;
 			}
@@ -491,69 +481,6 @@ function checkChangeForm(acceptSpecialChars){
 			var data = window.Oby.getFormData(target);
 			window.Oby.xRequest(elem.getAttribute('href'), {update: target, mode: 'POST', data: data});
 			return false;
-		}, openBox: function(elem, url, jqmodal){
-			var w = window;
-			if(typeof(elem) == "string"){
-				elem = document.getElementById(elem);
-			}
-			if(!elem){
-				return false;
-			}
-			try{
-				if(jqmodal === undefined || typeof(jQuery) == "undefined"){
-					jqmodal = false;
-				}
-				if(!jqmodal && w.SqueezeBox !== undefined){
-					if(url !== undefined){
-						elem.href = url;
-					}
-					if(w.SqueezeBox.open !== undefined){
-						SqueezeBox.open(elem, {parse: 'rel'});
-					}else if(w.SqueezeBox.fromElement !== undefined){
-						SqueezeBox.fromElement(elem);
-					}
-				}else{
-					var id = elem.getAttribute('id');
-					this.currentBox = id;
-
-					try{
-						jQuery('#modal-' + id).modal('show');
-					}catch(e){
-						if(w.SqueezeBox !== undefined){
-							if(url){
-								elem.href = url;
-							}
-							if(w.SqueezeBox.open !== undefined){
-								SqueezeBox.open(elem, {parse: 'rel'});
-							}else if(w.SqueezeBox.fromElement !== undefined){
-								SqueezeBox.fromElement(elem);
-							}
-						}
-					}
-
-					if(url){
-						if(document.getElementById('modal-' + id + '-container')){
-							jQuery('#modal-' + id + '-container').find('iframe').attr('src', url);
-						}else{
-							jQuery('#modal-' + id).find('iframe').attr('src', url);
-						}
-					}
-				}
-			}catch(e){
-			}
-			return false;
-		}, closeBox: function(name){
-			var d = document, w = window;
-			try{
-				if(d.getElementById('sbox-window')){
-					d.getElementById('sbox-window').close();
-				}else if(w.SqueezeBox !== undefined){
-					w.SqueezeBox.close();
-				}else if(name !== undefined && jQuery !== undefined){
-					jQuery('#' + name).modal('hide');
-				}
-			}catch(err){
-			}
 		}, tabSelect: function(m, c, id){
 			var d = document, sub = null;
 			if(typeof m == 'string'){
@@ -577,12 +504,96 @@ function checkChangeForm(acceptSpecialChars){
 				el = el.offsetParent;
 			}
 			return {top: y, left: x};
+		},
+		openpopup: function(url, width, height){
+			if(document.getElementById('acymailingpopupshadow') !== null) return;
+			var shadow = document.createElement('div');
+			shadow.id = 'acymailingpopupshadow';
+			shadow.onclick = function(){ acymailing.closeBox(); };
+			document.getElementsByTagName('body')[0].appendChild(shadow);
+
+			var closecross = document.createElement('div');
+			closecross.id = 'closepop';
+			closecross.onclick = function(){ acymailing.closeBox(); };
+
+			var iframe = document.createElement('iframe');
+			iframe.src = url;
+
+			var container = document.createElement('div');
+			container.id = 'acymailingpopup';
+			
+			if(width == 0){
+				container.style.width = '82%';
+				container.style.height = '84%';
+				container.style.left = (window.innerWidth*9/100)+'px';
+				container.style.top = (window.innerHeight*2/25)+'px';
+			}else {
+				container.style.width = width + 'px';
+				container.style.height = height + 'px';
+				container.style.left = ((window.innerWidth - width) / 2)+'px';
+				container.style.top = ((window.innerHeight - height) / 2)+'px';
+			}
+
+			document.getElementsByTagName('body')[0].appendChild(shadow);
+			container.appendChild(closecross);
+			container.appendChild(iframe);
+			document.getElementsByTagName('body')[0].appendChild(container);
+		},
+		closeBox: function(parent) {
+			var d = document;
+			if(parent){
+				d = window.parent.document;
+			}
+			try {
+				var popup = d.getElementById('acymailingpopup');
+				popup.parentNode.removeChild(popup);
+				var shadow = d.getElementById('acymailingpopupshadow');
+				shadow.parentNode.removeChild(shadow);
+			} catch(err) {}
+		},
+		tableOrdering: function(order, dir, task){
+			var form = document.adminForm;
+
+			form.filter_order.value = order;
+			form.filter_order_Dir.value = dir;
+			acymailing.submitform(task, form);
+		},
+		setOnclickPopup: function(element, url, width, height){
+			elem = document.getElementById(element);
+
+			elem.removeAttribute("onclick");
+			elem.onclick = function(){
+				acymailing.openpopup(url, width, height); return false;
+			};
 		}
 	};
-
+	
 	if((typeof(window.Oby) == 'undefined') || window.Oby.version < Oby.version){
 		window.Oby = Oby;
 		window.obscurelighty = Oby;
 	}
 	window.acymailing = acymailing;
 })();
+
+document.addEventListener('DOMContentLoaded', function(){
+	var tooltips = document.querySelectorAll(".acymailingtooltip");
+	for (var i = 0; i < tooltips.length; i++) {
+		tooltips[i].addEventListener("mouseover", function (event) {
+			var tooltiptext = this.getElementsByClassName("acymailingtooltiptext")[0];
+
+			if(this.parentElement.className == 'overviewbubble') {
+				tooltiptext.style.width = "140px";
+				tooltiptext.style.top = "-50px";
+				tooltiptext.style.left = "-65px";
+			}else{
+				var newTop = event.clientY - tooltiptext.clientHeight - 5;
+				if(newTop < 0) newTop = 0;
+
+				var newleft = event.clientX - tooltiptext.clientWidth/2;
+				if(newleft < 0) newleft = 0;
+				tooltiptext.style.top = newTop + "px";
+				tooltiptext.style.left = newleft + "px";
+			}
+		});
+	}
+});

@@ -2,7 +2,7 @@
 
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2016 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -313,29 +313,28 @@ function save()
 		$db->query();
 	}
 
-	if ($row->datum != '0000-00-00' AND $row->deadlineday != '0000-00-00' AND $row->deadlineday >= $row->datum) {
+	if ($row->datum != '0000-00-00' AND $row->datum != '1970-01-01' AND $row->deadlineday != '0000-00-00' AND $row->deadlineday != '1970-01-01' AND $row->deadlineday >= $row->datum) {
 		$ts1 = strtotime($row->deadlineday);
 		$ts2 = strtotime($row->datum);
 		$seconds_diff = $ts1 - $ts2;
 		$day_diff = (string) $seconds_diff/3600/24;
-		$deadlinetime = $row->deadlinetime.':00';
 		$query = " UPDATE #__clm_runden_termine "
 			." SET deadlineday = ADDDATE(datum,'".$day_diff."') "
 			." WHERE liga = ".$row->liga
 			." AND sid = ".$row->sid
-			." AND deadlineday = '0000-00-00' "
+			." AND (deadlineday = '0000-00-00' OR deadlineday = '1970-01-01') "
 		;
 		$db->setQuery($query);
 		$db->query();
 	}
 
-	if ($row->deadlinetime != '24:00') {
+	if ($row->deadlinetime != '00:00' AND $row->deadlinetime != '24:00') {
 		$deadlinetime = $row->deadlinetime.':00';
 		$query = " UPDATE #__clm_runden_termine "
 			." SET deadlinetime = '".$deadlinetime."' "
 			." WHERE liga = ".$row->liga
 			." AND sid = ".$row->sid
-			." AND deadlinetime = '24:00:00' "
+			." AND (deadlinetime = '00:00:00' OR deadlinetime = '24:00:00') "
 		;
 		$db->setQuery($query);
 		$db->query();
@@ -604,7 +603,7 @@ function saveOrder(  )
 	$mainframe->redirect( 'index.php?option='. $option.'&section='.$section );
 	}
 
-	public static function paarung()
+public static function paarung()
 	{
 	JRequest::checkToken() or die( 'Invalid Token' );
 	$mainframe	= JFactory::getApplication();
@@ -612,6 +611,8 @@ function saveOrder(  )
 	$db 		=JFactory::getDBO();
 	$user 		=JFactory::getUser();
 	$cid 		= intval(JRequest::getVar( 'liga' ));
+	$filter_lid 		= intval(JRequest::getVar( 'filter_lid' ));
+	if ($filter_lid > 0 AND !is_null($filter_lid)) $cid = $filter_lid;     
 
 	$option 	= JRequest::getCmd( 'option' );
 	$section 	= JRequest::getVar( 'section' );

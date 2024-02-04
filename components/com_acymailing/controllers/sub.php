@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -13,29 +14,27 @@ class SubController extends acymailingController{
 
 	function notask(){
 
-		$ajax = JRequest::getInt('ajax',0);
+		$ajax = acymailing_getVar('int', 'ajax', 0);
 		if($ajax) header("Content-type:text/html; charset=utf-8");
 
 		if($ajax){
 			echo '{"message":"Please enable the Javascript to be able to subscribe","type":"error","code":"0"}';
 			exit;
 		}else{
-			$redirectUrl = urldecode(JRequest::getVar('redirect','','','string'));
+			$redirectUrl = urldecode(acymailing_getVar('string', 'redirect', '', ''));
 			$this->_checkRedirectUrl($redirectUrl);
-			$this->setRedirect($redirectUrl,'Please enable the Javascript to be able to subscribe','notice');
+			acymailing_redirect($redirectUrl,'Please enable the Javascript to be able to subscribe','notice');
 		}
 		return false;
 	}
 
 	function display($dummy1 = false, $dummy2 = false){
-		$moduleId = JRequest::getInt('formid');
+		$moduleId = acymailing_getVar('int', 'formid');
 		if(empty($moduleId)) return;
 
-		if(JRequest::getInt('interval') > 0) setcookie('acymailingSubscriptionState', true, time() + JRequest::getInt('interval'), '/');
+		if(acymailing_getVar('int', 'interval') > 0) setcookie('acymailingSubscriptionState', true, time() + acymailing_getVar('int', 'interval'), '/');
 
-		$db = JFactory::getDBO();
-	 	$db->setQuery('SELECT * FROM #__modules WHERE id = '.intval($moduleId).' AND `module` LIKE \'%acymailing%\' AND published = 1 LIMIT 1');
-	 	$module = $db->loadObject();
+	 	$module = acymailing_loadObject('SELECT * FROM #__modules WHERE id = '.intval($moduleId).' AND `module` LIKE \'%acymailing%\' AND published = 1 LIMIT 1');
 	 	if(empty($module)){ echo 'No module found'; exit; }
 
 		$module->user  	= substr( $module->module, 0, 4 ) == 'mod_' ?  0 : 1;
@@ -44,10 +43,9 @@ class SubController extends acymailingController{
 		$module->module = preg_replace('/[^A-Z0-9_\.-]/i', '', $module->module);
 
 		$params = array();
-		if(JRequest::getInt('autofocus',0)){
-			acymailing_loadMootools();
+		if(acymailing_getVar('int', 'autofocus', 0)){
 			$js = "
-				window = addEvent('load', function(){
+				window.addEventListener('load', function(){
 					this.focus();
 					var moduleInputs = document.getElementsByTagName('input');
 					if(moduleInputs){
@@ -59,8 +57,7 @@ class SubController extends acymailingController{
 					}
 				});";
 
-			$doc = JFactory::getDocument();
-			$doc->addScriptDeclaration($js);
+			acymailing_addScript(true, $js);
 		}
 
 		echo JModuleHelper::renderModule($module, $params);
@@ -68,28 +65,25 @@ class SubController extends acymailingController{
 
 	function optin(){
 		acymailing_checkRobots();
-		$my = JFactory::getUser();
 		$config = acymailing_config();
-		$app = JFactory::getApplication();
 
-		if(!JRequest::getCmd('acy_source') && !empty($_GET['user'])){
-			JRequest::setVar('acy_source','url');
+		if(!acymailing_getVar('cmd', 'acy_source') && !empty($_GET['user'])){
+			acymailing_setVar('acy_source','url');
 		}
 
-		$ajax = JRequest::getInt('ajax',0);
+		$ajax = acymailing_getVar('int', 'ajax', 0);
 		if($ajax){
 			@ob_end_clean();
 			header("Content-type:text/html; charset=utf-8");
 		}
 
-		if((int) $config->get('allow_visitor',1) != 1 && empty($my->id)){
+		$currentUserid = acymailing_currentUserId();
+		if((int) $config->get('allow_visitor',1) != 1 && empty($currentUserid)){
 			if($ajax){
 				echo '{"message":"'.str_replace('"','\"',acymailing_translation('ONLY_LOGGED')).'","type":"error","code":"0"}';
 				exit;
 			}else{
-				$app->enqueueMessage(acymailing_translation('ONLY_LOGGED'),'error');
-				$usercomp = !ACYMAILING_J16 ? 'com_user' : 'com_users';
-				$app->redirect('index.php?option='.$usercomp.'&view=login');
+				acymailing_askLog(false, 'ONLY_LOGGED');
 				return;
 			}
 		}
@@ -99,10 +93,10 @@ class SubController extends acymailingController{
 
 		$userClass->geolocRight = true;
 
-		$redirectUrl = urldecode(JRequest::getVar('redirect','','','string'));
+		$redirectUrl = urldecode(acymailing_getVar('string', 'redirect', '', ''));
 
 		$user = new stdClass();
-		$formData = JRequest::getVar( 'user', array(), '', 'array' );
+		$formData = acymailing_getVar('array',  'user', array(), '');
 
 		if(!empty($formData)){
 			$userClass->checkFields($formData,$user);
@@ -128,7 +122,7 @@ class SubController extends acymailingController{
 			else echo "<script>alert('".acymailing_translation('VALID_EMAIL',true)."'); window.history.go(-1);</script>";
 			exit;
 		}
-		if(!empty($user->email) && version_compare(JVERSION, '3.1.2', '>=')) $user->email = JStringPunycode::emailToPunycode($user->email);
+		if(!empty($user->email)) $user->email = acymailing_punycode($user->email);
 
 		$alreadyExists = $userClass->get($user->email);
 
@@ -170,7 +164,7 @@ class SubController extends acymailingController{
 		$addlists = array();
 		$updatelists = array();
 
-		$hiddenlistsstring = JRequest::getVar('hiddenlists','','','string');
+		$hiddenlistsstring = acymailing_getVar('string', 'hiddenlists', '', '');
 		if(!empty($hiddenlistsstring)){
 
 			$hiddenlists = explode(',',$hiddenlistsstring);
@@ -189,7 +183,7 @@ class SubController extends acymailingController{
 			}
 		}
 
-		$visibleSubscription = JRequest::getVar('subscription','','','array');
+		$visibleSubscription = acymailing_getVar('array', 'subscription', '', '');
 
 		if(!empty($visibleSubscription)){
 			foreach($visibleSubscription as $idOneList){
@@ -206,7 +200,7 @@ class SubController extends acymailingController{
 			}
 		}
 
-		$visiblelistsstring = JRequest::getVar('visiblelists','','','string');
+		$visiblelistsstring = acymailing_getVar('string', 'visiblelists', '', '');
 
 		if(!empty($visiblelistsstring)){
 
@@ -285,7 +279,7 @@ class SubController extends acymailingController{
 			}
 
 			if($msg == strtoupper($msg)){
-				$source = JRequest::getCmd('acy_source');
+				$source = acymailing_getVar('cmd', 'acy_source');
 				if(strpos($source, 'module_') !== false){
 					$moduleId = '_'.strtoupper($source);
 					if(acymailing_translation($msg.$moduleId) != $msg.$moduleId) $msg = $msg.$moduleId;
@@ -306,12 +300,12 @@ class SubController extends acymailingController{
 				$msg = str_replace(array("\n","\r",'"','\\'),array(' ',' ',"'",'\\\\'),$msg);
 				echo '{"message":"'.$msg.'","type":"'.($msgtype == 'warning' ? 'success' : $msgtype).'","code":"'.$code.'"}';
 			}elseif(empty($redirectUrl)){
-				acymailing_display($msg,$msgtype == 'success' ? 'info' : $msgtype);
+				acymailing_enqueueMessage($msg,$msgtype == 'success' ? 'info' : $msgtype);
 			}else{
 				if(strlen($msg)>0){
-					if($msgtype == 'success') $app->enqueueMessage($msg);
-					elseif($msgtype == 'warning') $app->enqueueMessage($msg,'notice');
-					else $app->enqueueMessage($msg,'error');
+					if($msgtype == 'success') acymailing_enqueueMessage($msg);
+					elseif($msgtype == 'warning') acymailing_enqueueMessage($msg,'notice');
+					else acymailing_enqueueMessage($msg,'error');
 				}
 			}
 		}
@@ -343,27 +337,18 @@ class SubController extends acymailingController{
 
 		$this->_closepop($redirectUrl);
 
-		$this->setRedirect($redirectUrl);
+		if(!empty($redirectUrl)) acymailing_redirect($redirectUrl);
+		if('joomla' == 'wordpress') acymailing_redirect(acymailing_rootURI());
 		return true;
 	}
 
 	private function _closepop($redirectUrl){
 		$this->_checkRedirectUrl($redirectUrl);
-
-		if(empty($redirectUrl) OR !JRequest::getInt('closepop')) return;
+		if(empty($redirectUrl)) return;
+		if(!acymailing_getVar('int', 'closepop')) acymailing_redirect($redirectUrl);
 
 		echo '<script type="text/javascript" language="javascript">
 					window.parent.document.location.href=\''.str_replace('&amp;','&',$redirectUrl).'\';
-					d = window.parent.document;
-					w = window.parent;
-					var e = d.getElementById(\'sbox-window\');
-					if(e && typeof(e.close) != "undefined") {
-						e.close();
-					}else if(typeof(w.jQuery) != "undefined" && w.jQuery(\'div.modal.in\') && w.jQuery(\'div.modal.in\').hasClass(\'in\')){
-						w.jQuery(\'div.modal.in\').modal(\'hide\');
-					}else if(w.SqueezeBox !== undefined) {
-						w.SqueezeBox.close();
-					}
 				</script>';
 
 		$app = JFactory::getApplication();
@@ -379,27 +364,25 @@ class SubController extends acymailingController{
 	function optout(){
 		acymailing_checkRobots();
 		$config = acymailing_config();
-		$app = JFactory::getApplication();
 		$userClass = acymailing_get('class.subscriber');
 		$userClass->geolocRight = true;
-		$my = JFactory::getUser();
 
-		$ajax = JRequest::getInt('ajax',0);
+		$ajax = acymailing_getVar('int', 'ajax', 0);
 		if($ajax){
 			@ob_end_clean();
 			header("Content-type:text/html; charset=utf-8");
 		}
 
 
-		$redirectUrl = urldecode(JRequest::getString('redirectunsub'));
-		if(!empty($redirectUrl)) $this->setRedirect($redirectUrl);
+		$redirectUrl = urldecode(acymailing_getVar('string', 'redirectunsub'));
 
-		$formData = JRequest::getVar( 'user', array(), '', 'array' );
+		$formData = acymailing_getVar('array',  'user', array(), '');
 
 		$email = trim(strip_tags(@$formData['email']));
 
-		if(empty($email) && !empty($my->email)){
-			$email = $my->email;
+		$currentEmail = acymailing_currentUserEmail();
+		if(empty($email) && !empty($currentEmail)){
+			$email = $currentEmail;
 		}
 
 		$userHelper = acymailing_get('helper.user');
@@ -416,12 +399,13 @@ class SubController extends acymailingController{
 				echo '{"message":"'.str_replace('"','\"',acymailing_translation_sprintf('NOT_IN_LIST','<b><i>'.$email.'</i></b>')).'","type":"error","code":"8"}';
 				exit;
 			}
-			if(empty($redirectUrl)) acymailing_display(acymailing_translation_sprintf('NOT_IN_LIST','<b><i>'.$email.'</i></b>'),'warning');
-			else $app->enqueueMessage(acymailing_translation_sprintf('NOT_IN_LIST','<b><i>'.$email.'</i></b>'),'notice');
+			if(empty($redirectUrl)) acymailing_enqueueMessage(acymailing_translation_sprintf('NOT_IN_LIST','<b><i>'.$email.'</i></b>'),'warning');
+			else acymailing_enqueueMessage(acymailing_translation_sprintf('NOT_IN_LIST','<b><i>'.$email.'</i></b>'),'notice');
 			return $this->_closepop($redirectUrl);
 		}
 
-		if($config->get('allow_modif','data') == 'none' AND (empty($my->email) || $my->email != $email)){
+		$currentEmail = acymailing_currentUserEmail();
+		if($config->get('allow_modif','data') == 'none' AND (empty($currentEmail) || $currentEmail != $email)){
 			$mailClass = acymailing_get('helper.mailer');
 			$mailClass->checkConfirmField = false;
 			$mailClass->checkEnabled = false;
@@ -431,14 +415,14 @@ class SubController extends acymailingController{
 				echo '{"message":"'.str_replace('"','\"',acymailing_translation('IDENTIFICATION_SENT')).'","type":"success","code":"9"}';
 				exit;
 			}
-			if(empty($redirectUrl)) acymailing_display(acymailing_translation( 'IDENTIFICATION_SENT' ),'warning');
-			else $app->enqueueMessage(acymailing_translation( 'IDENTIFICATION_SENT' ), 'notice');
+			if(empty($redirectUrl)) acymailing_enqueueMessage(acymailing_translation( 'IDENTIFICATION_SENT' ),'warning');
+			else acymailing_enqueueMessage(acymailing_translation( 'IDENTIFICATION_SENT' ), 'notice');
 			return $this->_closepop($redirectUrl);
 		}
 
-		$visibleSubscription = JRequest::getVar('subscription','','','array');
+		$visibleSubscription = acymailing_getVar('array', 'subscription', '', '');
 		$currentSubscription = $userClass->getSubscriptionStatus($alreadyExists->subid);
-		$hiddenSubscription = explode(',',JRequest::getVar('hiddenlists','','','string'));
+		$hiddenSubscription = explode(',',acymailing_getVar('string', 'hiddenlists', '', ''));
 
 		$updatelists = array();
 		$removeSubscription = array_merge($visibleSubscription,$hiddenSubscription);
@@ -456,10 +440,10 @@ class SubController extends acymailingController{
 					echo '{"message":"'.str_replace('"','\"',acymailing_translation('UNSUBSCRIPTION_OK')).'","type":"success","code":"10"}';
 					exit;
 				}
-				if(empty($redirectUrl)) acymailing_display(acymailing_translation('UNSUBSCRIPTION_OK'),'info');
+				if(empty($redirectUrl)) acymailing_enqueueMessage(acymailing_translation('UNSUBSCRIPTION_OK'),'info');
 				else{
 					if(strlen(acymailing_translation('UNSUBSCRIPTION_OK'))>0){
-						$app->enqueueMessage(acymailing_translation('UNSUBSCRIPTION_OK'));
+						acymailing_enqueueMessage(acymailing_translation('UNSUBSCRIPTION_OK'));
 					}
 				}
 			}
@@ -468,8 +452,8 @@ class SubController extends acymailingController{
 				echo '{"message":"'.str_replace('"','\"',acymailing_translation('UNSUBSCRIPTION_NOT_IN_LIST')).'","type":"success","code":"11"}';
 				exit;
 			}
-			if(empty($redirectUrl)) acymailing_display(acymailing_translation('UNSUBSCRIPTION_NOT_IN_LIST'),'info');
-			else $app->enqueueMessage(acymailing_translation('UNSUBSCRIPTION_NOT_IN_LIST'));
+			if(empty($redirectUrl)) acymailing_enqueueMessage(acymailing_translation('UNSUBSCRIPTION_NOT_IN_LIST'),'info');
+			else acymailing_enqueueMessage(acymailing_translation('UNSUBSCRIPTION_NOT_IN_LIST'));
 		}
 
 		if ($ajax) exit;
@@ -478,18 +462,18 @@ class SubController extends acymailingController{
 
 	}
 
-	private function _checkRedirectUrl($redirectUrl){
+	function _checkRedirectUrl($redirectUrl){
 		$config = acymailing_config();
 		$regex = trim(preg_replace('#[^a-z0-9\|\.]#i','',$config->get('module_redirect')),'|');
-		if($regex != 'all' && !empty($redirectUrl)){
-			preg_match('#^(https?://)?(www.)?([^/]*)#i',$redirectUrl,$resultsurl);
-			$domainredirect = preg_replace('#[^a-z0-9\.]#i','',@$resultsurl[3]);
-			if(!preg_match('#^'.$regex.'$#i',$domainredirect)){
-				$regex .= '|'.$domainredirect;
-				echo "<script>alert('This redirect url is not allowed, you should change the \"".acymailing_translation('REDIRECTION_MODULE',true)."\" parameter from the AcyMailing configuration page to \"".$regex."\" to allow it or set it to \"all\" to allow all urls'); window.history.go(-1);</script>";
-				exit;
-			}
-		}
+		if(empty($regex) || $regex == 'all' || empty($redirectUrl) || 'joomla' != 'joomla') return;
+
+		preg_match('#^(https?://)?(www.)?([^/]*)#i',$redirectUrl,$resultsurl);
+		$domainredirect = preg_replace('#[^a-z0-9\.]#i','',@$resultsurl[3]);
+		if(preg_match('#^'.$regex.'$#i',$domainredirect)) return;
+
+		$regex .= '|'.$domainredirect;
+		echo "<script>alert('This redirect url is not allowed, you should change the \"".acymailing_translation('REDIRECTION_MODULE',true)."\" parameter from the AcyMailing configuration page to \"".$regex."\" to allow it or set it to \"all\" to allow all urls'); window.history.go(-1);</script>";
+		exit;
 	}
 
 	function listing(){
@@ -499,5 +483,4 @@ class SubController extends acymailingController{
 		if(!empty($_SERVER['HTTP_REFERER'])) $errorMsg .= "<br />Referer: ".htmlspecialchars($_SERVER['HTTP_REFERER'],ENT_COMPAT, 'UTF-8');
 		acymailing_display($errorMsg, 'error');
 	}
-
 }

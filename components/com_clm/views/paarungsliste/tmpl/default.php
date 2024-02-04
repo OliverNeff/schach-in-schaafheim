@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2016 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -26,7 +26,7 @@ $liga		= $this->liga;
 			$params[substr($value,0,$ipos)] = substr($value,$ipos+1);
 		}
 	}	
-	if (!isset($params['dwz_date'])) $params['dwz_date'] = '0000-00-00';
+	if (!isset($params['dwz_date'])) $params['dwz_date'] = '1970-01-01';
 	if (!isset($params['round_date'])) $params['round_date'] = '0';
 	if (!isset($params['noBoardResults'])) $params['noBoardResults'] = '0';
 
@@ -59,6 +59,7 @@ require_once(JPATH_COMPONENT.DS.'includes'.DS.'css_path.php');
 // Konfigurationsparameter auslesen
 $config			= clm_core::$db->config();
 $fe_runde_tln	= $config->fe_runde_tln;
+$countryversion	= $config->countryversion;
 ?>
 
 <div >
@@ -70,13 +71,20 @@ $fe_runde_tln	= $config->fe_runde_tln;
 <div id="pdf">
 <?php
 echo CLMContent::createPDFLink('paarungsliste', JText::_('PDF_PAAR'), array('saison' => $sid, 'layout' => 'paar', 'saison' => $liga[0]->sid, 'liga' => $liga[0]->id));
+if ($countryversion == 'en')
+	echo clm_core::$load->create_link_xls('paarungsliste', JText::_('CSV_PAAR'), array('layout' => 'paarungsliste', 'liga' => $liga[0]->id));
 ?>
 </div></div>
 <div class="clr"></div>
 
-<?php require_once(JPATH_COMPONENT.DS.'includes'.DS.'submenu.php'); ?>
-<?php
-if ( !$liga OR $liga[0]->published == "0") {
+<?php require_once(JPATH_COMPONENT.DS.'includes'.DS.'submenu.php'); 
+
+$archive_check = clm_core::$api->db_check_season_user($sid);
+if (!$archive_check) {
+	echo "<div id='wrong'>".JText::_('NO_ACCESS')."<br>".JText::_('NOT_REGISTERED')."</div>";
+}
+// schon veröffentlicht
+elseif (!$liga OR $liga[0]->published == 0) {
 echo "<br>".CLMContent::clmWarning(JText::_('NOT_PUBLISHED').'<br>'.JText::_('GEDULD'))."<br>"; }
 
 else {
@@ -92,7 +100,7 @@ else {
 	// Array für DWZ Schnitt setzen
 	$dwz = array();
 	for ($y=1; $y< ($liga[0]->teil)+1; $y++){
-		if ($params['dwz_date'] == '0000-00-00') {
+		if ($params['dwz_date'] == '0000-00-00' OR $params['dwz_date'] == '1970-01-01') {
 			if(isset($dwzschnitt[($y-1)]->dwz)) {
 			$dwz[$dwzschnitt[($y-1)]->tlnr] = $dwzschnitt[($y-1)]->dwz; }
 		} else {
@@ -150,10 +158,10 @@ if ($termin[$term]->published =="1") { ?>
 		<div class="left" style="width: 70%;">
 		<?php 
 		if ($termin[$term]->bemerkungen <> "") { ?>
-			<span class="editlinktip hasTip"><img src="<?php echo CLMImage::imageURL('con_info.png'); ?>" class="CLMTooltip" title="<?php echo JText::_( 'CHIEF_NOTE') ?>" /></span><?php }
+			<span class="editlinktip hasTip"><img src="<?php echo CLMImage::imageURL('con_info.png'); ?>" class="Tooltip" title="<?php echo JText::_( 'CHIEF_NOTE') ?>" /></span><?php }
 		// Wenn SL_OK dann Haken anzeigen
 		if ($rundensumme[$rund_sum]->sl_ok > 0) { ?>
-			<span class="editlinktip hasTip"><img  src="<?php echo CLMImage::imageURL('accept.png'); ?>" class="CLMTooltip" title="<?php echo JText::_( 'CHIEF_OK') ?>" /></span><?php } ?>
+			<span class="editlinktip hasTip"><img  src="<?php echo CLMImage::imageURL('accept.png'); ?>" class="Tooltip" title="<?php echo JText::_( 'CHIEF_OK') ?>" /></span><?php } ?>
 		<b>&nbsp;<?php if (isset($termin[$term]) AND $termin[$term]->nr == ($x+1)) { 
 			if ($termin[$term]->datum > 0) { echo JHTML::_('date',  $termin[$term]->datum, JText::_('DATE_FORMAT_CLM_F')); 
 			if($params['round_date'] == '0' and isset($termin[$term]->startzeit) and $termin[$term]->startzeit != '00:00:00') { echo '  '.substr($termin[$term]->startzeit,0,5); }
@@ -209,7 +217,7 @@ if ($y%2 != 0) { $zeilenr = 'zeile2'; }
 	</td>
 	<td class="dwz">
 		<?php if (isset($dwzgespielt[$z2]) AND $dwzgespielt[$z2]->runde == ($x+1) AND $dwzgespielt[$z2]->paar == ($y+1) AND $dwzgespielt[$z2]->dg == 1 AND $paar[$z]->hmnr !=0 AND $paar[$z]->gmnr != 0)
-			{ if ($params['dwz_date'] == '0000-00-00') echo round($dwzgespielt[$z2]->dwz); 
+			{ if ($params['dwz_date'] == '0000-00-00' OR $params['dwz_date'] == '1970-01-01') echo round($dwzgespielt[$z2]->dwz); 
 				else echo round($dwzgespielt[$z2]->start_dwz); }
 			else { if (isset($dwz[$paar[$z]->htln])) echo round($dwz[($paar[$z]->htln)]); } ?></td>
 		<?php
@@ -235,7 +243,7 @@ else { echo $paar[$z]->gname; } ?>
 
 <td class="dwz">
 	<?php if (isset($dwzgespielt[$z2]) AND $dwzgespielt[$z2]->runde == ($x+1) AND $dwzgespielt[$z2]->paar == ($y+1) AND $dwzgespielt[$z2]->dg == 1 AND $paar[$z]->hmnr !=0 AND $paar[$z]->gmnr != 0)
-			{ if ($params['dwz_date'] == '0000-00-00') echo round($dwzgespielt[$z2]->gdwz); 
+			{ if ($params['dwz_date'] == '0000-00-00' OR $params['dwz_date'] == '1970-01-01') echo round($dwzgespielt[$z2]->gdwz); 
 				else echo round($dwzgespielt[$z2]->gstart_dwz); 
 			$z2++;
 		}
@@ -326,10 +334,10 @@ if ($rundensumme[$rund_sum]->nr == ($x+1+$liga[0]->runden) ) { ?>
 <div class="left" style="width: 70%;">
 <?php 
 if ($termin[$term]->bemerkungen <> "") { ?>
-	<span class="editlinktip hasTip"><img src="<?php echo CLMImage::imageURL('con_info.png'); ?>" class="CLMTooltip" title="<?php echo JText::_( 'CHIEF_NOTE') ?>" /></span><?php }
+	<span class="editlinktip hasTip"><img src="<?php echo CLMImage::imageURL('con_info.png'); ?>" class="Tooltip" title="<?php echo JText::_( 'CHIEF_NOTE') ?>" /></span><?php }
 // Wenn SL_OK dann Haken anzeigen
 if ($rundensumme[$rund_sum]->sl_ok > 0) { ?>
-	<span class="editlinktip hasTip"><img  src="<?php echo CLMImage::imageURL('accept.png'); ?>" class="CLMTooltip" title="<?php echo JText::_( 'CHIEF_OK') ?>" /></span><?php } ?>
+	<span class="editlinktip hasTip"><img  src="<?php echo CLMImage::imageURL('accept.png'); ?>" class="Tooltip" title="<?php echo JText::_( 'CHIEF_OK') ?>" /></span><?php } ?>
 	<b>&nbsp;<?php if (isset($termin[$term]) AND $termin[$term]->nr == ($x+1+$liga[0]->runden)) { 
 		if ($termin[$term]->datum > 0) { echo JHTML::_('date',  $termin[$term]->datum, JText::_('DATE_FORMAT_CLM_F')); 
 		if($params['round_date'] == '0' and isset($termin[$term]->startzeit) and $termin[$term]->startzeit != '00:00:00') { echo '  '.substr($termin[$term]->startzeit,0,5); }
@@ -474,10 +482,10 @@ if ($rundensumme[$rund_sum]->nr == ($x+1+(2 * $liga[0]->runden)) ) { ?>
 <div class="left">
 <?php 
 if ($termin[$term]->bemerkungen <> "") { ?>
-	<span class="editlinktip hasTip"><img  src="<?php echo CLMImage::imageURL('con_info.png'); ?>" class="CLMTooltip" title="<?php echo JText::_( 'CHIEF_NOTE') ?>" /></span><?php }
+	<span class="editlinktip hasTip"><img  src="<?php echo CLMImage::imageURL('con_info.png'); ?>" class="Tooltip" title="<?php echo JText::_( 'CHIEF_NOTE') ?>" /></span><?php }
 // Wenn SL_OK dann Haken anzeigen
 if ($rundensumme[$rund_sum]->sl_ok > 0) { ?>
-	<span class="editlinktip hasTip"><img  src="<?php echo CLMImage::imageURL('accept.png'); ?>" class="CLMTooltip" title="<?php echo JText::_( 'CHIEF_OK') ?>" /></span><?php } ?>
+	<span class="editlinktip hasTip"><img  src="<?php echo CLMImage::imageURL('accept.png'); ?>" class="Tooltip" title="<?php echo JText::_( 'CHIEF_OK') ?>" /></span><?php } ?>
 	<b>&nbsp;<?php if (isset($termin[$term]) AND $termin[$term]->nr == ($x+1+(2 * $liga[0]->runden))) { 
 		if ($termin[$term]->datum > 0) { echo JHTML::_('date',  $termin[$term]->datum, JText::_('DATE_FORMAT_CLM_F')); 
 		if($params['round_date'] == '0' and isset($termin[$term]->startzeit) and $termin[$term]->startzeit != '00:00:00') { echo '  '.substr($termin[$term]->startzeit,0,5); }
@@ -622,10 +630,10 @@ if ($rundensumme[$rund_sum]->nr == ($x+1+(3 * $liga[0]->runden)) ) { ?>
 <div class="left">
 <?php 
 if ($termin[$term]->bemerkungen <> "") { ?>
-	<span class="editlinktip hasTip"><img  src="<?php echo CLMImage::imageURL('con_info.png'); ?>" class="CLMTooltip" title="<?php echo JText::_( 'CHIEF_NOTE') ?>" /></span><?php }
+	<span class="editlinktip hasTip"><img  src="<?php echo CLMImage::imageURL('con_info.png'); ?>" class="Tooltip" title="<?php echo JText::_( 'CHIEF_NOTE') ?>" /></span><?php }
 // Wenn SL_OK dann Haken anzeigen
 if ($rundensumme[$rund_sum]->sl_ok > 0) { ?>
-	<span class="editlinktip hasTip"><img  src="<?php echo CLMImage::imageURL('accept.png'); ?>" class="CLMTooltip" title="<?php echo JText::_( 'CHIEF_OK') ?>" /></span><?php } ?>
+	<span class="editlinktip hasTip"><img  src="<?php echo CLMImage::imageURL('accept.png'); ?>" class="Tooltip" title="<?php echo JText::_( 'CHIEF_OK') ?>" /></span><?php } ?>
 	<b>&nbsp;<?php if (isset($termin[$term]) AND $termin[$term]->nr == ($x+1+(3 * $liga[0]->runden))) { 
 		if ($termin[$term]->datum > 0) { echo JHTML::_('date',  $termin[$term]->datum, JText::_('DATE_FORMAT_CLM_F')); 
 		if($params['round_date'] == '0' and isset($termin[$term]->startzeit) and $termin[$term]->startzeit != '00:00:00') { echo '  '.substr($termin[$term]->startzeit,0,5); }

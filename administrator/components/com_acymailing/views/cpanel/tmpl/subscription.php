@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><div id="page-subscription">
 	<div class="onelineblockoptions">
@@ -34,9 +35,7 @@ defined('_JEXEC') or die('Restricted access');
 				</td>
 				<td>
 					<input class="inputbox" id="configautosub" name="config[autosub]" type="text" style="width:100px" value="<?php echo $this->escape($this->config->get('autosub', 'None')); ?>">
-					<a class="modal" id="linkconfigautosub" title="<?php echo acymailing_translation('SELECT_LISTS'); ?>" href="index.php?option=com_acymailing&amp;tmpl=component&amp;ctrl=chooselist&amp;task=autosub&amp;values=<?php echo $this->config->get('autosub', 'None'); ?>&amp;control=config" rel="{handler: 'iframe', size: {x: 650, y: 375}}">
-						<button class="acymailing_button_grey" onclick="return false"><?php echo acymailing_translation('SELECT'); ?></button>
-					</a>
+					<?php echo acymailing_popup(acymailing_completeLink('chooselist', true).'&amp;task=autosub&amp;values='.$this->config->get('autosub', 'None').'&amp;control=config', '<button class="acymailing_button_grey" onclick="return false">'.acymailing_translation('SELECT').'</button>', '', 650, 375, 'linkconfigautosub'); ?>
 				</td>
 			</tr>
 			<tr>
@@ -53,7 +52,7 @@ defined('_JEXEC') or die('Restricted access');
 					<?php echo acymailing_translation('GENERATE_NAME'); ?>
 				</td>
 				<td>
-					<?php echo JHTML::_('acyselect.booleanlist', "config[generate_name]", '', $this->config->get('generate_name', 1)); ?>
+					<?php echo acymailing_boolean("config[generate_name]", '', $this->config->get('generate_name', 1)); ?>
 				</td>
 			</tr>
 		</table>
@@ -131,7 +130,16 @@ defined('_JEXEC') or die('Restricted access');
 		<table class="acymailing_table" cellspacing="1">
 			<tr>
 				<td class="acykey">
-					<?php echo acymailing_tooltip(acymailing_translation('REDIRECTION_SUB_DESC').'<br /><br /><i>'.acymailing_translation('REDIRECTION_NOT_MODULE').'</i>', acymailing_translation('REDIRECTION_SUB'), '', acymailing_translation('REDIRECTION_SUB')); ?>
+					<?php echo acymailing_tooltip(acymailing_translation('REDIRECTION_CONFIRM_DESC'), acymailing_translation('REDIRECTION_CONFIRM'), '', acymailing_translation('REDIRECTION_CONFIRM')); ?>
+				</td>
+				<td>
+					<input class="inputbox" type="text" id="confirm_redirect" name="config[confirm_redirect]" style="width:250px" value="<?php echo $this->escape($this->config->get('confirm_redirect')); ?>">
+				</td>
+			</tr>
+			<?php $redirectMessageModule = 'joomla' == 'joomla' ? '<br /><br /><i>'.acymailing_translation('REDIRECTION_NOT_MODULE').'</i>' : ''; ?>
+			<tr>
+				<td class="acykey">
+					<?php echo acymailing_tooltip(acymailing_translation('REDIRECTION_SUB_DESC').$redirectMessageModule, acymailing_translation('REDIRECTION_SUB'), '', acymailing_translation('REDIRECTION_SUB')); ?>
 				</td>
 				<td>
 					<input class="inputbox" type="text" id="sub_redirect" name="config[sub_redirect]" style="width:250px" value="<?php echo $this->escape($this->config->get('sub_redirect')); ?>">
@@ -139,7 +147,7 @@ defined('_JEXEC') or die('Restricted access');
 			</tr>
 			<tr>
 				<td class="acykey">
-					<?php echo acymailing_tooltip(acymailing_translation('REDIRECTION_MODIF_DESC').'<br /><br /><i>'.acymailing_translation('REDIRECTION_NOT_MODULE').'</i>', acymailing_translation('REDIRECTION_MODIF'), '', acymailing_translation('REDIRECTION_MODIF')); ?>
+					<?php echo acymailing_tooltip(acymailing_translation('REDIRECTION_MODIF_DESC').$redirectMessageModule, acymailing_translation('REDIRECTION_MODIF'), '', acymailing_translation('REDIRECTION_MODIF')); ?>
 				</td>
 				<td>
 					<input class="inputbox" type="text" id="modif_redirect" name="config[modif_redirect]" style="width:250px" value="<?php echo $this->escape($this->config->get('modif_redirect')); ?>">
@@ -147,20 +155,13 @@ defined('_JEXEC') or die('Restricted access');
 			</tr>
 			<tr>
 				<td class="acykey">
-					<?php echo acymailing_tooltip(acymailing_translation('REDIRECTION_CONFIRM_DESC'), acymailing_translation('REDIRECTION_CONFIRM'), '', acymailing_translation('REDIRECTION_CONFIRM')); ?>
-				</td>
-				<td>
-					<input class="inputbox" type="text" id="confirm_redirect" name="config[confirm_redirect]" style="width:250px" value="<?php echo $this->escape($this->config->get('confirm_redirect')); ?>">
-				</td>
-			</tr>
-			<tr>
-				<td class="acykey">
-					<?php echo acymailing_tooltip(acymailing_translation('REDIRECTION_UNSUB_DESC'), acymailing_translation('REDIRECTION_UNSUB'), '', acymailing_translation('REDIRECTION_UNSUB')); ?>
+					<?php echo acymailing_tooltip(acymailing_translation('REDIRECTION_UNSUB_DESC').$redirectMessageModule, acymailing_translation('REDIRECTION_UNSUB'), '', acymailing_translation('REDIRECTION_UNSUB')); ?>
 				</td>
 				<td>
 					<input class="inputbox" type="text" id="unsub_redirect" name="config[unsub_redirect]" style="width:250px" value="<?php echo $this->escape($this->config->get('unsub_redirect')); ?>">
 				</td>
 			</tr>
+			<?php if('joomla' == 'joomla') { ?>
 			<tr>
 				<td class="acykey">
 					<?php echo acymailing_tooltip(acymailing_translation('REDIRECTION_MODULE_DESC'), acymailing_translation('REDIRECTION_MODULE'), '', acymailing_translation('REDIRECTION_MODULE')); ?>
@@ -169,65 +170,15 @@ defined('_JEXEC') or die('Restricted access');
 					<input class="inputbox" type="text" id="module_redirect" name="config[module_redirect]" style="width:250px" value="<?php echo $this->escape($this->config->get('module_redirect')); ?>">
 				</td>
 			</tr>
+			<?php } ?>
 			<tr>
 				<td class="acykey">
 					<?php echo acymailing_translation('ACY_REDIRECT_TAGS'); ?>
 				</td>
 				<td>
-					<?php echo JHTML::_('acyselect.booleanlist', "config[redirect_tags]", '', $this->config->get('redirect_tags', 0)); ?>
+					<?php echo acymailing_boolean("config[redirect_tags]", '', $this->config->get('redirect_tags', 0)); ?>
 				</td>
 			</tr>
-		</table>
-	</div>
-	<div class="onelineblockoptions">
-		<span class="acyblocktitle"><?php echo acymailing_translation('GEOLOCATION'); ?></span>
-		<script language="JavaScript" type="text/javascript">
-			function testAPI(id, newvalue){
-				window.document.getElementById(id).className = 'onload';
-				try{
-					new Ajax('index.php?option=com_acymailing&tmpl=component&ctrl=toggle&task=' + id + '&value=' + newvalue, {
-						method: 'get', update: $(id), onComplete: function(){
-							window.document.getElementById(id).className = 'loading';
-						}
-					}).request();
-				}catch(err){
-					new Request({
-						url: 'index.php?option=com_acymailing&tmpl=component&ctrl=toggle&task=' + id + '&value=' + newvalue, method: 'get', onComplete: function(response){
-							$(id).innerHTML = response;
-							window.document.getElementById(id).className = 'loading';
-						}
-					}).send();
-				}
-			}
-		</script>
-		<table class="acymailing_table" cellspacing="1">
-			<tr>
-				<td class="acykey">
-					<?php echo acymailing_tooltip(acymailing_translation('GEOLOCATION_TYPE_DESC'), acymailing_translation('GEOLOCATION_TYPE'), '', acymailing_translation('GEOLOCATION_TYPE')); ?>
-				</td>
-				<td>
-					<?php echo $this->elements->geolocation; ?>
-				</td>
-			</tr>
-			<?php if($this->elements->geoloc_api_key){ ?>
-				<tr>
-					<td class="acykey">
-						<a href="http://ipinfodb.com/register.php" target="_blank"><?php echo acymailing_tooltip(acymailing_translation('GEOLOCATION_API_KEY_DESC'), 'IPInfoDB API key', '', 'IPInfoDB API key'); ?></a>
-					</td>
-					<td>
-						<?php echo $this->elements->geoloc_api_key; ?>
-					</td>
-				</tr>
-				<tr>
-					<td colspan="2">
-
-						<span id="testApiKey" class="acymailing_button_grey">
-							<i class="acyicon-location"></i>
-							<a style="color:#666;text-decoration:none;" href="javascript:void(0);" onclick="testAPI('testApiKey',window.document.getElementById('geoloc_api_key').value)"><?php echo acymailing_translation('GEOLOC_TEST_API_KEY'); ?></a>
-						</span>
-					</td>
-				</tr>
-			<?php } ?>
 		</table>
 	</div>
 </div>

@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><div id="acyusersubscription">
   <?php
@@ -15,7 +16,7 @@ defined('_JEXEC') or die('Restricted access');
     if(empty($row->published) OR !$row->visible) continue;
 
     $value = 0;
-    $dropdownOpts[] = JHTML::_('select.option', $row->listid, $row->name);
+    $dropdownOpts[] = acymailing_selectOption($row->listid, $row->name);
     if($row->status == 1) {
       $value = 1;
       $selectedIndex = $k;
@@ -25,7 +26,7 @@ defined('_JEXEC') or die('Restricted access');
     $k++;
   }
 
-  $dropdown = JHTML::_('select.genericlist', $dropdownOpts, 'data[listsubdropdown]', 'onchange="setSubsDropdown()"', 'value', 'text', $selectedIndex);
+  $dropdown = acymailing_select($dropdownOpts, 'data[listsubdropdown]', 'onchange="setSubsDropdown()"', 'value', 'text', $selectedIndex);
   echo $dropdown;
   ?>
 </div>
@@ -44,3 +45,4 @@ defined('_JEXEC') or die('Restricted access');
     }
   }
 </script>
+

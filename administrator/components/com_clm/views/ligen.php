@@ -2,7 +2,7 @@
 
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2016 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -69,7 +69,7 @@ class CLMViewLigen
 	if (!isset($row->params['anz_sgp']))  {   //Standardbelegung
 		$row->params['anz_sgp'] = 1; }
 	if (!isset($row->params['deadline_roster']))  {   //Standardbelegung
-		$row->params['deadline_roster'] = '0000-00-00'; }
+		$row->params['deadline_roster'] = '1970-01-01'; }
 	if (!isset($row->params['color_order']))  {   //Standardbelegung
 		$row->params['color_order'] = '1'; }
 	if (!isset($row->params['incl_to_season']))  {   //Standardbelegung
@@ -91,6 +91,8 @@ class CLMViewLigen
 		$row->params['pgnPublic'] = '0'; }
 	if (!isset($row->params['pgnDownload']))  {   //Standardbelegung
 		$row->params['pgnDownload'] = '0'; }
+	if (!isset($row->params['firstView']))  {   //Standardbelegung
+		$row->params['firstView'] = '0'; }
 	?>
 	
 	<script language="javascript" type="text/javascript">
@@ -237,7 +239,7 @@ class CLMViewLigen
            	</label>
         </td>
         <td>
-           	<?php echo JHtml::_('calendar', $row->params['deadline_roster'], "params[deadline_roster]", "params[deadline_roster]", '%Y-%m-%d', array('class'=>'text_area', 'size'=>'12',  'maxlength'=>'19')); ?>
+			<?php echo CLMForm::calendar($row->params['deadline_roster'], "params[deadline_roster]", "params[deadline_roster]", '%Y-%m-%d', array('class'=>'text_area', 'size'=>'12',  'maxlength'=>'19')); ?>
         </td>
 	</tr>
 	
@@ -568,6 +570,19 @@ class CLMViewLigen
 
     <tr>
 	<td nowrap="nowrap">
+	<label for="params[firstView]"><?php echo JText::_( 'LEAGUE_FIRST_VIEW' ); ?></label>
+	</td><td colspan="5">
+		<select name="params[firstView]" id="params[firstView]" value="<?php echo $row->params['firstView']; ?>" size="1">
+		<option value="0" <?php if ($row->params['firstView'] == 0) {echo 'selected="selected"';}  ?>><?php echo JText::_( 'LEAGUE_FV_RANGLISTE' );?></option>
+		<option value="1" <?php if ($row->params['firstView'] == 1) {echo 'selected="selected"';}  ?>><?php echo JText::_( 'LEAGUE_FV_TABELLE' );?></option>
+		<option value="2" <?php if ($row->params['firstView'] == 2) {echo 'selected="selected"';}  ?>><?php echo JText::_( 'LEAGUE_FV_PAARUNGSLISTE' );?></option>
+		<option value="3" <?php if ($row->params['firstView'] == 3) {echo 'selected="selected"';}  ?>><?php echo JText::_( 'LEAGUE_FV_TEILNEHMER' );?></option>
+		</select>
+	</td>
+	</tr>
+
+    <tr>
+	<td nowrap="nowrap">
 	<label for="params[pgntype]"><?php echo JText::_( 'LEAGUE_PGN_TYPE' ); ?></label>
 	</td><td colspan="5">
 		<select name="params[pgntype]" id="params[pgntype]" value="<?php echo $row->params['pgntype']; ?>" size="1">
@@ -727,6 +742,7 @@ class CLMViewLigen
 	<input type="hidden" name="task" value="" />
 	<input type="hidden" name="params[noOrgReference]" value="<?php echo $row->params['noOrgReference']; ?>" />
 	<input type="hidden" name="params[noBoardResults]" value="<?php echo $row->params['noBoardResults']; ?>" />
+	<input type="hidden" name="ordering" value="<?php echo $row->ordering; ?>" />
 
 	<?php echo JHtml::_( 'form.token' ); ?>
 	</form>

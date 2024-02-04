@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -21,14 +22,14 @@ class plgAcymailingContentplugin extends JPlugin
 		}
 
 		$this->paramsContent = JComponentHelper::getParams('com_content');
-		JPluginHelper::importPlugin('content');
-		$this->dispatcherContent = JDispatcher::getInstance();
+		acymailing_importPlugin('content');
 
 		$excludedHandlers = array('plgContentEmailCloak','pluginImageShow');
 		$excludedNames = array('system' => array('SEOGenerator','SEOSimple'), 'content' => array('webeecomment','highslide','smartresizer','phocagallery'));
 		$excludedType = array_keys($excludedNames);
 
 		if(!ACYMAILING_J16){
+			$this->dispatcherContent = JDispatcher::getInstance();
 			foreach ($this->dispatcherContent->_observers as $id => $observer){
 				if (is_array($observer) AND in_array($observer['handler'],$excludedHandlers)){
 					$this->dispatcherContent->_observers[$id]['event'] = '';
@@ -65,10 +66,10 @@ class plgAcymailingContentplugin extends JPlugin
 			if(!empty($email->body)){
 				$art->text = $email->body;
 				if(!ACYMAILING_J16){
-					$resultsPlugin = $this->dispatcherContent->trigger('onPrepareContent', array (&$art, &$this->paramsContent, 0 ));
+					$resultsPlugin = acymailing_trigger('onPrepareContent', array(&$art, &$this->paramsContent, 0));
 				}else{
 					if($send) $art->text .= '{emailcloak=off}';
-					$resultsPlugin = $this->dispatcherContent->trigger('onContentPrepare', array ($context,&$art, &$this->paramsContent, 0 ));
+					$resultsPlugin = acymailing_trigger('onContentPrepare', array($context, &$art, &$this->paramsContent, 0));
 					if($send) $art->text = str_replace(array('{emailcloak=off}','{* emailcloak=off}'),'',$art->text);
 				}
 				$email->body = $art->text;
@@ -76,10 +77,10 @@ class plgAcymailingContentplugin extends JPlugin
 			if(!empty($email->altbody)){
 				$art->text = $email->altbody;
 				if(!ACYMAILING_J16){
-					$resultsPlugin = $this->dispatcherContent->trigger('onPrepareContent', array (&$art, &$this->paramsContent, 0 ));
+					$resultsPlugin = acymailing_trigger('onPrepareContent', array(&$art, &$this->paramsContent, 0));
 				}else{
 					if($send) $art->text .= '{emailcloak=off}';
-					$resultsPlugin = $this->dispatcherContent->trigger('onContentPrepare', array ($context,&$art, &$this->paramsContent, 0 ));
+					$resultsPlugin = acymailing_trigger('onContentPrepare', array ($context,&$art, &$this->paramsContent, 0 ));
 					if($send) $art->text = str_replace(array('{emailcloak=off}','{* emailcloak=off}'),'',$art->text);
 				}
 				$email->altbody = $art->text;

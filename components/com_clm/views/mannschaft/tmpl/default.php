@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2017 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -46,7 +46,7 @@ $mannschaft	=$this->mannschaft;
 				$lparams[$key] = substr($value,$ipos+1);
 		}
 	}
-	if (!isset($lparams['dwz_date'])) $lparams['dwz_date'] = '0000-00-00';
+	if (!isset($lparams['dwz_date'])) $lparams['dwz_date'] = '1970-01-01';
 	if (!isset($lparams['noOrgReference'])) $lparams['noOrgReference'] = '0';
 	if (!isset($lparams['noBoardResults'])) $lparams['noBoardResults'] = '0';
 $vereine	=$this->vereine;
@@ -85,7 +85,7 @@ $db =JFactory::getDBO ();
 $db->setQuery ($sql);
 $ligapunkte = $db->loadObject ();
 
-if ($lparams['dwz_date'] == '0000-00-00') {
+if ($lparams['dwz_date'] == '0000-00-00' OR $lparams['dwz_date'] == '1970-01-01') {
 	if ($saison[0]->dsb_datum  > 0) $hint_dwzdsb = JText::_('DWZ_DSB_COMMENT_RUN').' '.utf8_decode(JText::_('ON_DAY')).' '.JHTML::_('date',  $saison[0]->dsb_datum, JText::_('DATE_FORMAT_CLM_F'));  
 	if (($saison[0]->dsb_datum == 0) || (!isset($saison))) $hint_dwzdsb = JText::_('DWZ_DSB_COMMENT_UNCLEAR'); 
 } else {
@@ -101,7 +101,6 @@ if ( $mannschaft[0]->published == 0) {
 	$link = 'index.php?option='.$option.'&view=info&Itemid='.$itemid;
 	$mainframe->redirect( $link, $msg );
 	}
-if ($mannschaft[0]->lpublished != 0 AND $mannschaft[0]->published != 0) {
 
 // Stylesheet laden
 require_once(JPATH_COMPONENT.DS.'includes'.DS.'css_path.php');
@@ -112,6 +111,7 @@ require_once(JPATH_COMPONENT.DS.'includes'.DS.'css_path.php');
 
 	// Konfigurationsparameter auslesen
 	$config = clm_core::$db->config();
+	$email_from = $config->email_from;
 	$countryversion   = $config->countryversion;
 	$telefon= $config->man_tel;
 	$mobil	= $config->man_mobil;
@@ -125,6 +125,8 @@ require_once(JPATH_COMPONENT.DS.'includes'.DS.'css_path.php');
 	$googlemaps_rtype   = $config->googlemaps_rtype;
 	$googlemaps_mrout   = $config->googlemaps_mrout;
 	// Aufbereitung Googledaten 1. Spiellokal
+	$mannschaft[0]->lokal = str_replace(chr(10),"",$mannschaft[0]->lokal);
+	$mannschaft[0]->lokal = str_replace(chr(13),"",$mannschaft[0]->lokal);
 	$spiellokal1G = explode(",", $mannschaft[0]->lokal); 
     if (isset($spiellokal1G[2]) AND $googlemaps_rtype == 1) {
         $google_address = $spiellokal1G[0].','.$spiellokal1G[1].','.$spiellokal1G[2]; }
@@ -133,6 +135,7 @@ require_once(JPATH_COMPONENT.DS.'includes'.DS.'css_path.php');
     elseif (isset($spiellokal1G[1]) AND $googlemaps_rtype == 3) {
         $google_address = $spiellokal1G[0].','.$spiellokal1G[1]; }
 	else $google_address = $mannschaft[0]->lokal;
+	
 require_once(JPATH_COMPONENT.DS.'includes'.DS.'googlemaps.php');
  
 	// Userkennung holen
@@ -149,10 +152,18 @@ $attr = clm_core::$api->db_lineup_attr($lid);
 
 <div >
 <div id="mannschaft">
+<?php
+require_once(JPATH_COMPONENT.DS.'includes'.DS.'submenu.php');
+
+$archive_check = clm_core::$api->db_check_season_user($sid);
+if (!$archive_check) {
+	echo "<div id='wrong'>".JText::_('NO_ACCESS')."<br>".JText::_('NOT_REGISTERED')."</div>";
+}
+// Liga schon veröffentlicht
+elseif ($mannschaft[0]->lpublished != 0 AND $mannschaft[0]->published != 0) { ?>
 
     <div class="componentheading"><?php echo $mannschaft[0]->name; ?> - <?php echo $mannschaft[0]->liga_name; ?></div>
 
-<?php require_once(JPATH_COMPONENT.DS.'includes'.DS.'submenu.php'); ?>
     <?php if ($mannschaft[0]->zps != "0") { ?>
 		<div class="clmbox">
 		<a href="index.php?option=com_clm&view=verein&saison=<?php echo $sid; ?>&zps=<?php echo $mannschaft[0]->zps; ?><?php if ($itemid <>'') { echo "&Itemid=".$itemid; } ?>"><?php echo JText::_('TEAM_DETAILS') ?></a>
@@ -210,7 +221,7 @@ $attr = clm_core::$api->db_lineup_attr($lid);
         <div id="rightalign">
     <?php if ($man_spiellokal =="1") { ?>
         <b><?php echo JText::_('TEAM_LOCATION'); ?></b>
-        <?php if ( ($mannschaft[0]->lokal ==! false) and ($googlemaps_msch == "1") and ($googlemaps == "1") ) { ?>&nbsp;(&nbsp;
+        <?php if ( ($mannschaft[0]->lokal ==! false) and ($googlemaps_msch > "0") and ($googlemaps == "1") ) { ?>&nbsp;(&nbsp;
         <a href="index.php?option=com_clm&view=mannschaft&saison=<?php echo $mannschaft[0]->sid ?>&liga=<?php echo $mannschaft[0]->liga ?>&tlnr=<?php echo $mannschaft[0]->tln_nr ?>#google"><?php echo JText::_('TEAM_KARTE') ?></a>&nbsp;)<?php } ?>
         <br />
         <div style="float:left; width: 50%;">
@@ -288,7 +299,7 @@ $attr = clm_core::$api->db_lineup_attr($lid);
     <?php } ?>
 		<th class="nr"><?php echo JText::_('CLUB_LIST_TITEL') ?></th>
         <th class="name"><?php echo JText::_('DWZ_NAME') ?></th>
-        <th class="dwz"><a title="<?php echo $hint_dwzdsb; ?>" class="CLMTooltip"><?php if ($countryversion == "de") echo JText::_('LEAGUE_STAT_DWZ'); else echo JText::_('LEAGUE_STAT_DWZ_EN')?></a></th>
+        <th class="dwz"><a title="<?php echo $hint_dwzdsb; ?>" class="Tooltip"><?php if ($countryversion == "de") echo JText::_('LEAGUE_STAT_DWZ'); else echo JText::_('LEAGUE_STAT_DWZ_EN')?></a></th>
 	 <?php 
     // erster Durchgang
     for ($b=0; $b<$mannschaft[0]->runden; $b++) { ?>
@@ -347,7 +358,7 @@ for ($x=0; $x< 100; $x++){
 	<?php } else { ?>
 		<td class="name"><?php echo $count[$x]->name; ?></td>
 	<?php } ?>
-    <td class="dwz"><?php if ($lparams['dwz_date'] == '0000-00-00') { if ($count[$x]->dwz >0) echo $count[$x]->dwz;} 
+    <td class="dwz"><?php if ($lparams['dwz_date'] == '0000-00-00' OR $lparams['dwz_date'] == '1970-01-01' ) { if ($count[$x]->dwz >0) echo $count[$x]->dwz;} 
 						  else { if ($count[$x]->start_dwz >0) echo $count[$x]->start_dwz;} ?></td>
     <?php
 	//keine Ergebnisse zum Spieler
@@ -449,14 +460,19 @@ for ($x=0; $x< 100; $x++){
 	
     ?>
     <tr class="ende">
-    <td colspan="4"><?php echo JText::_('TEAM_TOTAL'); ?></td>
-    <?php	$spl = 0; $gespielt = 0;
+    <?php if ($attr) { ?>
+		<td colspan="5"><?php echo JText::_('TEAM_TOTAL'); ?></td>
+    <?php } else { ?>
+		<td colspan="4"><?php echo JText::_('TEAM_TOTAL'); ?></td>
+    <?php } ?>
+    <?php	$spl = 0; $gespielt = 0; $ibe = 0;
     // erster Durchgang
         for ($z=0; $z< $mannschaft[0]->runden; $z++) { 			
 			while ((isset($bp[$spl]->tln_nr)) AND ($bp[$spl]->tln_nr != $mannschaft[0]->tln_nr)) { $spl++; } 
         if (isset($bp[$spl]->runde) AND $bp[$spl]->runde == $z+1) { ?>
     <td class="rnd"><?php echo str_replace ('.0', '', $bp[$spl]->brettpunkte); ?></td>
-    <?php $spl++; }
+    <?php if (!is_null($bp[$spl]->brettpunkte)) $ibe++; 
+		 $spl++; }
          else { ?>
     <td class="rnd">&nbsp;</td>
     <?php 		}
@@ -467,7 +483,8 @@ for ($x=0; $x< 100; $x++){
 			while ((isset($bp[$spl]->tln_nr)) AND ($bp[$spl]->tln_nr != $mannschaft[0]->tln_nr)) { $spl++; } 
         if (isset($bp[$spl]->runde) AND $bp[$spl]->runde == $z+1) { ?>
     <td class="rnd"><?php echo str_replace ('.0', '', $bp[$spl]->brettpunkte); ?></td>
-    <?php 	$spl++;			}
+    <?php if (!is_null($bp[$spl]->brettpunkte)) $ibe++; 
+		 $spl++; }
          else { ?>
     <td class="rnd">&nbsp;</td>
     <?php 		}}}
@@ -477,7 +494,8 @@ for ($x=0; $x< 100; $x++){
 			while ((isset($bp[$spl]->tln_nr)) AND ($bp[$spl]->tln_nr != $mannschaft[0]->tln_nr)) { $spl++; } 
         if (isset($bp[$spl]->runde) AND $bp[$spl]->runde == $z+1) { ?>
     <td class="rnd"><?php echo str_replace ('.0', '', $bp[$spl]->brettpunkte); ?></td>
-    <?php 	$spl++;			}
+    <?php if (!is_null($bp[$spl]->brettpunkte)) $ibe++; 
+		 $spl++; }
          else { ?>
     <td class="rnd">&nbsp;</td>
     <?php 		}}}
@@ -487,13 +505,15 @@ for ($x=0; $x< 100; $x++){
 			while ((isset($bp[$spl]->tln_nr)) AND ($bp[$spl]->tln_nr != $mannschaft[0]->tln_nr)) { $spl++; } 
         if (isset($bp[$spl]->runde) AND $bp[$spl]->runde == $z+1) { ?>
     <td class="rnd"><?php echo str_replace ('.0', '', $bp[$spl]->brettpunkte); ?></td>
-    <?php 	$spl++;			}
+    <?php if (!is_null($bp[$spl]->brettpunkte)) $ibe++; 
+		 $spl++; }
          else { ?>
     <td class="rnd">&nbsp;</td>
     <?php 		}}}
     ?>
     <td class="punkte"><?php echo str_replace ('.0', '', $sumbp[0]->summe); ?></td>
-    <td class="spiele"><?php echo $sumspl; //echo $sumgespielt; ?></td>
+    <td class="spiele"><?php $sumspl = $mannschaft[0]->stamm * $ibe;
+							 echo $sumspl; //echo $sumgespielt; ?></td>
     <?php if ($sumgespielt < 1) { ?>
     <td class="spiele">&nbsp;</td>
     <?php } else { ?>
@@ -562,20 +582,124 @@ for ($x=0; $x< 100; $x++){
     </tr>
     <?php } ?>
     </table>
-    <?php }} ?>
+    <?php } ?>
     <br>
-    
-    <?php if ( ($mannschaft[0]->lokal ==! false) and ($googlemaps_msch == "1")  and ($googlemaps == "1") ) { ?>
-    <a name="google"></a><h4><?php echo JText::_('GOOGLE_MAPS') ?></h4>
+	
+    <a name="google"></a>    
+	
+    <?php //Kartenanzeige mit Google Maps 
+	if ( ($mannschaft[0]->lokal ==! false) and ($googlemaps_msch == "1")  and ($googlemaps == "1") ) { ?>
+		<h4><?php echo JText::_('GOOGLE_MAPS') ?></h4>
     <!-- Google Maps-->
-    <center><div style="border:1px solid #CCC;"><div id="map" style="width: 100%; height: 300px;"><script>load();</script>map</div></div></center>
-    <br>
+  <center><div style="border:1px solid #CCC;"><div id="map" style="width: 100%; height: 300px;"><script>load();</script>map</div></div></center> 
+    <br><br>
+    <?php } ?>
+
+    <?php //Kartenanzeige mit OpenStreetMap
+	if ( ($mannschaft[0]->lokal ==! false) and ($googlemaps_msch == "3")  and ($googlemaps == "1") ) { ?>
+		<h4><?php echo JText::_('OSM_MAPS') ?></h4>
+		<?php 
+		if (isset($spiellokal1G[2]) AND $googlemaps_rtype == 2) {
+			if (isset($spiellokal1G[2]))$city = str_replace(" ","%20",$spiellokal1G[2]); else $city = '';
+			if (isset($spiellokal1G[1])) $street = str_replace(" ","%20",$spiellokal1G[1]); else $street = '';
+			$error_text = "name,straße,ort,...";
+        } else {  // $googlemaps_rtype == 3
+			if (isset($spiellokal1G[1]))$city = str_replace(" ","%20",$spiellokal1G[1]); else $city = '';
+			if (isset($spiellokal1G[0])) $street = str_replace(" ","%20",$spiellokal1G[0]); else $street = '';
+			$error_text = "straße,ort,...";
+		}
+		$baseUrl = 'https://nominatim.openstreetmap.org/search?format=json&city='.$city.'&street='.$street;
+		$data = file_get_contents( $baseUrl.'&limit=1&email='.$email_from.'&addressdetails=1' );
+		$json = json_decode( $data );
+		if (isset($json[0])) {
+			$lat = $json[0]->lat;
+			$lon = $json[0]->lon; 
+		} else {
+			$lat = 0;
+			$lon = 0; 
+		}
+		if ($spiellokal1G[0] ==! false ) $loc_text = $spiellokal1G[0]; else $loc_text = '';
+		if (isset($spiellokal1G[1])) $loc_text .= '<br>'.$spiellokal1G[1]; 
+		if (isset($spiellokal1G[2])) $loc_text .= '<br>'.$spiellokal1G[2]; 
+		if (isset($spiellokal1G[3])) $loc_text .= '<br>'.$spiellokal1G[3]; 
+
+		$img_marker = clm_core::$load->gen_image_url("table/marker-icon");
+	?>
+
+	<br><br>
+	
+    <link rel="stylesheet" href="https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.3.0/css/ol.css" type="text/css">
+	<div style="position:relative;">
+		<div id="mapdiv1" class="map" style="position:absolute;top:0;right:0;float:right;width:100%;height:300px;text-align:center;"></div>
+		<?php if ($lat != 0 || $lon != 0) { ?>
+			<div id="madinfo" style="position:absolute;top:0;right:0;float:right;z-index:1000;width:80%;height:200px;text-align:center;"><span style="font-weight: bold; background-color: #FFF"><?php echo $loc_text; ?></span></div>
+		<?php } ?>
+	</div>
+    <script src="https://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.3.0/build/ol.js"></script>
+ 
+	<script>
+		var Lat=<?php printf( '%0.7f', $lat ); ?>;
+		var Lon=<?php printf( '%0.7f', $lon ); ?>;
+		if (Lat == 0 && Lon == 0) {
+			alert("Die Adresse des Spiellokals wird nicht gefunden.");
+			document.getElementById('mapdiv1').innerHTML = "Die Adresse des Spiellokals wird nicht gefunden.<br>Vielleicht entspricht die Angabe nicht der Vorgabe " + "<?php echo $error_text; ?>" + "<br><br>" + '<?php echo $loc_text; ?>';
+		} else {
+			var map = new ol.Map({
+				layers: [new ol.layer.Tile({ source: new ol.source.OSM() })],
+				target: document.getElementById('mapdiv1'),
+				view: new ol.View({
+					center: ol.proj.fromLonLat([Lon, Lat]),
+					zoom: 15
+					})
+				});
+
+			// Adding a marker on the map
+			var marker = new ol.Feature({
+				geometry: new ol.geom.Point(
+				ol.proj.fromLonLat([Lon,Lat])
+				),  // Cordinates of New York's Town Hall
+			});
+			
+			marker.setStyle(new ol.style.Style({
+				image: new ol.style.Icon(({
+					crossOrigin: 'anonymous',
+					anchor: [0.5, 1],
+					anchorXUnits: 'fraction',
+					anchorYUnits: 'fraction',
+					src: '<?php echo $img_marker; ?>'
+				}))
+			}));
+			var vectorSource = new ol.source.Vector({
+				features: [marker]
+			});
+			var markerVectorLayer = new ol.layer.Vector({
+				source: vectorSource,
+			});
+			map.addLayer(markerVectorLayer);
+			
+/*			// Adding a marker on the map
+			var north = Lat-0.0003;
+			var south = Lat+0.0003;
+			var east = Lon-0.0005;
+			var west = Lon+0.0005;
+			var extent = ol.proj.transformExtent([east, north, west, south], 'EPSG:4326', 'EPSG:3857');
+			var imageLayer = new ol.layer.Image({
+				source: new ol.source.ImageStatic({
+					url: '<?php echo $img_marker; ?>',
+					imageExtent: extent
+				})
+			});
+			map.addLayer(imageLayer);
+*/		}
+		</script>
+		<div id="mapdiv0" class="map" style="width:100%;height:300px;"></div>																	   
+    <br><br>
     <?php } ?>
     <?php echo '<div class="hint">'.$hint_dwzdsb.'</div><br>'; ?>
 
     <?php require_once(JPATH_COMPONENT.DS.'includes'.DS.'copy.php'); ?>
+  <?php } ?>
 
 <div class="clr"></div>
 </div>
 </div>
- 

@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -19,17 +20,14 @@ class acylistHelper{
 	var $skipedfollowups = 0;
 
 	function subscribe($subid,$listids){
-		$app = JFactory::getApplication();
 
 
-		JPluginHelper::importPlugin('acymailing');
-		$dispatcher = JDispatcher::getInstance();
-		$resultsTrigger = $dispatcher->trigger('onAcySubscribe',array($subid,$listids));
+		acymailing_importPlugin('acymailing');
+		$resultsTrigger = acymailing_trigger('onAcySubscribe', array($subid, $listids));
 
 	}//endfct
 
 	function unsubscribe($subid,$listids){
-		$app = JFactory::getApplication();
 
 		if(acymailing_level(3)){
 			$campaignClass = acymailing_get('helper.campaign');
@@ -38,7 +36,7 @@ class acylistHelper{
 
 		$config = acymailing_config();
 		static $alreadySent = false;
-		if($this->sendNotif AND !$alreadySent AND $config->get('notification_unsub') AND !$app->isAdmin()){
+		if($this->sendNotif AND !$alreadySent AND $config->get('notification_unsub') AND !acymailing_isAdmin()){
 			$alreadySent = true;
 			$mailer = acymailing_get('helper.mailer');
 			$mailer->report = false;
@@ -60,11 +58,8 @@ class acylistHelper{
 			}
 		}
 
-		$db = JFactory::getDBO();
-
-		if($this->forceConf || ($this->sendConf AND !$app->isAdmin())){
-			$db->setQuery('SELECT DISTINCT `unsubmailid` FROM '.acymailing_table('list').' WHERE `listid` IN ('.implode(',',$listids).') AND `published` = 1  AND `unsubmailid` > 0');
-			$messages = acymailing_loadResultArray($db);
+		if($this->forceConf || ($this->sendConf AND !acymailing_isAdmin())){
+			$messages = acymailing_loadResultArray('SELECT DISTINCT `unsubmailid` FROM '.acymailing_table('list').' WHERE `listid` IN ('.implode(',',$listids).') AND `published` = 1  AND `unsubmailid` > 0');
 
 			if(!empty($messages)){
 				$config = acymailing_config();
@@ -78,11 +73,9 @@ class acylistHelper{
 			}
 		}//end only frontend
 
-		$db->setQuery('DELETE  FROM '.acymailing_table('queue').' WHERE `subid` = '.(int) $subid.' AND `mailid` IN (SELECT `mailid` FROM '.acymailing_table('listmail').' WHERE `listid` IN ('.implode(',',$listids).'))');
-		$db->query();
+		acymailing_query('DELETE FROM '.acymailing_table('queue').' WHERE `subid` = '.(int) $subid.' AND `mailid` IN (SELECT `mailid` FROM '.acymailing_table('listmail').' WHERE `listid` IN ('.implode(',',$listids).'))');
 
-		JPluginHelper::importPlugin('acymailing');
-		$dispatcher = JDispatcher::getInstance();
-		$resultsTrigger = $dispatcher->trigger('onAcyUnsubscribe',array($subid,$listids));
+		acymailing_importPlugin('acymailing');
+		$resultsTrigger = acymailing_trigger('onAcyUnsubscribe', array($subid, $listids));
 	}
 }//endclass

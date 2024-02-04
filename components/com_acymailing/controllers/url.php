@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -15,36 +16,25 @@ class UrlController extends acymailingController{
 	{
 		parent::__construct($config);
 
-		JRequest::setVar('tmpl','component');
+		acymailing_setVar('tmpl','component');
 		$this->registerDefaultTask('click');
 
 	}
 
 
 	function sef(){
-		$urls = JRequest::getVar('urls', array(), '', 'array');
+		$urls = acymailing_getVar('array', 'urls', array(), '');
 		$result = array();
 
-		$otherarguments = '';
-
-		$liveParsed = parse_url(ACYMAILING_LIVE);
-		if(isset($liveParsed['path']) AND strlen($liveParsed['path']) > 0){
-			$mainurl = substr(ACYMAILING_LIVE, 0, strrpos(ACYMAILING_LIVE, $liveParsed['path'])).'/';
-			$otherarguments = trim(str_replace($mainurl, '', ACYMAILING_LIVE), '/');
-			if(strlen($otherarguments) > 0) $otherarguments .= '/';
-		}else{
-			$mainurl = ACYMAILING_LIVE;
-		}
-
-		$uri = JUri::root(true);
+		$uri = acymailing_rootURI();
 		foreach($urls as $url){
 			$url = base64_decode($url);
-			$link = JRoute::_($url, false);
+			$link = acymailing_route($url, false);
 			if(!empty($uri) && strpos($link, $uri) === 0) $link = substr($link, strlen($uri));
 
 			$link = ltrim($link, '/');
-			if(!empty($otherarguments) && strpos($link, $otherarguments) === false) $link = $otherarguments.$link;
 
+			$mainurl = acymailing_mainURL($link);
 			$result[$url] = $mainurl.$link;
 		}
 		echo json_encode($result);

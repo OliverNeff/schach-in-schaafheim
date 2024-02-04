@@ -1,8 +1,8 @@
 <?php
 /**********************************************************************************
  * @package Embed Chessboard plugin for joomla 1.6 or later
- * @version 3.03.00
- * @copyright copyright (c) 2009-2017 Paolo Casaschi
+ * @version 3.04.00
+ * @copyright copyright (c) 2009-2019 Paolo Casaschi
  * @license GNU General Public License version 2
  * @author: http://pgn4web.casaschi.net
  * @tutorial: http://pgn4web-project.casaschi.net/wiki/User_Notes_joomla/
@@ -120,6 +120,7 @@
  * 3.01.00: upgraded pgn4web to 3.01
  * 3.02.00: upgraded pgn4web to 3.02
  * 3.03.00: upgraded pgn4web to 3.03
+ * 3.04.00: upgraded pgn4web to 3.04
  **********************************************************************************/
 
 // No direct access allowed to this file

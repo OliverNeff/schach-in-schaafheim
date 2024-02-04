@@ -12,6 +12,123 @@ $ -> Language fix or change
 - -> Removed
 ! -> Note
 
+- - - - - 3.7.0 - [16-02-2019] - - - - - - - - - - - - - - - - - - - -
+# SWT-Import: Ignorieren von Verein und Mitgliedsnummer bei Import ohne Org-Bezug
+
+- - - - - 3.6.6 - [06-02-2019] - - - - - - - - - - - - - - - - - - - -
++ Einzelturniere: Bye-Regelung einschl. SWT- und TUNx-Import
+# pgn-Dateierstellung
+^ count-Funktion und PHP 7.3
++ Fehlerbehandlung: Kennzeichnung der durch Bots verursachten Fehler im Fehlertext
+^ Leistungssteigerung der DB-Zugriffe durch geänderte/neue Indizes
+  
+- - - - - 3.6.5 - [15-01-2019] - - - - - - - - - - - - - - - - - - - -
+# View Mitgliederliste: Anzeige Vorjahre entsprechend Datenschutzparameter
+# Views Paarungsliste und Runde: Summierung Sonderergebnisse
+# AdminClass CLMText: Format Feinwertungen
+^ Team-Views: Weglassen des Kommentars bei ungerader Anzahl Mannschaften
+^ Copyright 2008-2019
++ Views Mannschaft und Verein: Kartenanzeige nun wahlweise auch über OpenStreetMap
+ 
+- - - - - 3.6.4 - [22-11-2018] - - - - - - - - - - - - - - - - - - - -
+# Admin-View Mannschaftsaufstellung: Editorname
++ Einzelturniere: Teilnehmer mit weniger als 50% der Partien (FIDE §12b,c)
+# Admin-View Turnierwertung ändern: bei deaktivierter Berliner Wertung
+# Ergebnismeldung: Handling --kein Spieler-- verbessert zur Vermeidung von Notice (284+285)
+# Mini-Korrekturen zur Vermeidung von Warnungen bei Extern-Lösung
+^ pdf-Ausgabe: leichte Umgestaltung pdf-Meldeliste
+
+- - - - - 3.6.3 - [17-10-2018] - - - - - - - - - - - - - - - - - - - -
+# pdf-Ausgaben: Zusammenspiel mit Komponente Fabrik
+
+- - - - - 3.6.2 - [18-09-2018] - - - - - - - - - - - - - - - - - - - -
+^ Einzelturniere: Anzeige Direkter Vergleich
++ SWM-Import Voll-Turniere (Swiss-Manager Dateityp TURx) einschl. Update
++ Verein Saisonübersicht: CSV-Ausgabe
+# Admin-View Runden: Korrektur bis einschl. Uhrzeit
+# Admin-View Liga: Reihenfolge-Id
++ Liga Paarungsliste: CSV-Ausgabe zur Planung (nur engl. Anwendung)
+^ DB-Felder: Vereinsname, Spielername und FIDE-Titel erweitert 
++ Direkt-Update DSB-daten: Prüfung auf Update erfolgreich
+# Rundenmanager: Runden bearbeiten für aktuelle Liga
+^ Ligaheft: Minidesignändeung
+
+- - - - - 3.6.1 - [02-07-2018] - - - - - - - - - - - - - - - - - - - -
+^ Geburtsjahr: Anzeige-Standard nein
++ Archivdaten: Anzeige der Daten der Vorjahre nur für registrierte Benutzer (optional)
++ Benutzercheck auf Vereinszugehörigkeit (optional)
+
+- - - - - 3.6.0 - [23-05-2018] - - - - - - - - - - - - - - - - - - - -
+^ View Turnier-Spieler: Mini-Designänderung
+# SWM-Import: Feld Typ 
+
+- - - - - 3.5.2 - [14-05-2018] - - - - - - - - - - - - - - - - - - - -
+# Admin-View Meldeliste: Prüfung doppelte Spieler
+# Admin-View Ergebnismeldung: Turnierwertung ändern insb. Wertpunkte
++ Admin-View Meldeliste: Einfügen Spieler
++ Admin-View Mannschaft: Mannschaft annullieren
+# View Runde / View Info: Code-Nachbesserungen
+^ pdf-Ausgaben: Klasse FPDF 1.6 durch FPDF 1.81 wegen PHP 7.2 ersetzt
+# MTurnier: Berliner Wertung technisch umgestellt
+^ count-Funktion und PHP 7.2
+
+- - - - - 3.5.1 - [13-03-2018] - - - - - - - - - - - - - - - - - - - -
+# View Turnierplayer: Link zur ECF (engl. Anwendung)
++ View Aktuelle Runde bei ExternZugriff
+^ Copyright 2008-2018
++ ErrorHandling: Meldung um HTTP_USER_AGENT erweitert
+# Admin-View Datenbank: Liga Export/Import
+# Views Rangliste und Tabelle: deaktivierte Mannschaften 
+^ Saisonstatistik: ggf.ohne Daten -> keine Anzeige und kein Kommentar
+# Importe: engl. Texte überarbeitet
+^ View Rangliste: Spaltenbreite bei CH-Turnier erweitert
+# Link in Ergebnismail
+# View Turnier-Rangliste: Design-Nachbesserung
++ Ligen/MTurniere: Parameter 'Rangliste/Tabelle' als Standard-View in Submenü und Modulen
++ Menüeintragstyp Vereinsliste: Parameter erweitert
+# Ligen/MTurniere: nach 'Turnierwertung ändern' folgt Ranglisten-Neuberechnung
+# SWT-Import: fehlender Text
++ neuer View 'Liga-Teilnehmer' über Submenü und Menüeintragstyp
++ SWT-Import(Liga): Datei mit 0(0) Runden zur Übernahme der Teilnehmer
++ Ligen/MTurniere: Parameter 'Standard-View' erweitert um Teilnehmerliste
+
+- - - - - 3.5.0 - [13-12-2017] - - - - - - - - - - - - - - - - - - - -
+- - - - - 3.4.3 - [21-11-2017] - - - - - - - - - - - - - - - - - - - -
+# Meldeliste Eingabe im FE bei Spielgemeinschaften
+# Admin-View Saison: Anpassung MySQL 5.7 / PHP 7
++ SWM-Import CH-Turniere (Swiss-Manager Dateityp TUNx) einschl. Update
++ neuer View: Saisonübersicht pro Verein einschl. Kopfmenü
+# SWT-Import Turnier: Übernahme der Ergebnissen 0,5-0 und 0-0,5
+# Admin-View Ligen: Änderung Hint-Text
+# Admin-View Meldeliste: rechte K-Spalte 4-stellig
+# View Mannschaft und Ligaheft: Prozentfehler bei KO-Turnier
+
+- - - - - 3.4.2 - [03-09-2017] - - - - - - - - - - - - - - - - - - - -
++ Views Mannschaft,Verein Google-Maps bei SSL
++ pdf-View Mannschaft mit Attributsfeld
++ Sonderranglisten kopieren
+# Sonderranglisten: Textkorrekturen
+^ Logging: alle Einträge löschen -> alle älter als 450 Tage
+# SWT-Import Turnier: Übernahme Teilnehmerzahl
+# pdf-Views Paarungsliste und Liga-Heft: Datum der Paarung
+
+- - - - - 3.4.1 - [22-05-2017] - - - - - - - - - - - - - - - - - - - -
+^ Anpassungen an date,datetime mit '0000-00-00' (MySQL 5.7)
+^ Anpassungen PHP7
++ Grading Export für Mannschaftsturniere (engl.Anwendung)
+# pdf-Paarungsliste: Behandlung langer Kommentare
++ Mannschaftsturniere: Erstellung pgn-Templatedatei
+# Einzelturniere: Text Freies System
+# Termine: Tippfehler bei date-Anpassung und kleine Designkorrektur
+^ Rundenbericht: pgn-Template als API und mit Mehrsprachigkeit
+# DWZ-Liste: Sortierung mit DWZ-Index
+# Ergebniskorrektur: kleine engl. Textänderungen
++ View Spieler: Link zu ECF Grading Database (engl. Anwendung)
+# View akt. Runde: fehlerhafte Parameterabfrage
+# View Spieler: Summierung Punkte bei kampflosen Partien
+# View Mannschaft: Anzeige Zeile Gesamt
+^ Mannschaftsaufstellung: Attributsfeld erweitert
+
 - - - - - 3.4.0 - [08-03-2017] - - - - - - - - - - - - - - - - - - - -
 # PGN-Anzeige: Nachbesserung
 ^ Eingabe Aufstellung: Einbau Mehrsprachigkeit

@@ -1,19 +1,17 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
-$db = JFactory::getDBO();
-$db->setQuery('SELECT count(id) FROM '.acymailing_table('users', false));
-$resultUsers = $db->loadResult();
+$resultUsers = acymailing_loadResult('SELECT count('.$this->cmsUserVars->id.') FROM '.acymailing_table($this->cmsUserVars->table, false));
 
-$db->setQuery('SELECT count(subid) FROM '.acymailing_table('subscriber').' WHERE userid > 0');
-$resultAcymailing = $db->loadResult();
+$resultAcymailing = acymailing_loadResult('SELECT count(subid) FROM '.acymailing_table('subscriber').' WHERE userid > 0');
 
 echo acymailing_translation_sprintf('ACY_IMPORT_NB_J_USERS', $resultUsers).'<br />';
 echo acymailing_translation_sprintf('ACY_IMPORT_NB_ACY_USERS', $resultAcymailing).'<br />';

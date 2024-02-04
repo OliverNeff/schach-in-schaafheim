@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -15,23 +16,21 @@ JHtml::_('bootstrap.framework');
 class JHtmlAcyselect extends JHTMLSelect{
 	static $event = false;
 
-	public static function booleanlist($name, $attribs = null, $selected = null, $yes = 'JYES', $no = 'JNO', $id = false){
-		$arr = array(JHtml::_('select.option', '0', acymailing_translation($no)), JHtml::_('acyselect.option', '1', acymailing_translation($yes)));
+	public static function booleanlist($name, $attribs = null, $selected = null, $yes = 'JOOMEXT_YES', $no = 'JOOMEXT_NO', $id = false){
+		$arr = array(acymailing_selectOption('0', acymailing_translation($no)), acymailing_selectOption('1', acymailing_translation($yes)));
 		$arr[0]->class = 'btn-danger';
 		$arr[1]->class = 'btn-success';
-		return JHtml::_('acyselect.radiolist', $arr, $name, $attribs, 'value', 'text', (int)$selected, $id);
+		return acymailing_radio($arr, $name, $attribs, 'value', 'text', (int)$selected, $id);
 	}
 
 	public static function radiolist($data, $name, $attribs = null, $optKey = 'value', $optText = 'text', $selected = null, $idtag = false, $translate = false, $vertical = false){
 		reset($data);
-		$app = JFactory::getApplication();
-		$backend = $app->isAdmin();
+		$backend = acymailing_isAdmin();
 		$config = acymailing_config();
 		if(!self::$event){
 			self::$event = true;
-			$doc = JFactory::getDocument();
 			if($backend){
-				$doc->addScriptDeclaration('
+				acymailing_addScript(true, '
 (function($){
 	$.propHooks.checked = {
 		set: function(elem, value, name) {
@@ -42,7 +41,7 @@ class JHtmlAcyselect extends JHTMLSelect{
 	};
 })(jQuery);');
 			}else{
-				$doc->addScriptDeclaration('
+				acymailing_addScript(true, '
 (function($){
 if(!window.acyLocal)
 	window.acyLocal = {};

@@ -24,7 +24,7 @@ function piechartToImage($filename, $width, $height, $values, $colors){
 	imagePNG( $img );
 	$image = ob_get_clean();
     
-    JFile::write(ACYMAILING_MEDIA.'statistic_charts'.DS.$filename, $image);
+    acymailing_writeFile(ACYMAILING_MEDIA.'statistic_charts'.DS.$filename, $image);
 
 	return true;
 }

@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -17,7 +18,7 @@ class acypictHelper{
 	var $destination;
 
 	function __construct(){
-		jimport('joomla.filesystem.file');
+		
 	}
 
 	function removePictures($text){
@@ -177,7 +178,7 @@ class acypictHelper{
 				break;
 		}
 		$imageContent = ob_get_clean();
-		$status = $status && JFile::write($newFile,$imageContent);
+		$status = $status && acymailing_writeFile($newFile,$imageContent);
 		imagedestroy($thumb);
 		imagedestroy($img);
 
@@ -186,3 +187,4 @@ class acypictHelper{
 		return array('file' => $newFile,'width' => $newWidth,'height' => $newHeight);
 	}
 }
+

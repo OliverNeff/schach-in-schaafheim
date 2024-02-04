@@ -1,19 +1,21 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
-class statusquickType{
+class statusquickType extends acymailingClass{
 	function __construct(){
+		parent::__construct();
 		$this->values = array();
-		$this->values[] = JHTML::_('select.option', '0', acymailing_translation('JOOMEXT_RESET') );
-		$this->values[] = JHTML::_('select.option', '1', acymailing_translation('SUBSCRIBE_ALL') );
+		$this->values[] = acymailing_selectOption('0', acymailing_translation('JOOMEXT_RESET'));
+		$this->values[] = acymailing_selectOption('1', acymailing_translation('SUBSCRIBE_ALL'));
 
 		$js = "function updateStatus(statusval){".
 			'var i=0;'.
@@ -24,11 +26,10 @@ class statusquickType{
 		$js .= "window.document.getElementById('status'+i+statusval).checked = true;";
 		$js .= 'i++;}'.
 		'}';
-		$doc = JFactory::getDocument();
-		$doc->addScriptDeclaration( $js );
+		acymailing_addScript(true, $js);
 	}
 
 	function display($map){
-		return JHTML::_('acyselect.radiolist', $this->values, $map , 'class="radiobox" size="1" onclick="updateStatus(this.value)"', 'value', 'text', '','status_all');
+		return acymailing_radio($this->values, $map , 'class="radiobox" size="1" onclick="updateStatus(this.value)"', 'value', 'text', '','status_all');
 	}
 }

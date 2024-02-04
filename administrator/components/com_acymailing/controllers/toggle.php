@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -40,12 +41,12 @@ class ToggleController extends acymailingController{
 	function toggle(){
 		acymailing_checkToken();
 
-		$completeTask = JRequest::getCmd('task');
+		$completeTask = acymailing_getVar('cmd', 'task');
 		$task = substr($completeTask, 0, strpos($completeTask, '_'));
 		$elementId = substr($completeTask, strpos($completeTask, '_') + 1);
 
-		$value = JRequest::getVar('value', '0', '', 'int');
-		$table = JRequest::getVar('table', '', '', 'word');
+		$value = acymailing_getVar('int', 'value', '0', '');
+		$table = acymailing_getVar('word', 'table', '', '');
 
 		if(empty($this->allowedTablesColumn[$table]) || empty($this->allowedTablesColumn[$table][$task])) exit;
 		$pkey = $this->allowedTablesColumn[$table][$task];
@@ -55,19 +56,17 @@ class ToggleController extends acymailingController{
 		if(method_exists($this, $function)){
 			$this->$function($elementId, $value);
 		}else{
-			$db = JFactory::getDBO();
-			$db->setQuery('UPDATE '.acymailing_table($table).' SET '.$task.' = '.$value.' WHERE '.$pkey.' = '.intval($elementId).' LIMIT 1');
-			$db->query();
+			acymailing_query('UPDATE '.acymailing_table($table).' SET '.$task.' = '.$value.' WHERE '.$pkey.' = '.intval($elementId).' LIMIT 1');
 		}
 
 		$toggleClass = acymailing_get('helper.toggle');
-		$extra = JRequest::getVar('extra', array(), '', 'array');
+		$extra = acymailing_getVar('array', 'extra', array(), '');
 		if(!empty($extra)){
 			foreach($extra as $key => $val){
 				$extra[$key] = urldecode($val);
 			}
 		}
-		echo $toggleClass->toggle(JRequest::getCmd('task', ''), $value, $table, $extra);
+		echo $toggleClass->toggle(acymailing_getVar('cmd', 'task', ''), $value, $table, $extra);
 		exit;
 	}
 
@@ -87,7 +86,7 @@ class ToggleController extends acymailingController{
 				$total++;
 			}else{
 				echo '<br /><span style="color:red" >Port <b>'.$port.'</b> not opened on your server ';
-				echo " errornum: ".$errno.' : '.$errstr;
+				echo " errornum: ".$errno.' : '.utf8_encode($errstr);
 				echo '</span>';
 			}
 		}
@@ -98,7 +97,7 @@ class ToggleController extends acymailingController{
 	}
 
 	function testApiKey(){
-		$apiKey = JRequest::getString('value', '');
+		$apiKey = acymailing_getVar('string', 'value', '');
 		if(empty($apiKey)){
 			echo '<span style="color:red">No API key</span><br />';
 			exit;
@@ -121,7 +120,6 @@ class ToggleController extends acymailingController{
 		}
 		exit;
 	}
-
 
 	function configaddindex($table, $value){
 		$queries = array();
@@ -160,19 +158,16 @@ class ToggleController extends acymailingController{
 			exit;
 		}
 
-		$db = JFactory::getDBO();
 		$indexOk = 0;
 		echo '<span style="color:purple">| ';
 		foreach($queries[$table] as $oneQuery){
-			$db->setQuery($oneQuery);
-
 			try{
-				$isError = $db->query();
+				$isError = acymailing_query($oneQuery);
 			}catch(Exception $e){
 				$isError = null;
 			}
-			if($isError == null){
-				echo isset($e) ? $e->getMessage() : substr(strip_tags($db->getErrorMsg()), 0, 200).'...';
+			if($isError === null){
+				echo isset($e) ? $e->getMessage() : substr(strip_tags(acymailing_getDBError()), 0, 200).'...';
 			}else{
 				$indexOk++;
 			}
@@ -226,14 +221,11 @@ class ToggleController extends acymailingController{
 			exit;
 		}
 
-		$db = JFactory::getDBO();
 		$query = 'UPDATE #__acymailing_queue as a ';
 		$query .= 'LEFT JOIN #__acymailing_listsub as b ON a.subid = b.subid AND b.listid = '.$mycampaign->listid;
 		$query .= ' SET a.`senddate` = b.`subdate` + '.$followup->senddate;
 		$query .= ' WHERE a.mailid = '.$followup->mailid;
-		$db->setQuery($query);
-		$db->query();
-		$nbupdated = $db->getAffectedRows();
+		$nbupdated = acymailing_query($query);
 
 		if(!empty($nbupdated)){
 			$campaignHelper = acymailing_get('helper.campaign');
@@ -245,10 +237,10 @@ class ToggleController extends acymailingController{
 	}
 
 	function delete(){
-		$value = JRequest::getCmd('value');
+		$value = acymailing_getVar('cmd', 'value');
 		if(strpos($value, '_') === false) exit;
 		list($value1, $value2) = explode('_', $value);
-		$table = JRequest::getVar('table', '', '', 'word');
+		$table = acymailing_getVar('word', 'table', '', '');
 		if(empty($table)) exit;
 
 		$function = 'delete'.$table;
@@ -263,9 +255,7 @@ class ToggleController extends acymailingController{
 
 		if(empty($key1) || empty($key2) || empty($value1) || empty($value2)) exit;
 
-		$db = JFactory::getDBO();
-		$db->setQuery('DELETE FROM '.acymailing_table($table).' WHERE '.$key1.' = '.intval($value1).' AND '.$key2.' = '.intval($value2));
-		$db->query();
+		acymailing_query('DELETE FROM '.acymailing_table($table).' WHERE '.$key1.' = '.intval($value1).' AND '.$key2.' = '.intval($value2));
 
 		exit;
 	}
@@ -290,18 +280,14 @@ class ToggleController extends acymailingController{
 		$mailid = intval($mailid);
 		if(empty($mailid)) return false;
 
-		$db = JFactory::getDBO();
-		$db->setQuery('SELECT attach FROM '.acymailing_table('mail').' WHERE mailid = '.$mailid.' LIMIT 1');
-		$attachment = $db->loadResult();
+		$attachment = acymailing_loadResult('SELECT attach FROM '.acymailing_table('mail').' WHERE mailid = '.$mailid.' LIMIT 1');
 		if(empty($attachment)) return;
 		$attach = unserialize($attachment);
 
 		unset($attach[$attachid]);
 		$attachdb = serialize($attach);
 
-		$db->setQuery('UPDATE '.acymailing_table('mail').' SET attach = '.$db->Quote($attachdb).' WHERE mailid = '.$mailid.' LIMIT 1');
-
-		return $db->query();
+		return acymailing_query('UPDATE '.acymailing_table('mail').' SET attach = '.acymailing_escapeDB($attachdb).' WHERE mailid = '.$mailid.' LIMIT 1');
 	}
 
 	function deleteFavicon($mailid, $favicon){
@@ -312,10 +298,7 @@ class ToggleController extends acymailingController{
 		$mailid = intval($mailid);
 		if(empty($mailid)) return false;
 
-		$db = JFactory::getDBO();
-		$db->setQuery('UPDATE '.acymailing_table('mail').' SET favicon = "" WHERE mailid = '.$mailid.' LIMIT 1');
-
-		return $db->query();
+		return acymailing_query('UPDATE '.acymailing_table('mail').' SET favicon = "" WHERE mailid = '.$mailid.' LIMIT 1');
 	}
 
 	function subscriberconfirmed($subid, $value){
@@ -323,9 +306,7 @@ class ToggleController extends acymailingController{
 			$subscriberClass = acymailing_get('class.subscriber');
 			$subscriberClass->confirmSubscription($subid);
 		}else{
-			$db = JFactory::getDBO();
-			$db->setQuery('UPDATE '.acymailing_table('subscriber').' SET confirmed = '.$value.' WHERE subid = '.intval($subid).' LIMIT 1');
-			$db->query();
+			acymailing_query('UPDATE '.acymailing_table('subscriber').' SET confirmed = '.$value.' WHERE subid = '.intval($subid).' LIMIT 1');
 		}
 	}
 
@@ -347,13 +328,11 @@ class ToggleController extends acymailingController{
 	function pluginspublished($id, $publish){
 		acymailing_checkToken();
 
-		$db = JFactory::getDBO();
 		if(!ACYMAILING_J16){
-			$db->setQuery('UPDATE '.acymailing_table('plugins', false).' SET `published` = '.intval($publish).' WHERE `id` = '.intval($id).' AND (`folder` = \'acymailing\' OR `name` LIKE \'%acymailing%\' OR `element` LIKE \'%acymailing%\') LIMIT 1');
+			acymailing_query('UPDATE '.acymailing_table('plugins', false).' SET `published` = '.intval($publish).' WHERE `id` = '.intval($id).' AND (`folder` = \'acymailing\' OR `name` LIKE \'%acymailing%\' OR `element` LIKE \'%acymailing%\') LIMIT 1');
 		}else{
-			$db->setQuery('UPDATE `#__extensions` SET `enabled` = '.intval($publish).' WHERE `extension_id` = '.intval($id).' AND (`folder` = \'acymailing\' OR `name` LIKE \'%acymailing%\' OR `element` LIKE \'%acymailing%\') LIMIT 1');
+			acymailing_query('UPDATE `#__extensions` SET `enabled` = '.intval($publish).' WHERE `extension_id` = '.intval($id).' AND (`folder` = \'acymailing\' OR `name` LIKE \'%acymailing%\' OR `element` LIKE \'%acymailing%\') LIMIT 1');
 		}
-		$db->query();
 
 		$updateHelper = acymailing_get('helper.update');
 		$updateHelper->cleanPluginCache();

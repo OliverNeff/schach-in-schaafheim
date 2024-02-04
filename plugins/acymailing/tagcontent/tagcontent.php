@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php defined('_JEXEC') or die('Restricted access'); ?>
 <?php
@@ -17,13 +18,13 @@ class plgAcymailingTagcontent extends JPlugin{
 			$plugin = JPluginHelper::getPlugin('acymailing', 'tagcontent');
 			$this->params = new acyParameter($plugin->params);
 		}
-		$this->db = JFactory::getDBO();
 		$this->acypluginsHelper = acymailing_get('helper.acyplugins');
+		$tables = acymailing_getTableList();
+		$this->newMulticats = in_array(acymailing_getPrefix().'content_multicats', $tables);
 	}
 
 	public function acymailing_getPluginType(){
-		$app = JFactory::getApplication();
-		if($this->params->get('frontendaccess') == 'none' && !$app->isAdmin()) return;
+		if($this->params->get('frontendaccess') == 'none' && !acymailing_isAdmin()) return;
 
 		$onePlugin = new stdClass();
 		$onePlugin->name = acymailing_translation('JOOMLA_CONTENT');
@@ -34,56 +35,53 @@ class plgAcymailingTagcontent extends JPlugin{
 	}
 
 	public function acymailingtagcontent_show(){
-		$app = JFactory::getApplication();
 
 		$pageInfo = new stdClass();
 		$pageInfo->filter = new stdClass();
 		$pageInfo->filter->order = new stdClass();
 		$pageInfo->limit = new stdClass();
 		$pageInfo->elements = new stdClass();
-
-		$my = JFactory::getUser();
-		$lang = JFactory::getLanguage();
-		$lang->load('com_content', JPATH_SITE);
+		
+		acymailing_loadLanguageFile('com_content', JPATH_SITE);
 
 		$paramBase = ACYMAILING_COMPONENT.'.tagcontent';
-		$pageInfo->filter->order->value = $app->getUserStateFromRequest($paramBase.".filter_order", 'filter_order', 'a.id', 'cmd');
-		$pageInfo->filter->order->dir = $app->getUserStateFromRequest($paramBase.".filter_order_Dir", 'filter_order_Dir', 'desc', 'word');
+		$pageInfo->filter->order->value = acymailing_getUserVar($paramBase.".filter_order", 'filter_order', 'a.id', 'cmd');
+		$pageInfo->filter->order->dir = acymailing_getUserVar($paramBase.".filter_order_Dir", 'filter_order_Dir', 'desc', 'word');
 		if(strtolower($pageInfo->filter->order->dir) !== 'desc') $pageInfo->filter->order->dir = 'asc';
-		$pageInfo->search = $app->getUserStateFromRequest($paramBase.".search", 'search', '', 'string');
-		$pageInfo->search = JString::strtolower(trim($pageInfo->search));
-		$pageInfo->filter_cat = $app->getUserStateFromRequest($paramBase.".filter_cat", 'filter_cat', '', 'int');
-		$pageInfo->contenttype = $app->getUserStateFromRequest($paramBase.".contenttype", 'contenttype', $this->params->get('default_type', 'intro'), 'string');
-		$pageInfo->author = $app->getUserStateFromRequest($paramBase.".author", 'author', $this->params->get('default_author', '0'), 'string');
-		$pageInfo->titlelink = $app->getUserStateFromRequest($paramBase.".titlelink", 'titlelink', $this->params->get('default_titlelink', 'link'), 'string');
-		$pageInfo->lang = $app->getUserStateFromRequest($paramBase.".lang", 'lang', '', 'string');
-		$pageInfo->pict = $app->getUserStateFromRequest($paramBase.".pict", 'pict', $this->params->get('default_pict', 1), 'string');
-		$pageInfo->pictheight = $app->getUserStateFromRequest($paramBase.".pictheight", 'pictheight', $this->params->get('maxheight', 150), 'string');
-		$pageInfo->pictwidth = $app->getUserStateFromRequest($paramBase.".pictwidth", 'pictwidth', $this->params->get('maxwidth', 150), 'string');
+		$pageInfo->search = acymailing_getUserVar($paramBase.".search", 'search', '', 'string');
+		$pageInfo->search = strtolower(trim($pageInfo->search));
+		$pageInfo->filter_cat = acymailing_getUserVar($paramBase.".filter_cat", 'filter_cat', '', 'int');
+		$pageInfo->contenttype = acymailing_getUserVar($paramBase.".contenttype", 'contenttype', $this->params->get('default_type', 'intro'), 'string');
+		$pageInfo->author = acymailing_getUserVar($paramBase.".author", 'author', $this->params->get('default_author', '0'), 'string');
+		$pageInfo->titlelink = acymailing_getUserVar($paramBase.".titlelink", 'titlelink', $this->params->get('default_titlelink', 'link'), 'string');
+		$pageInfo->lang = acymailing_getUserVar($paramBase.".lang", 'lang', '', 'string');
+		$pageInfo->pict = acymailing_getUserVar($paramBase.".pict", 'pict', $this->params->get('default_pict', 1), 'string');
+		$pageInfo->pictheight = acymailing_getUserVar($paramBase.".pictheight", 'pictheight', $this->params->get('maxheight', 150), 'string');
+		$pageInfo->pictwidth = acymailing_getUserVar($paramBase.".pictwidth", 'pictwidth', $this->params->get('maxwidth', 150), 'string');
 
 
-		$pageInfo->limit->value = $app->getUserStateFromRequest($paramBase.'.list_limit', 'limit', $app->getCfg('list_limit'), 'int');
-		$pageInfo->limit->start = $app->getUserStateFromRequest($paramBase.'.limitstart', 'limitstart', 0, 'int');
+		$pageInfo->limit->value = acymailing_getUserVar($paramBase.'.list_limit', 'limit', acymailing_getCMSConfig('list_limit'), 'int');
+		$pageInfo->limit->start = acymailing_getUserVar($paramBase.'.limitstart', 'limitstart', 0, 'int');
 
 		$picts = array();
-		$picts[] = JHTML::_('select.option', "1", acymailing_translation('JOOMEXT_YES'));
+		$picts[] = acymailing_selectOption("1", acymailing_translation('JOOMEXT_YES'));
 		$pictureHelper = acymailing_get('helper.acypict');
-		if($pictureHelper->available()) $picts[] = JHTML::_('select.option', "resized", acymailing_translation('RESIZED'));
-		$picts[] = JHTML::_('select.option', "0", acymailing_translation('JOOMEXT_NO'));
+		if($pictureHelper->available()) $picts[] = acymailing_selectOption("resized", acymailing_translation('RESIZED'));
+		$picts[] = acymailing_selectOption("0", acymailing_translation('JOOMEXT_NO'));
 
 		$contenttype = array();
-		$contenttype[] = JHTML::_('select.option', "title", acymailing_translation('TITLE_ONLY'));
-		$contenttype[] = JHTML::_('select.option', "intro", acymailing_translation('INTRO_ONLY'));
-		$contenttype[] = JHTML::_('select.option', "text", acymailing_translation('FIELD_TEXT'));
-		$contenttype[] = JHTML::_('select.option', "full", acymailing_translation('FULL_TEXT'));
+		$contenttype[] = acymailing_selectOption("title", acymailing_translation('TITLE_ONLY'));
+		$contenttype[] = acymailing_selectOption("intro", acymailing_translation('INTRO_ONLY'));
+		$contenttype[] = acymailing_selectOption("text", acymailing_translation('FIELD_TEXT'));
+		$contenttype[] = acymailing_selectOption("full", acymailing_translation('FULL_TEXT'));
 
 		$titlelink = array();
-		$titlelink[] = JHTML::_('select.option', "link", acymailing_translation('JOOMEXT_YES'));
-		$titlelink[] = JHTML::_('select.option', "0", acymailing_translation('JOOMEXT_NO'));
+		$titlelink[] = acymailing_selectOption("link", acymailing_translation('JOOMEXT_YES'));
+		$titlelink[] = acymailing_selectOption("0", acymailing_translation('JOOMEXT_NO'));
 
 		$authorname = array();
-		$authorname[] = JHTML::_('select.option', "author", acymailing_translation('JOOMEXT_YES'));
-		$authorname[] = JHTML::_('select.option', "0", acymailing_translation('JOOMEXT_NO'));
+		$authorname[] = acymailing_selectOption("author", acymailing_translation('JOOMEXT_YES'));
+		$authorname[] = acymailing_selectOption("0", acymailing_translation('JOOMEXT_NO'));
 
 		$searchFields = array('a.id', 'a.title', 'a.alias', 'a.created_by', 'b.name', 'b.username');
 		if(!empty($pageInfo->search)){
@@ -101,7 +99,9 @@ class plgAcymailingTagcontent extends JPlugin{
 			$filters[] = "a.state != -2";
 		}
 
-		if(!$app->isAdmin()){
+		if(!acymailing_isAdmin()){
+			$my = JFactory::getUser();
+
 			if(!ACYMAILING_J16){
 				$filters[] = 'a.`access` <= '.(int)$my->get('aid');
 			}else{
@@ -110,8 +110,8 @@ class plgAcymailingTagcontent extends JPlugin{
 			}
 		}
 
-		if($this->params->get('frontendaccess') == 'author' && !$app->isAdmin()){
-			$filters[] = "a.created_by = ".intval($my->id);
+		if($this->params->get('frontendaccess') == 'author' && !acymailing_isAdmin()){
+			$filters[] = "a.created_by = ".intval(acymailing_currentUserId());
 		}
 
 		$whereQuery = '';
@@ -126,49 +126,44 @@ class plgAcymailingTagcontent extends JPlugin{
 			$query .= ' ORDER BY '.$pageInfo->filter->order->value.' '.$pageInfo->filter->order->dir;
 		}
 
-		$this->db->setQuery($query, $pageInfo->limit->start, $pageInfo->limit->value);
-		$rows = $this->db->loadObjectList();
+		$rows = acymailing_loadObjectList($query, '', $pageInfo->limit->start, $pageInfo->limit->value);
 
 		if(!empty($pageInfo->search)){
 			$rows = acymailing_search($pageInfo->search, $rows);
 		}
 
-		$this->db->setQuery('SELECT FOUND_ROWS()');
-		$pageInfo->elements->total = $this->db->loadResult();
+		$pageInfo->elements->total = acymailing_loadResult('SELECT FOUND_ROWS()');
 		$pageInfo->elements->page = count($rows);
 
 		if(!ACYMAILING_J16){
 			$query = 'SELECT a.id, a.id as catid, a.title as category, b.title as section, b.id as secid from #__categories as a ';
 			$query .= 'INNER JOIN #__sections as b on a.section = b.id ORDER BY b.ordering,a.ordering';
 
-			$this->db->setQuery($query);
-			$categories = $this->db->loadObjectList('id');
+			$categories = acymailing_loadObjectList($query, 'id');
 			$categoriesValues = array();
-			$categoriesValues[] = JHTML::_('select.option', '', acymailing_translation('ACY_ALL'));
+			$categoriesValues[] = acymailing_selectOption('', acymailing_translation('ACY_ALL'));
 			$currentSec = '';
 			foreach($categories as $catid => $oneCategorie){
 				if($currentSec != $oneCategorie->section){
-					if(!empty($currentSec)) $this->values[] = JHTML::_('select.option', '</OPTGROUP>');
-					$categoriesValues[] = JHTML::_('select.option', '<OPTGROUP>', $oneCategorie->section);
+					if(!empty($currentSec)) $this->values[] = acymailing_selectOption('</OPTGROUP>');
+					$categoriesValues[] = acymailing_selectOption('<OPTGROUP>', $oneCategorie->section);
 					$currentSec = $oneCategorie->section;
 				}
-				$categoriesValues[] = JHTML::_('select.option', $catid, $oneCategorie->category);
+				$categoriesValues[] = acymailing_selectOption($catid, $oneCategorie->category);
 			}
 		}else{
 			$query = "SELECT * from #__categories WHERE `extension` = 'com_content' ORDER BY lft ASC";
 
-			$this->db->setQuery($query);
-			$categories = $this->db->loadObjectList('id');
+			$categories = acymailing_loadObjectList($query, 'id');
 			$categoriesValues = array();
-			$categoriesValues[] = JHTML::_('select.option', '', acymailing_translation('ACY_ALL'));
+			$categoriesValues[] = acymailing_selectOption('', acymailing_translation('ACY_ALL'));
 			foreach($categories as $catid => $oneCategorie){
 				$categories[$catid]->title = str_repeat('- - ', $categories[$catid]->level).$categories[$catid]->title;
-				$categoriesValues[] = JHTML::_('select.option', $catid, $categories[$catid]->title);
+				$categoriesValues[] = acymailing_selectOption($catid, $categories[$catid]->title);
 			}
 		}
 
-		jimport('joomla.html.pagination');
-		$pagination = new JPagination($pageInfo->elements->total, $pageInfo->limit->start, $pageInfo->limit->value);
+		$pagination = new acyPagination($pageInfo->elements->total, $pageInfo->limit->start, $pageInfo->limit->value);
 
 		$tabs = acymailing_get('helper.acytabs');
 		echo $tabs->startPane('joomlacontent_tab');
@@ -199,6 +194,24 @@ class plgAcymailingTagcontent extends JPlugin{
 						otherinfo += '| type:' + document.adminForm.contenttype[i].value;
 					}
 				}
+
+				if(document.adminForm.customfields){
+					if(document.adminForm.customfields.length == undefined){
+						if(document.adminForm.customfields.checked) otherinfo += "| custom:" + document.adminForm.customfields.value;
+					}else{
+						tmp = 0;
+						for(i = 0; i < document.adminForm.customfields.length; i++){
+							if(!document.adminForm.customfields[i].checked) continue;
+							if(tmp == 0){
+								tmp += 1;
+								otherinfo += "| custom:" + document.adminForm.customfields[i].value;
+							}else{
+								otherinfo += "," + document.adminForm.customfields[i].value;
+							}
+						}
+					}
+				}
+
 				for(var i = 0; i < document.adminForm.titlelink.length; i++){
 					if(document.adminForm.titlelink[i].checked && document.adminForm.titlelink[i].value.length > 1){
 						otherinfo += '| ' + document.adminForm.titlelink[i].value;
@@ -267,7 +280,7 @@ class plgAcymailingTagcontent extends JPlugin{
 						<?php echo acymailing_translation('DISPLAY'); ?>
 					</td>
 					<td colspan="2">
-						<?php echo JHTML::_('acyselect.radiolist', $contenttype, 'contenttype', 'size="1" onclick="updateTag();"', 'value', 'text', $pageInfo->contenttype); ?>
+						<?php echo acymailing_radio($contenttype, 'contenttype', 'size="1" onclick="updateTag();"', 'value', 'text', $pageInfo->contenttype); ?>
 					</td>
 					<td>
 						<?php $jflanguages = acymailing_get('type.jflanguages');
@@ -283,7 +296,7 @@ class plgAcymailingTagcontent extends JPlugin{
 						<?php echo $this->acypluginsHelper->getFormatOption('tagcontent'); ?>
 					</td>
 					<td valign="top"><?php echo acymailing_translation('DISPLAY_PICTURES'); ?></td>
-					<td valign="top"><?php echo JHTML::_('acyselect.radiolist', $picts, 'pict', 'size="1" onclick="updateTag();"', 'value', 'text', $pageInfo->pict); ?>
+					<td valign="top"><?php echo acymailing_radio($picts, 'pict', 'size="1" onclick="updateTag();"', 'value', 'text', $pageInfo->pict); ?>
 						<span id="pictsize" <?php if($pageInfo->pict != 'resized') echo 'style="display:none;"'; ?>><br/><?php echo acymailing_translation('CAPTCHA_WIDTH') ?>
 							<input name="pictwidth" type="text" onchange="updateTag();" value="<?php echo $pageInfo->pictwidth; ?>" style="width:30px;"/>
 							x <?php echo acymailing_translation('CAPTCHA_HEIGHT') ?>
@@ -296,13 +309,13 @@ class plgAcymailingTagcontent extends JPlugin{
 						<?php echo acymailing_translation('CLICKABLE_TITLE'); ?>
 					</td>
 					<td>
-						<?php echo JHTML::_('acyselect.radiolist', $titlelink, 'titlelink', 'size="1" onclick="updateTag();"', 'value', 'text', $pageInfo->titlelink); ?>
+						<?php echo acymailing_radio($titlelink, 'titlelink', 'size="1" onclick="updateTag();"', 'value', 'text', $pageInfo->titlelink); ?>
 					</td>
 					<td>
 						<?php echo acymailing_translation('AUTHOR_NAME'); ?>
 					</td>
 					<td>
-						<?php echo JHTML::_('acyselect.radiolist', $authorname, 'author', 'size="1" onclick="updateTag();"', 'value', 'text', (string)$pageInfo->author); ?>
+						<?php echo acymailing_radio($authorname, 'author', 'size="1" onclick="updateTag();"', 'value', 'text', (string)$pageInfo->author); ?>
 					</td>
 				</tr>
 				<tr>
@@ -332,6 +345,46 @@ class plgAcymailingTagcontent extends JPlugin{
 				?>
 				</tr>
 			</table>
+<?php
+		$jversion = preg_replace('#[^0-9\.]#i', '', JVERSION);
+		if(version_compare($jversion, '3.7.0', '>=')){
+			$query = 'SELECT id, title, group_id FROM #__fields WHERE context = "com_content.article" AND state = 1 ORDER BY title ASC';
+			$customFields = acymailing_loadObjectList($query);
+
+			if(!empty($customFields)){
+				$query = 'SELECT id, title FROM #__fields_groups WHERE context = "com_content.article" AND state = 1 ORDER BY title ASC';
+				$groups = acymailing_loadObjectList($query);
+				$defaultGroup = new stdClass();
+				$defaultGroup->id = 0;
+				$defaultGroup->title = acymailing_translation('ACY_NO_GROUP');
+				array_unshift($groups, $defaultGroup);
+
+				echo '<div class="onelineblockoptions">
+						<span class="acyblocktitle">'.acymailing_translation('EXTRA_FIELDS').'</span>
+						<table class="acymailing_table" cellpadding="1">';
+				foreach($groups as $oneGroup){
+					echo '<tr><td style="font-weight: bold;">'.$oneGroup->title.'</td>';
+					$i = 1;
+					foreach($customFields as $oneCF){
+						if($oneCF->group_id != $oneGroup->id) continue;
+						if($i == 4){
+							$i = 1;
+							echo '</tr><tr><td/>';
+						}
+						echo '<td><input value="'.$oneCF->id.'" name="customfields" id="cf_'.$oneCF->id.'" type="checkbox" onclick="updateTag();"/>';
+						echo '<label style="margin-left:5px" for="cf_'.$oneCF->id.'">'.$oneCF->title.'</label></td>';
+						$i++;
+					}
+					while($i != 4){
+						$i++;
+						echo '<td/>';
+					}
+					echo '</tr>';
+				}
+				echo '</table></div>';
+			}
+		}
+?>
 		</div>
 		<div class="onelineblockoptions">
 			<table class="acymailing_table_options">
@@ -340,7 +393,7 @@ class plgAcymailingTagcontent extends JPlugin{
 						<?php acymailing_listingsearch($pageInfo->search); ?>
 					</td>
 					<td nowrap="nowrap">
-						<?php echo JHTML::_('select.genericlist', $categoriesValues, 'filter_cat', 'class="inputbox" size="1" onchange="document.adminForm.submit( );"', 'value', 'text', (int)$pageInfo->filter_cat); ?>
+						<?php echo acymailing_select($categoriesValues, 'filter_cat', 'class="inputbox" size="1" onchange="document.adminForm.submit( );"', 'value', 'text', (int)$pageInfo->filter_cat); ?>
 					</td>
 				</tr>
 			</table>
@@ -351,19 +404,19 @@ class plgAcymailingTagcontent extends JPlugin{
 					<th class="title">
 					</th>
 					<th class="title">
-						<?php echo JHTML::_('grid.sort', acymailing_translation('FIELD_TITLE'), 'a.title', $pageInfo->filter->order->dir, $pageInfo->filter->order->value); ?>
+						<?php echo acymailing_gridSort(acymailing_translation('FIELD_TITLE'), 'a.title', $pageInfo->filter->order->dir, $pageInfo->filter->order->value); ?>
 					</th>
 					<th class="title">
-						<?php echo JHTML::_('grid.sort', acymailing_translation('ACY_AUTHOR'), 'b.name', $pageInfo->filter->order->dir, $pageInfo->filter->order->value); ?>
+						<?php echo acymailing_gridSort(acymailing_translation('ACY_AUTHOR'), 'b.name', $pageInfo->filter->order->dir, $pageInfo->filter->order->value); ?>
 					</th>
 					<th class="title">
-						<?php echo JHTML::_('grid.sort', acymailing_translation(ACYMAILING_J16 ? 'COM_CONTENT_PUBLISHED_DATE' : 'START PUBLISHING'), 'a.publish_up', $pageInfo->filter->order->dir, $pageInfo->filter->order->value); ?>
+						<?php echo acymailing_gridSort(acymailing_translation(ACYMAILING_J16 ? 'COM_CONTENT_PUBLISHED_DATE' : 'START PUBLISHING'), 'a.publish_up', $pageInfo->filter->order->dir, $pageInfo->filter->order->value); ?>
 					</th>
 					<th class="title">
-						<?php echo JHTML::_('grid.sort', acymailing_translation('ACY_CREATED'), 'a.created', $pageInfo->filter->order->dir, $pageInfo->filter->order->value); ?>
+						<?php echo acymailing_gridSort(acymailing_translation('ACY_CREATED'), 'a.created', $pageInfo->filter->order->dir, $pageInfo->filter->order->value); ?>
 					</th>
 					<th class="title titleid">
-						<?php echo JHTML::_('grid.sort', acymailing_translation('ACY_ID'), 'a.id', $pageInfo->filter->order->dir, $pageInfo->filter->order->value); ?>
+						<?php echo acymailing_gridSort(acymailing_translation('ACY_ID'), 'a.id', $pageInfo->filter->order->dir, $pageInfo->filter->order->value); ?>
 					</th>
 				</tr>
 				</thead>
@@ -400,10 +453,10 @@ class plgAcymailingTagcontent extends JPlugin{
 							?>
 						</td>
 						<td align="center">
-							<?php echo JHTML::_('date', strip_tags($row->publish_up), acymailing_translation('DATE_FORMAT_LC4')); ?>
+							<?php echo acymailing_date(strip_tags($row->publish_up), acymailing_translation('DATE_FORMAT_LC4')); ?>
 						</td>
 						<td align="center">
-							<?php echo JHTML::_('date', strip_tags($row->created), acymailing_translation('DATE_FORMAT_LC4')); ?>
+							<?php echo acymailing_date(strip_tags($row->created), acymailing_translation('DATE_FORMAT_LC4')); ?>
 						</td>
 						<td align="center">
 							<?php echo $row->id; ?>
@@ -423,7 +476,7 @@ class plgAcymailingTagcontent extends JPlugin{
 		echo $tabs->endPanel();
 		echo $tabs->startPanel(acymailing_translation('TAG_CATEGORIES'), 'joomlacontent_auto');
 
-		$type = JRequest::getString('type');
+		$type = acymailing_getVar('string', 'type');
 
 		?>
 		<script language="javascript" type="text/javascript">
@@ -550,6 +603,23 @@ class plgAcymailingTagcontent extends JPlugin{
 					}
 				}
 
+				if(document.adminForm.customfieldsauto){
+					if(document.adminForm.customfieldsauto.length == undefined){
+						if(document.adminForm.customfieldsauto.checked) tag += "| custom:" + document.adminForm.customfieldsauto.value;
+					}else{
+						tmp = 0;
+						for(i = 0; i < document.adminForm.customfieldsauto.length; i++){
+							if(!document.adminForm.customfieldsauto[i].checked) continue;
+							if(tmp == 0){
+								tmp += 1;
+								tag += "| custom:" + document.adminForm.customfieldsauto[i].value;
+							}else{
+								tag += "," + document.adminForm.customfieldsauto[i].value;
+							}
+						}
+					}
+				}
+
 				for(var i = 0; i < document.adminForm.titlelinkauto.length; i++){
 					if(document.adminForm.titlelinkauto[i].checked && document.adminForm.titlelinkauto[i].value.length > 1){
 						tag += '|' + document.adminForm.titlelinkauto[i].value;
@@ -620,7 +690,7 @@ class plgAcymailingTagcontent extends JPlugin{
 						<?php echo acymailing_translation('DISPLAY'); ?>
 					</td>
 					<td colspan="2">
-						<?php echo JHTML::_('acyselect.radiolist', $contenttype, 'contenttypeauto', 'size="1" onclick="updateAutoTag();"', 'value', 'text', $this->params->get('default_type', 'intro')); ?>
+						<?php echo acymailing_radio($contenttype, 'contenttypeauto', 'size="1" onclick="updateAutoTag();"', 'value', 'text', $this->params->get('default_type', 'intro')); ?>
 					</td>
 					<td id="languagesauto">
 						<?php $jflanguages = acymailing_get('type.jflanguages');
@@ -641,7 +711,7 @@ class plgAcymailingTagcontent extends JPlugin{
 						<?php echo $this->acypluginsHelper->getFormatOption('tagcontent', 'TOP_LEFT', false, 'updateAutoTag'); ?>
 					</td>
 					<td valign="top"><?php echo acymailing_translation('DISPLAY_PICTURES'); ?></td>
-					<td valign="top"><?php echo JHTML::_('acyselect.radiolist', $picts, 'pictauto', 'size="1" onclick="updateAutoTag();"', 'value', 'text', $this->params->get('default_pict', '1')); ?>
+					<td valign="top"><?php echo acymailing_radio($picts, 'pictauto', 'size="1" onclick="updateAutoTag();"', 'value', 'text', $this->params->get('default_pict', '1')); ?>
 						<span id="pictsizeauto" <?php if($this->params->get('default_pict', '1') != 'resized') echo 'style="display:none;"'; ?> ><br/><?php echo acymailing_translation('CAPTCHA_WIDTH') ?>
 							<input name="pictwidthauto" type="text" onchange="updateAutoTag();" value="<?php echo $this->params->get('maxwidth', '150'); ?>" style="width:30px;"/>
 							x <?php echo acymailing_translation('CAPTCHA_HEIGHT') ?>
@@ -654,13 +724,13 @@ class plgAcymailingTagcontent extends JPlugin{
 						<?php echo acymailing_translation('CLICKABLE_TITLE'); ?>
 					</td>
 					<td>
-						<?php echo JHTML::_('acyselect.radiolist', $titlelink, 'titlelinkauto', 'size="1" onclick="updateAutoTag();"', 'value', 'text', $this->params->get('default_titlelink', 'link')); ?>
+						<?php echo acymailing_radio($titlelink, 'titlelinkauto', 'size="1" onclick="updateAutoTag();"', 'value', 'text', $this->params->get('default_titlelink', 'link')); ?>
 					</td>
 					<td>
 						<?php echo acymailing_translation('AUTHOR_NAME'); ?>
 					</td>
 					<td>
-						<?php echo JHTML::_('acyselect.radiolist', $authorname, 'authorauto', 'size="1" onclick="updateAutoTag();"', 'value', 'text', (string)$this->params->get('default_author', '0')); ?>
+						<?php echo acymailing_radio($authorname, 'authorauto', 'size="1" onclick="updateAutoTag();"', 'value', 'text', (string)$this->params->get('default_author', '0')); ?>
 					</td>
 				</tr>
 				<tr>
@@ -698,7 +768,7 @@ class plgAcymailingTagcontent extends JPlugin{
 					</td>
 					<td>
 						<?php
-						$values = array('id' => 'ACY_ID', 'ordering' => 'ACY_ORDERING', 'created' => 'CREATED_DATE', 'modified' => 'MODIFIED_DATE', 'title' => 'FIELD_TITLE');
+						$values = array('id' => 'ACY_ID', 'ordering' => 'ACY_ORDERING', 'created' => 'CREATED_DATE', 'modified' => 'MODIFIED_DATE', 'title' => 'FIELD_TITLE', 'hits' => 'ACY_HITS');
 						if(ACYMAILING_J16) $values['publish_up'] = 'COM_CONTENT_PUBLISHED_DATE';
 						echo $this->acypluginsHelper->getOrderingField($values, 'id', 'DESC', 'updateAutoTag');
 						?>
@@ -754,6 +824,33 @@ class plgAcymailingTagcontent extends JPlugin{
 					?>
 				</tr>
 			</table>
+<?php
+		if(version_compare($jversion, '3.7.0', '>=') && !empty($customFields)){
+			echo '<div class="onelineblockoptions">
+					<span class="acyblocktitle">'.acymailing_translation('EXTRA_FIELDS').'</span>
+					<table class="acymailing_table" cellpadding="1">';
+			foreach($groups as $oneGroup){
+				echo '<tr><td style="font-weight: bold;">'.$oneGroup->title.'</td>';
+				$i = 1;
+				foreach($customFields as $oneCF){
+					if($oneCF->group_id != $oneGroup->id) continue;
+					if($i == 4){
+						$i = 1;
+						echo '</tr><tr><td/>';
+					}
+					echo '<td><input value="'.$oneCF->id.'" name="customfieldsauto" id="autocf_'.$oneCF->id.'" type="checkbox" onclick="updateAutoTag();"/>';
+					echo '<label style="margin-left:5px" for="autocf_'.$oneCF->id.'">'.$oneCF->title.'</label></td>';
+					$i++;
+				}
+				while($i != 4){
+					$i++;
+					echo '<td/>';
+				}
+				echo '</tr>';
+			}
+			echo '</table></div>';
+		}
+?>
 		</div>
 
 		<div class="onelineblockoptions">
@@ -862,8 +959,7 @@ class plgAcymailingTagcontent extends JPlugin{
 
 		$this->newslanguage = new stdClass();
 		if(!empty($email->language)){
-			$this->db->setQuery('SELECT lang_id, lang_code FROM #__languages WHERE sef = '.$this->db->quote($email->language).' LIMIT 1');
-			$this->newslanguage = $this->db->loadObject();
+			$this->newslanguage = acymailing_loadObject('SELECT lang_id, lang_code FROM #__languages WHERE sef = '.acymailing_escapeDB($email->language).' LIMIT 1');
 		}
 
 		$this->currentcatid = -1;
@@ -887,6 +983,11 @@ class plgAcymailingTagcontent extends JPlugin{
 	private function _replaceContent(&$tag){
 		$oldFormat = empty($tag->format);
 
+		if($tag->id == 'current'){
+			$article_id = acymailing_getVar('int', 'articleId');
+			if(empty($article_id)) return;
+			$tag->id = $article_id;
+		}
 		if(!ACYMAILING_J16){
 			$query = 'SELECT a.*,b.name as authorname, c.alias as catalias, c.title as cattitle, c.image AS catpict, s.alias as secalias, s.title as sectitle FROM '.acymailing_table('content', false).' as a ';
 			$query .= 'LEFT JOIN '.acymailing_table('users', false).' as b ON a.created_by = b.id ';
@@ -900,12 +1001,10 @@ class plgAcymailingTagcontent extends JPlugin{
 			$query .= 'WHERE a.id = '.$tag->id.' LIMIT 1';
 		}
 
-		$this->db->setQuery($query);
-		$article = $this->db->loadObject();
+		$article = acymailing_loadObject($query);
 
 		if(empty($article)){
-			$app = JFactory::getApplication();
-			if($app->isAdmin()) $app->enqueueMessage('The article "'.$tag->id.'" could not be loaded', 'notice');
+			if(acymailing_isAdmin()) acymailing_enqueueMessage('The article "'.$tag->id.'" could not be loaded', 'notice');
 			return '';
 		}
 
@@ -964,20 +1063,21 @@ class plgAcymailingTagcontent extends JPlugin{
 		}
 
 		if(!empty($tag->itemid)) $link .= '&Itemid='.$tag->itemid;
-
 		if(!empty($tag->lang)) $link .= (strpos($link, '?') ? '&' : '?').'lang='.substr($tag->lang, 0, strpos($tag->lang, ACYMAILING_J16 ? '-' : ','));
 		if(!empty($tag->autologin)) $link .= (strpos($link, '?') ? '&' : '?').'user={usertag:username|urlencode}&passw={usertag:password|urlencode}';
 
 		if(empty($tag->lang) && !empty($article->language) && $article->language != '*'){
 			if(!isset($this->langcodes[$article->language])){
-				$this->db->setQuery('SELECT sef FROM #__languages WHERE lang_code = '.$this->db->Quote($article->language).' ORDER BY `published` DESC LIMIT 1');
-				$this->langcodes[$article->language] = $this->db->loadResult();
+				$this->langcodes[$article->language] = acymailing_loadResult('SELECT sef FROM #__languages WHERE lang_code = '.acymailing_escapeDB($article->language).' ORDER BY `published` DESC LIMIT 1');
 				if(empty($this->langcodes[$article->language])) $this->langcodes[$article->language] = $article->language;
 			}
 			$link .= (strpos($link, '?') ? '&' : '?').'lang='.$this->langcodes[$article->language];
 		}
 
 		$nonsefLink = $link;
+		$mainurl = acymailing_mainURL($nonsefLink);
+		$nonsefLink = $mainurl.$nonsefLink;
+
 		$link = acymailing_frontendLink($link);
 		$varFields['{link}'] = $link;
 
@@ -995,13 +1095,13 @@ class plgAcymailingTagcontent extends JPlugin{
 		$dateFormat = empty($tag->dateformat) ? acymailing_translation('DATE_FORMAT_LC2') : $tag->dateformat;
 		if(!empty($tag->created)){
 			if($tag->type == 'title') $afterTitle .= '<br />';
-			$varFields['{createddate}'] = JHTML::_('date', $article->created, $dateFormat);
+			$varFields['{createddate}'] = acymailing_date($article->created, $dateFormat);
 			$afterTitle .= '<span class="createddate">'.$varFields['{createddate}'].'</span><br />';
 		}
 
 		if(!empty($tag->modified)){
 			if($tag->type == 'title') $afterTitle .= '<br />';
-			$varFields['{modifieddate}'] = JHTML::_('date', $article->modified, $dateFormat);
+			$varFields['{modifieddate}'] = acymailing_date($article->modified, $dateFormat);
 			$afterTitle .= '<span class="modifieddate">'.$varFields['{modifieddate}'].'</span><br />';
 		}
 
@@ -1054,7 +1154,8 @@ class plgAcymailingTagcontent extends JPlugin{
 				$contentText = strip_tags($contentText, '<p><br><span><ul><li><h1><h2><h3><h4><a>');
 			}
 
-			if(ACYMAILING_J16 && !empty($article->images) && !empty($tag->pict)){
+			$varFields['{picthtml}'] = '';
+			if(ACYMAILING_J16 && !empty($article->images) && !empty($tag->pict) && empty($tag->nomainimage)){
 				$picthtml = '';
 				$images = json_decode($article->images);
 				$pictVar = ($tag->type == 'intro') ? 'image_intro' : 'image_fulltext';
@@ -1069,8 +1170,8 @@ class plgAcymailingTagcontent extends JPlugin{
 					$alt = '';
 					$altVar = $pictVar.'_alt';
 					if(!empty($images->$altVar)) $alt = $images->$altVar;
-					$picthtml .= '<img'.(empty($tag->nopictstyle) ? ' style="'.$style.'"' : '').' alt="'.$alt.'" border="0" src="'.JURI::root().$images->$pictVar.'" />';
-					$pictPath = JURI::root().$images->$pictVar;
+					$picthtml .= '<img'.(empty($tag->nopictstyle) ? ' style="'.$style.'"' : '').' alt="'.$alt.'" border="0" src="'.acymailing_rootURI().$images->$pictVar.'" />';
+					$pictPath = acymailing_rootURI().$images->$pictVar;
 					if(!empty($tag->link) && empty($tag->nopictlink)) $picthtml .= '</a>';
 					$varFields['{picthtml}'] = $picthtml;
 				}
@@ -1078,14 +1179,108 @@ class plgAcymailingTagcontent extends JPlugin{
 
 			$contentText = preg_replace('/^\s*(<img[^>]*>)\s*(?:<br[^>]*>\s*)*/i', '$1', $contentText);
 
+			if(!empty($tag->custom)){
+				$tag->custom = explode(',', $tag->custom);
+				acymailing_arrayToInteger($tag->custom);
+
+				$articleCFValues = acymailing_loadObjectList('SELECT fv.value, f.id, f.fieldparams, f.params, f.type, f.label, f.name, f.default_value 
+																FROM #__fields AS f 
+																LEFT JOIN #__fields_values AS fv ON fv.field_id = f.id AND fv.item_id = '.intval($tag->id).' 
+																WHERE  f.id IN ('.implode(',', $tag->custom).')');
+
+				$fields = array();
+				foreach($articleCFValues as $oneVal){
+					$fields[$oneVal->id]['values'][] = $oneVal->value;
+					$fields[$oneVal->id]['field'] = $oneVal;
+				}
+
+				foreach($fields as $oneField){
+					if(!empty($oneField['field']->fieldparams)) $oneField['field']->fieldparams = json_decode($oneField['field']->fieldparams, true);
+					$oneField['field']->params = json_decode($oneField['field']->params, true);
+
+					if($oneField['values'][0] === NULL){
+						if(($oneField['field']->type == 'user' && empty($oneField['field']->default_value)) || ($oneField['field']->type != 'user' && strlen($oneField['field']->default_value) == 0)) continue;
+						$oneField['values'] = array($oneField['field']->default_value);
+					}
+
+					foreach($oneField['values'] as &$oneFieldVal){
+						switch($oneField['field']->type){
+							case 'radio':
+							case 'list':
+							case 'checkboxes':
+								foreach($oneField['field']->fieldparams['options'] as $oneOPT){
+									if($oneOPT['value'] == $oneFieldVal){
+										$oneFieldVal = $oneOPT['name'];
+										break;
+									}
+								}
+								break;
+
+							case 'usergrouplist':
+								if(empty($this->usergroups)) $this->usergroups = acymailing_loadObjectList('SELECT id, title FROM #__usergroups', 'id');
+
+								$oneFieldVal = $this->usergroups[$oneFieldVal]->title;
+								break;
+
+							case 'imagelist':
+								if($oneFieldVal == -1){
+									$oneFieldVal = NULL;
+									continue;
+								}
+
+								if(strlen($oneField['field']->fieldparams['directory']) > 1) $oneFieldVal = '/'.$oneFieldVal;
+								else $oneField['field']->fieldparams['directory'] = '';
+								$oneFieldVal = '<img src="images/'.$oneField['field']->fieldparams['directory'].$oneFieldVal.'" />';
+								break;
+
+							case 'url':
+								$oneFieldVal = '<a target="_blank" href="'.$oneFieldVal.'">'.$oneFieldVal.'</a>';
+								break;
+
+							case 'sql':
+								if(empty($oneField['field']->options)){
+									$oneField['field']->options = acymailing_loadObjectList($oneField['field']->fieldparams['query'], 'value');
+								}
+
+								$oneFieldVal = $oneField['field']->options[$oneFieldVal]->text;
+								break;
+
+							case 'user':
+								$oneFieldVal = acymailing_currentUserName($oneFieldVal);
+								break;
+
+							case 'media':
+								$oneFieldVal = '<img src="'.$oneFieldVal.'" />';
+								break;
+
+							case 'calendar':
+								$format = $oneField['field']->fieldparams['showtime'] == '1' ? 'Y-m-d H:i' : 'Y-m-d';
+								$oneFieldVal = acymailing_date(strtotime($oneFieldVal), $format);
+								break;
+						}
+					}
+
+					$replaceme = trim(implode(', ', $oneField['values']), ', ');
+					if(empty($replaceme)) continue;
+
+					$varFields['{custom:'.$oneField['field']->name.'}'] = $replaceme;
+
+					if($oneField['field']->params['showlabel'] == '1'){
+						$label = $oneField['field']->label.': ';
+						if($oneField['field']->type == 'imagelist') $label .= '<br/>';
+						$replaceme = $label.$replaceme;
+					}
+					$afterArticle .= '<br />'.$replaceme;
+				}
+			}
+			
 			if(file_exists(JPATH_SITE.DS.'plugins'.DS.'attachments') && empty($tag->noattach)){
 				try{
 					$query = 'SELECT display_name, url, filename '.'FROM #__attachments '.'WHERE (parent_entity = "article" '.'AND parent_id = '.intval($tag->id).')';
 					if(ACYMAILING_J16){
 						$query .= ' OR (parent_entity = "category" '.'AND parent_id = '.intval($article->catid).')';
 					}
-					$this->db->setQuery($query);
-					$attachments = $this->db->loadObjectList();
+					$attachments = acymailing_loadObjectList($query);
 				}catch(Exception $e){
 					$attachments = array();
 				}
@@ -1138,8 +1333,7 @@ class plgAcymailingTagcontent extends JPlugin{
 		}
 
 		if(!empty($tag->jtags) && version_compare(JVERSION, '3.1.0', '>=')){
-			$this->db->setQuery('SELECT t.id, t.alias, t.title FROM #__tags AS t JOIN #__contentitem_tag_map AS m ON t.id = m.tag_id WHERE t.published = 1 AND m.type_alias = "com_content.article" AND m.content_item_id = '.intval($tag->id));
-			$tags = $this->db->loadObjectList();
+			$tags = acymailing_loadObjectList('SELECT t.id, t.alias, t.title FROM #__tags AS t JOIN #__contentitem_tag_map AS m ON t.id = m.tag_id WHERE t.published = 1 AND m.type_alias = "com_content.article" AND m.content_item_id = '.intval($tag->id));
 			if(!empty($tags)){
 				$afterArticle .= '<br />';
 				foreach($tags as $oneTag){
@@ -1224,7 +1418,6 @@ class plgAcymailingTagcontent extends JPlugin{
 		$result = str_replace(array_keys($varFields), $varFields, $result);
 
 		$result = $this->acypluginsHelper->removeJS($result);
-		$result = $this->acypluginsHelper->replaceVideos($result);
 
 		$tag->maxheight = empty($tag->maxheight) ? $this->params->get('maxheight', 150) : $tag->maxheight;
 		$tag->maxwidth = empty($tag->maxwidth) ? $this->params->get('maxwidth', 150) : $tag->maxwidth;
@@ -1278,7 +1471,7 @@ class plgAcymailingTagcontent extends JPlugin{
 				}
 			}
 
-			$query = 'SELECT a.id FROM `#__content` as a ';
+			$query = 'SELECT DISTINCT a.id FROM `#__content` as a ';
 			$where = array();
 
 			if(!empty($parameter->tags) && version_compare(JVERSION, '3.1.0', '>=')){
@@ -1310,18 +1503,18 @@ class plgAcymailingTagcontent extends JPlugin{
 			}
 
 			if(ACYMAILING_J16 && !empty($parameter->subcats) && !empty($selectedArea)){
-				$this->db->setQuery('SELECT lft,rgt FROM #__categories WHERE id IN ('.implode(',', $selectedArea).')');
-				$catinfos = $this->db->loadObjectList();
+				$catinfos = acymailing_loadObjectList('SELECT lft,rgt FROM #__categories WHERE id IN ('.implode(',', $selectedArea).')');
 				if(!empty($catinfos)){
 					$whereCats = array();
 					foreach($catinfos as $onecat){
 						$whereCats[] = 'lft > '.$onecat->lft.' AND rgt < '.$onecat->rgt;
 					}
-					$this->db->setQuery('SELECT id FROM #__categories WHERE ('.implode(') OR (', $whereCats).')');
-					$othercats = acymailing_loadResultArray($this->db);
+					$othercats = acymailing_loadResultArray('SELECT id FROM #__categories WHERE ('.implode(') OR (', $whereCats).')');
 					$selectedArea = array_merge($selectedArea, $othercats);
 				}
 			}
+
+			if($this->newMulticats && (!empty($selectedArea) || !empty($parameter->excludedcats))) $query .= ' JOIN `#__multicats_content_catid` as mcc ON a.id = mcc.item_id ';
 
 			if(!empty($selectedArea)){
 				if(!ACYMAILING_J16){
@@ -1329,7 +1522,11 @@ class plgAcymailingTagcontent extends JPlugin{
 				}else{
 					$filter_cat = '`catid` IN ('.implode(',', $selectedArea).')';
 					if(file_exists(JPATH_SITE.DS.'components'.DS.'com_multicats')){
-						$filter_cat = '`catid` REGEXP "^([0-9]+,)*'.implode('(,[0-9]+)*$" OR `catid` REGEXP "^([0-9]+,)*', $selectedArea).'(,[0-9]+)*$"';
+						if($this->newMulticats){
+							$filter_cat = 'mcc.`catid` REGEXP "^([0-9]+,)*'.implode('(,[0-9]+)*$" OR mcc.`catid` REGEXP "^([0-9]+,)*', $selectedArea).'(,[0-9]+)*$"';
+						}else{
+							$filter_cat = '`catid` REGEXP "^([0-9]+,)*'.implode('(,[0-9]+)*$" OR `catid` REGEXP "^([0-9]+,)*', $selectedArea).'(,[0-9]+)*$"';
+						}
 					}
 					$where[] = $filter_cat;
 				}
@@ -1340,7 +1537,11 @@ class plgAcymailingTagcontent extends JPlugin{
 				acymailing_arrayToInteger($excludedCats);
 				$filter_cat = '`catid` NOT IN ("'.implode('","', $excludedCats).'")';
 				if(file_exists(JPATH_SITE.DS.'components'.DS.'com_multicats')){
-					$filter_cat = '`catid` NOT REGEXP "^([0-9]+,)*'.implode('(,[0-9]+)*$" AND `catid` NOT REGEXP "^([0-9]+,)*', $excludedCats).'(,[0-9]+)*$"';
+					if($this->newMulticats){
+						$filter_cat = 'mcc.`catid` NOT REGEXP "^([0-9]+,)*'.implode('(,[0-9]+)*$" AND mcc.`catid` NOT REGEXP "^([0-9]+,)*', $excludedCats).'(,[0-9]+)*$"';
+					}else{
+						$filter_cat = '`catid` NOT REGEXP "^([0-9]+,)*'.implode('(,[0-9]+)*$" AND `catid` NOT REGEXP "^([0-9]+,)*', $excludedCats).'(,[0-9]+)*$"';
+					}
 				}
 				$where[] = $filter_cat;
 			}
@@ -1364,7 +1565,7 @@ class plgAcymailingTagcontent extends JPlugin{
 				if(empty($date)){
 					acymailing_display('Wrong date format ('.$parameter->maxcreated.' in '.$oneTag.'), please use YYYY-MM-DD', 'warning');
 				}
-				$where[] = '`created` < '.$this->db->Quote(date('Y-m-d H:i:s', $date)).' OR `publish_up` < '.$this->db->Quote(date('Y-m-d H:i:s', $date));
+				$where[] = '`created` < '.acymailing_escapeDB(date('Y-m-d H:i:s', $date)).' OR `publish_up` < '.acymailing_escapeDB(date('Y-m-d H:i:s', $date));
 			}else{
 				$where[] = '`publish_up` < \''.date('Y-m-d H:i:s', $time - date('Z')).'\'';
 			}
@@ -1376,7 +1577,7 @@ class plgAcymailingTagcontent extends JPlugin{
 				if(empty($date)){
 					acymailing_display('Wrong date format ('.$parameter->mincreated.' in '.$oneTag.'), please use YYYY-MM-DD', 'warning');
 				}
-				$where[] = '`created` > '.$this->db->Quote(date('Y-m-d H:i:s', $date)).' OR `publish_up` > '.$this->db->Quote(date('Y-m-d H:i:s', $date));
+				$where[] = '`created` > '.acymailing_escapeDB(date('Y-m-d H:i:s', $date)).' OR `publish_up` > '.acymailing_escapeDB(date('Y-m-d H:i:s', $date));
 			}
 
 
@@ -1419,7 +1620,7 @@ class plgAcymailingTagcontent extends JPlugin{
 				$allLanguages = explode(',', $parameter->language);
 				$langWhere = 'language IN (';
 				foreach($allLanguages as $oneLanguage){
-					$langWhere .= $this->db->Quote(trim($oneLanguage)).',';
+					$langWhere .= acymailing_escapeDB(trim($oneLanguage)).',';
 				}
 				$where[] = trim($langWhere, ',').')';
 			}
@@ -1441,8 +1642,7 @@ class plgAcymailingTagcontent extends JPlugin{
 
 			$query .= ' LIMIT '.$start.(int)$parameter->max;
 
-			$this->db->setQuery($query);
-			$allArticles = acymailing_loadResultArray($this->db);
+			$allArticles = acymailing_loadResultArray($query);
 
 			if(!empty($parameter->min) && count($allArticles) < $parameter->min){
 				$return->status = false;
@@ -1464,6 +1664,7 @@ class plgAcymailingTagcontent extends JPlugin{
 						$args[] = 'num:'.$numArticle++;
 						if(!empty($parameter->invert) && $numArticle % 2 == 1) $args[] = 'invert';
 						if(!empty($parameter->type)) $args[] = 'type:'.$parameter->type;
+						if(!empty($parameter->custom)) $args[] = 'custom:'.$parameter->custom;
 						if(!empty($parameter->format)) $args[] = 'format:'.$parameter->format;
 						if(!empty($parameter->template)) $args[] = 'template:'.$parameter->template;
 						if(!empty($parameter->jtags)) $args[] = 'jtags';
@@ -1495,6 +1696,7 @@ class plgAcymailingTagcontent extends JPlugin{
 						if(!empty($parameter->catpict)) $args[] = 'catpict';
 						if(!empty($parameter->catmaxwidth)) $args[] = 'catmaxwidth:'.$parameter->catmaxwidth;
 						if(!empty($parameter->catmaxheight)) $args[] = 'catmaxheight:'.$parameter->catmaxheight;
+						if(!empty($parameter->nomainimage)) $args[] = 'nomainimage';
 						$arrayElements[] = '{'.implode('|', $args).'}';
 					}
 					$stringTag = $this->acypluginsHelper->getFormattedResult($arrayElements, $parameter);

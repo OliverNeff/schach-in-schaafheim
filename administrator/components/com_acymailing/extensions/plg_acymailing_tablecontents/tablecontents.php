@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 defined('_JEXEC') or die('Restricted access');
@@ -34,18 +35,18 @@ class plgAcymailingTablecontents extends JPlugin{
 	function acymailingtablecontents_show(){
 
 		$contenttype = array();
-		$contenttype[] = JHTML::_('select.option', '', acymailing_translation('ACY_EXISTINGANCHOR'));
+		$contenttype[] = acymailing_selectOption('', acymailing_translation('ACY_EXISTINGANCHOR'));
 		for($i = 1; $i < 6; $i++){
-			$contenttype[] = JHTML::_('select.option', "|type:h".$i, 'H'.$i);
+			$contenttype[] = acymailing_selectOption("|type:h".$i, 'H'.$i);
 		}
-		$contenttype[] = JHTML::_('select.option', 'class', acymailing_translation('CLASS_NAME'));
+		$contenttype[] = acymailing_selectOption('class', acymailing_translation('CLASS_NAME'));
 
 		$contentsubtype = array();
-		$contentsubtype[] = JHTML::_('select.option', '', acymailing_translation('ACY_NONE'));
+		$contentsubtype[] = acymailing_selectOption('', acymailing_translation('ACY_NONE'));
 		for($i = 1; $i < 6; $i++){
-			$contentsubtype[] = JHTML::_('select.option', "|subtype:h".$i, 'H'.$i);
+			$contentsubtype[] = acymailing_selectOption("|subtype:h".$i, 'H'.$i);
 		}
-		$contentsubtype[] = JHTML::_('select.option', 'class', acymailing_translation('CLASS_NAME'));
+		$contentsubtype[] = acymailing_selectOption('class', acymailing_translation('CLASS_NAME'));
 
 		?>
 
@@ -82,17 +83,16 @@ class plgAcymailingTablecontents extends JPlugin{
 			<table width="100%" class="acymailing_table">
 				<tr>
 					<td><?php echo acymailing_translation_sprintf('ACY_LEVEL', 1)?></td>
-					<td><?php echo JHTML::_('select.genericlist', $contenttype, 'contenttype', 'size="1" onchange="updateTag();"', 'value', 'text'); ?><input type="text" style="display:none" onchange="updateTag();" name="classvalue"/></td>
+					<td><?php echo acymailing_select($contenttype, 'contenttype', 'size="1" onchange="updateTag();"', 'value', 'text'); ?><input type="text" style="display:none" onchange="updateTag();" name="classvalue"/></td>
 				</tr>
 				<tr>
 					<td><?php echo acymailing_translation_sprintf('ACY_LEVEL', 2)?></td>
-					<td><?php echo JHTML::_('select.genericlist', $contentsubtype, 'contentsubtype', 'size="1" onchange="updateTag();"', 'value', 'text'); ?><input type="text" style="display:none" onchange="updateTag();" name="subclassvalue"/></td>
+					<td><?php echo acymailing_select($contentsubtype, 'contentsubtype', 'size="1" onchange="updateTag();"', 'value', 'text'); ?><input type="text" style="display:none" onchange="updateTag();" name="subclassvalue"/></td>
 				</tr>
 			</table>
 		</div>
 		<?php
-		$doc = JFactory::getDocument();
-		$doc->addScriptDeclaration("window.addEvent('domready', function(){ updateTag(); });");
+		acymailing_addScript(true, "document.addEventListener(\"DOMContentLoaded\", function(){ updateTag(); });");
 	}
 
 

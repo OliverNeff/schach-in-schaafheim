@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -25,22 +26,19 @@ class queueClass extends acymailingClass{
 			$query .= ' JOIN '.acymailing_table('mail').' as c on a.mailid = c.mailid';
 			$query .= ' WHERE ('.implode(') AND (', $filters).')';
 		}else{
-			$this->database->setQuery('SELECT COUNT(*) FROM #__acymailing_queue');
-			$nbRecords = $this->database->loadResult();
+			$nbRecords = acymailing_loadResult('SELECT COUNT(*) FROM #__acymailing_queue');
 
 			$query = 'TRUNCATE TABLE '.acymailing_table('queue');
 		}
-		$this->database->setQuery($query);
-		$this->database->query();
-		if(empty($nbRecords)) $nbRecords = $this->database->getAffectedRows();
+		$affected = acymailing_query($query);
+		if(empty($nbRecords)) $nbRecords = $affected;
 
 		return $nbRecords;
 	}
 
 	function nbQueue($mailid){
 		$mailid = (int)$mailid;
-		$this->database->setQuery('SELECT count(subid) FROM '.acymailing_table('queue').' WHERE mailid = '.$mailid.' GROUP BY mailid');
-		return $this->database->loadResult();
+		return acymailing_loadResult('SELECT count(subid) FROM '.acymailing_table('queue').' WHERE mailid = '.$mailid.' GROUP BY mailid');
 	}
 
 	function queue($mailid, $time){
@@ -51,69 +49,60 @@ class queueClass extends acymailingClass{
 		$lists = $classLists->getReceivers($mailid, false);
 		if(empty($lists)) return 0;
 
-		JPluginHelper::importPlugin('acymailing');
+		$config = acymailing_config();
+		acymailing_importPlugin('acymailing');
+		$filterClass = acymailing_get('class.filter'); // Keep it, it loads the acyQuery class
 
 		$mailClass = acymailing_get('class.mail');
 		$mail = $mailClass->get($mailid);
 
-		$filterClass = acymailing_get('class.filter');
-		$queryClass = new acyQuery();
-		if(!empty($mail->filter['type'])){
-			$dispatcher = JDispatcher::getInstance();
-			foreach($mail->filter['type'] as $num => $oneType){
-				if(empty($oneType)) continue;
-				$dispatcher->trigger('onAcyProcessFilter_'.$oneType, array(&$queryClass, $mail->filter[$num][$oneType], $num));
+		if(empty($mail->filter['type'])){
+			$cquery = $this->initialQuery($lists);
+			$query = 'INSERT IGNORE INTO '.acymailing_table('queue').' (subid,mailid,senddate,priority) '.$cquery->getQuery(array('a.subid',$mailid,$time,(int)$config->get('priority_newsletter', 3)));
+			$totalinserted = acymailing_query($query);
+		}else{
+			$totalinserted = 0;
+			foreach($mail->filter['type'] as $block => $oneFilter) {
+				$cquery = $this->initialQuery($lists);
+				foreach($oneFilter as $num => $oneType) {
+					if(empty($oneType)) continue;
+					acymailing_trigger('onAcyProcessFilter_' . $oneType, array(&$cquery, $mail->filter[$num][$oneType], $num));
+				}
+				$query = 'INSERT IGNORE INTO '.acymailing_table('queue').' (subid,mailid,senddate,priority) '.$cquery->getQuery(array('a.subid',$mailid,$time,(int)$config->get('priority_newsletter', 3)));
+				$totalinserted += acymailing_query($query);
 			}
 		}
 
-		$config = acymailing_config();
-
-		$querySelect = 'SELECT DISTINCT a.subid,'.$mailid.','.$time.','.(int)$config->get('priority_newsletter', 3);
-		$querySelect .= ' FROM '.acymailing_table('listsub').' as a ';
-		$querySelect .= ' JOIN '.acymailing_table('subscriber').' as sub ON a.subid = sub.subid ';
-		if(!empty($queryClass->join)) $querySelect .= ' JOIN '.implode(' JOIN ', $queryClass->join);
-		if(!empty($queryClass->leftjoin)) $querySelect .= ' LEFT JOIN '.implode(' LEFT JOIN ', $queryClass->leftjoin);
-
-		$querySelect .= ' WHERE sub.enabled = 1 AND sub.accept = 1 ';
-		if(!empty($queryClass->where)) $querySelect .= ' AND ('.implode(') AND (', $queryClass->where).')';
-		$querySelect .= ' AND a.listid IN ('.implode(',', array_keys($lists)).') AND a.status = 1 ';
-		$config = acymailing_config();
-		if($config->get('require_confirmation', '0')){
-			$querySelect .= 'AND sub.confirmed = 1 ';
-		}
-
-		if(!empty($this->orderBy)){
-			$querySelect .= ' ORDER BY '.$this->orderBy;
-		}elseif(!empty($queryClass->orderBy)) $querySelect .= ' ORDER BY '.$queryClass->orderBy;
-
-		if(!empty($this->limit)){
-			$querySelect .= ' LIMIT '.$this->limit;
-		}elseif(!empty($queryClass->limit)) $querySelect .= ' LIMIT '.$queryClass->limit;
-
-		$query = 'INSERT IGNORE INTO '.acymailing_table('queue').' (subid,mailid,senddate,priority) '.$querySelect;
-
-		$this->database->setQuery($query);
-		if(!$this->database->query()){
-			acymailing_display($this->database->getErrorMsg(), 'error');
-		}
-		$totalinserted = $this->database->getAffectedRows();
-
 		if($this->onlynew){
-			$this->database->setQuery('DELETE b.* FROM `#__acymailing_userstats` as a JOIN `#__acymailing_queue` as b on a.subid = b.subid WHERE a.mailid = '.$mailid);
-			$this->database->query();
-			$totalinserted = $totalinserted - $this->database->getAffectedRows();
+			$affected = acymailing_query('DELETE b.* FROM `#__acymailing_userstats` as a JOIN `#__acymailing_queue` as b ON a.subid = b.subid AND a.mailid = b.mailid WHERE a.mailid = '.$mailid);
+			$totalinserted = $totalinserted - $affected;
 		}
 
 		if(!empty($this->mindelay)){
-			$this->database->setQuery('DELETE b.* FROM `#__acymailing_userstats` as a JOIN `#__acymailing_queue` as b on a.subid = b.subid WHERE a.senddate > '.(time() - ($this->mindelay * 24 * 60 * 60)));
-			$this->database->query();
-			$totalinserted = $totalinserted - $this->database->getAffectedRows();
+			$affected = acymailing_query('DELETE b.* FROM `#__acymailing_queue` as b JOIN `#__acymailing_userstats` AS a ON a.subid = b.subid WHERE b.mailid = '.$mailid.' AND a.senddate > '.(time() - ($this->mindelay * 24 * 60 * 60)));
+			$totalinserted = $totalinserted - $affected;
 		}
 
-		$dispatcher = JDispatcher::getInstance();
-		$dispatcher->trigger('onAcySendNewsletter', array($mailid));
+		acymailing_trigger('onAcySendNewsletter', array($mailid));
 
 		return $totalinserted;
+	}
+
+	function initialQuery($lists){
+		$query = new acyQuery();
+
+		$query->from = acymailing_table('listsub').' as a ';
+		$query->join[] = acymailing_table('subscriber').' as sub ON a.subid = sub.subid ';
+		$query->where[] = 'sub.enabled = 1';
+		$query->where[] = 'sub.accept = 1';
+		$query->where[] = 'a.listid IN ('.implode(',', array_keys($lists)).')';
+		$query->where[] = 'a.status = 1';
+		$config = acymailing_config();
+		if($config->get('require_confirmation', '0')) $query->where[] = 'sub.confirmed = 1';
+		$query->orderBy = $this->orderBy;
+		$query->limit = $this->limit;
+
+		return $query;
 	}
 
 	public function getReady($limit, $mailid = 0){
@@ -132,36 +121,33 @@ class queueClass extends acymailingClass{
 			}
 		}
 
-		$query = 'SELECT a.* FROM '.acymailing_table('queue').' as a';
-		$query .= ' JOIN '.acymailing_table('mail').' as b on a.`mailid` = b.`mailid` ';
+		$query = 'SELECT a.* FROM '.acymailing_table('queue').' AS a';
+		$query .= ' JOIN '.acymailing_table('mail').' AS b on a.`mailid` = b.`mailid` ';
 		$query .= ' WHERE a.`senddate` <= '.time().' AND b.`published` = 1';
 		if(!empty($this->emailtypes)){
 			foreach($this->emailtypes as &$oneType){
-				$oneType = $this->database->quote($oneType);
+				$oneType = acymailing_escapeDB($oneType);
 			}
 			$query .= ' AND (b.type = '.implode(' OR b.type = ', $this->emailtypes).')';
 		}
 		if(!empty($mailid)) $query .= ' AND a.`mailid` = '.$mailid;
 		$query .= ' ORDER BY a.`priority` ASC, a.`senddate` ASC, '.$order;
-		$query .= ' LIMIT '.JRequest::getInt('startqueue', 0).','.intval($limit);
-		$this->database->setQuery($query);
+		$query .= ' LIMIT '.acymailing_getVar('int', 'startqueue', 0).','.intval($limit);
 		try{
-			$results = $this->database->loadObjectList();
+			$results = acymailing_loadObjectList($query);
 		}catch(Exception $e){
 			$results = null;
 		}
 
 		if($results === null){
-			$this->database->setQuery('REPAIR TABLE #__acymailing_queue, #__acymailing_subscriber, #__acymailing_mail');
-			$this->database->query();
+			acymailing_query('REPAIR TABLE #__acymailing_queue, #__acymailing_subscriber, #__acymailing_mail');
 		}
 
 		if(empty($results)) return array();
 
 		if(!empty($results)){
 			$firstElementQueued = reset($results);
-			$this->database->setQuery('UPDATE #__acymailing_queue SET senddate = senddate + 1 WHERE mailid = '.$firstElementQueued->mailid.' AND subid = '.$firstElementQueued->subid.' LIMIT 1');
-			$this->database->query();
+			acymailing_query('UPDATE #__acymailing_queue SET senddate = senddate + 1 WHERE mailid = '.$firstElementQueued->mailid.' AND subid = '.$firstElementQueued->subid.' LIMIT 1');
 		}
 
 		$subids = array();
@@ -171,8 +157,7 @@ class queueClass extends acymailingClass{
 
 		$cleanQueue = false;
 		if(!empty($subids)){
-			$this->database->setQuery('SELECT * FROM #__acymailing_subscriber WHERE subid IN ('.implode(',', $subids).')');
-			$allusers = $this->database->loadObjectList('subid');
+			$allusers = acymailing_loadObjectList('SELECT * FROM #__acymailing_subscriber WHERE subid IN ('.implode(',', $subids).')', 'subid');
 			foreach($results as $oneId => $oneRes){
 				if(empty($allusers[$oneRes->subid])){
 					$cleanQueue = true;
@@ -185,8 +170,7 @@ class queueClass extends acymailingClass{
 		}
 
 		if($cleanQueue){
-			$this->database->setQuery('DELETE a.* FROM #__acymailing_queue as a LEFT JOIN #__acymailing_subscriber as b ON a.subid = b.subid WHERE b.subid IS NULL');
-			$this->database->query();
+			acymailing_query('DELETE a.* FROM #__acymailing_queue as a LEFT JOIN #__acymailing_subscriber as b ON a.subid = b.subid WHERE b.subid IS NULL');
 		}
 
 		return $results;
@@ -202,8 +186,7 @@ class queueClass extends acymailingClass{
 			if(!empty($mailid)) $query .= ' AND a.mailid = '.$mailid;
 		}
 		$query .= ' GROUP BY a.mailid';
-		$this->database->setQuery($query);
-		$queueStatus = $this->database->loadObjectList('mailid');
+		$queueStatus = acymailing_loadObjectList($query, 'mailid');
 
 		return $queueStatus;
 	}

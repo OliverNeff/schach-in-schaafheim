@@ -6,8 +6,8 @@
  * @copyright	(C) 2009-2012 De Anima Consulting Ltd. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
-defined('_JEXEC') or die('Restricted access');
 
+acymailing_cmsLoaded();
 
 class ipinfodbInc{
 	var $errors = array();
@@ -47,7 +47,6 @@ class ipinfodbInc{
 	}
 	function curlRequest($ip, $name) {
 		$qs = 'http://' . $this->service . '/' . $this->version . '/' . $name . '/' . '?ip=' . $ip . '&format=json&key=' . $this->apiKey;
-		$app = JFactory::getApplication();
 		if(!function_exists('curl_init')){
 			//$app->enqueueMessage('The AcyMailing geolocation plugin needs the CURL library installed but it seems that it is not available on your server. Please contact your web hosting to set it up.','error');
 			$this->errors[] = 'The AcyMailing geolocation plugin needs the CURL library installed but it seems that it is not available on your server. Please contact your web hosting to set it up.';

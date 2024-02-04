@@ -1,8 +1,8 @@
 /**
  * @package    AcyMailing for Joomla!
- * @version    5.7.0
+ * @version    5.10.2
  * @author     acyba.com
- * @copyright  (C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright  (C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license    GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
 
@@ -25,7 +25,6 @@ var isJoomla2_5 = false;
 var isJoomla3 = false;
 var isBack = false;
 var isTagAllowed = false;
-var modalInitialized = false;
 var tooltipTemplateDelete;
 var tooltipTemplateText;
 var tooltipTemplatePicture;
@@ -34,7 +33,7 @@ var templateShown = false;
 var urlAcyeditor;
 var boutonTags = "toolbar-tag";
 var boutonMediaBrowser = "toolbar-popup-Acymediabrowser";
-var acyVersion = "5.7.0";
+var acyVersion = "5.10.2";
 var pasteType = "plain";
 var acyEnterMode = "br";
 var urlSite = "";
@@ -43,7 +42,7 @@ var txtSup = "";
 var titleSup = "";
 var titleEd = "";
 var titleBtnDupliAfter = "";
-var defaultText = "Write you text here";
+var defaultText = "Write your text here";
 var inlineSource = 1;
 var zoneActionActive;
 var confirmInitAreas = "";
@@ -88,37 +87,38 @@ function Initialisation(id, type, urlBase, urlAdminBase, cssUrl, forceComplet, m
 		boutonMediaBrowser = "acybuttonmediabrowser";
 	}
 
+	var popupMediaBrowserContainer = parent.document.getElementById(boutonMediaBrowser);
+	var popupTagContainer = parent.document.getElementById(boutonTags);
+
 	if(isBrowserIE7() || isBrowserIE8()){
-		var popupTagContainer = parent.document.getElementById(boutonTags);
-		var popupMediaBrowserContainer = parent.document.getElementById(boutonMediaBrowser);
+
 		if(popupTagContainer != null
 		 && popupTagContainer != undefined
 		 && popupTagContainer.children[0] != null
 		 && popupTagContainer.children[0] != undefined){
-			popupTagContainer.children[0].onclick = function (){ IeCursorFix(true); };
+			popupTagContainer.children[0].addEventListener("click", function (){ IeCursorFix(true); });
 		}
 
 		if(popupMediaBrowserContainer != null
 		 && popupMediaBrowserContainer != undefined
 		 && popupMediaBrowserContainer.children[0] != null
 		 && popupMediaBrowserContainer.children[0] != undefined){
-			popupMediaBrowserContainer.children[0].onclick = function (){ IeCursorFix(true); };
+			popupMediaBrowserContainer.children[0].addEventListener("click", function (){ IeCursorFix(true); });
 		}
 	}else{
-		var popupTagContainer = parent.document.getElementById(boutonTags);
-		var popupMediaBrowserContainer = parent.document.getElementById(boutonMediaBrowser);
+
 		if(popupTagContainer != null
 		 && popupTagContainer != undefined
 		 && popupTagContainer.children[0] != null
 		 && popupTagContainer.children[0] != undefined){
-			popupTagContainer.children[0].onclick = function (){ IeCursorFix(); };
+			popupTagContainer.children[0].addEventListener("click", function (){ IeCursorFix(); });
 		}
 
 		if(popupMediaBrowserContainer != null
 		 && popupMediaBrowserContainer != undefined
 		 && popupMediaBrowserContainer.children[0] != null
 		 && popupMediaBrowserContainer.children[0] != undefined){
-			popupMediaBrowserContainer.children[0].onclick = function (){ IeCursorFix(); };
+			popupMediaBrowserContainer.children[0].addEventListener("click", function (){ IeCursorFix(); });
 		}
 	}
 
@@ -146,12 +146,12 @@ function Initialisation(id, type, urlBase, urlAdminBase, cssUrl, forceComplet, m
 		if(!isBack){
 			lienImage.href = "index.php?option=com_acymailing&tmpl=component&ctrl=fronteditor&task=browse&e_name=ACY_NAME_AREA&image_zone=true" + endUrl;
 		}
-		lienImage.rel = "{handler: 'iframe', size: {x: 850, y: 600}}";
+		lienImage.onclick = function(){ acymailing.openpopup(lienImage.href,850,600); return false; };
 		if(inPopup)
-			lienImage.rel = "{handler: 'iframe', size: {x: 700, y: 460}}";
+			lienImage.onclick = function(){ acymailing.openpopup(lienImage.href,700,460); return false; };
 		lienImage.style.display = "none";
+
 		document.body.appendChild(lienImage);
-		acyJquery('#' + lienImage.id).addClass("modal");
 	}
 	if(acyJquery('#AcyLienTag')[0] == null || acyJquery('#AcyLienTag')[0] == undefined){
 		var lienTag = document.createElement("a");
@@ -160,11 +160,9 @@ function Initialisation(id, type, urlBase, urlAdminBase, cssUrl, forceComplet, m
 		if(!isBack){
 			lienTag.href = urlBase + "index.php?option=com_acymailing&ctrl=fronttag&task=tag&tmpl=component&type=" + typeCtrl;
 		}
-		lienTag.rel = "{handler: 'iframe', size: {x: 780, y: 550}}";
-		lienTag.onclick = function (){ try { IeCursorFix(); } catch (e){} };
+		lienTag.onclick = function(){ acymailing.openpopup(lienTag.href,780,550); return false; };
 		lienTag.style.display = "none";
 		document.body.appendChild(lienTag);
-		acyJquery('#' + lienTag.id).addClass("modal");
 	}
 
 	if(acyJquery('#AcyLienMediaBrowser')[0] == null || acyJquery('#AcyLienMediaBrowser')[0] == undefined){
@@ -177,13 +175,13 @@ function Initialisation(id, type, urlBase, urlAdminBase, cssUrl, forceComplet, m
 			if(!isBack){
 				lienMediaBrowser.href = urlBase + "index.php?option=com_acymailing&tmpl=component&ctrl=fronteditor&task=browse&e_name=ACY_NAME_AREA" + endUrl;
 			}
-			lienMediaBrowser.rel = "{handler: 'iframe', size: {x: 850, y: 600}}";
+
+			lienMediaBrowser.onclick = function(){ acymailing.openpopup(lienMediaBrowser.href,850,600); return false; };
 			if(inPopup)
-				lienMediaBrowser.rel = "{handler: 'iframe', size: {x: 700, y: 460}}";
-			lienMediaBrowser.onclick = function (){ try { IeCursorFix(); } catch (e){} };
+				lienMediaBrowser.onclick = function(){ acymailing.openpopup(lienMediaBrowser.href,700,460); return false; };
+
 			lienMediaBrowser.style.display = "none";
 			document.body.appendChild(lienMediaBrowser);
-			acyJquery('#' + lienMediaBrowser.id).addClass("modal");
 	}
 
 	var idIframe = id + "_ifr";
@@ -229,21 +227,7 @@ function Initialisation(id, type, urlBase, urlAdminBase, cssUrl, forceComplet, m
 				iframe.contentWindow.document.write(markup);
 				iframe.contentWindow.document.close();
 			}
-
 				ChargementIframe(iframe, urlBase, code, width, height, id, texteSuppression, titleSuppression, titleEdition, urlAdminBase, realstylesheetpath);
-
-				if((isBrowserIE7() || isBrowserIE8()) && !isJoomla2_5 && !isJoomla3){
-					setTimeout(function(){
-						SqueezeBox.initialize({});
-
-						$$('a.modal').each(function(el){
-							el.addEvent('click', function(e){
-								new Event(e).stop();
-								SqueezeBox.fromElement(el);
-							});
-						});
-					}, 200);
-				}
 		};
 
 		if(!isBrowserIE())
@@ -1132,7 +1116,6 @@ function CreateZoneMore(zone, element, id, zoneBoutonSuppression){
 
 		zoneActionActive = btnPlus;
 
-
 			acyJquery(zoneBoutonSuppression).closest('acyeditor_delete').addClass('nepasediter');
 			elem = acyJquery(zoneBoutonSuppression).closest('.acyeditor_delete');
 			elemCopy = elem.clone();
@@ -1147,7 +1130,6 @@ function CreateZoneMore(zone, element, id, zoneBoutonSuppression){
 			InitContent(id, txtSup, titleSup, titleEd, urlSite);
 			Sauvegarde(id);
 			ResizeIframe(id);
-
 
 	});
 	zoneBoutonSuppression.appendChild(btnPlus);
@@ -1325,7 +1307,11 @@ function duplicateZone(id, zoneCopy, action){
 }
 
 function hideAll(id){
-	var zoneBody = acyJquery('#' + id + "_ifr")[0].contentWindow.document.body;
+	if(acyJquery('#' + id + "_ifr")[0].tagName !== "IFRAME"){
+		var zoneBody = acyJquery('#' + id + "_ifr")[0].getElementsByTagName('IFRAME')[0].contentWindow.document.body;
+	}else{
+		var zoneBody = acyJquery('#' + id + "_ifr")[0].contentWindow.document.body;
+	}
 	acyJquery(zoneBody).children('.acyeditor_disable').removeClass('acyeditor_disable');
 	var zoneGlob = zoneBody.getElementsByTagName('*');
 	acyJquery(zoneGlob).remove('.acyeditor_mask');
@@ -1350,7 +1336,11 @@ function hideActionButtons(id, e, zoneClick, protectEditor){
 	}
 
 	if(zoneClick == 'outside' || zoneClick == 'noClick' || canHide){
-		zoneBody = acyJquery('#' + id + "_ifr")[0].contentWindow.document.body;
+		if(acyJquery('#' + id + "_ifr")[0].tagName !== "IFRAME"){
+			zoneBody = acyJquery('#' + id + "_ifr")[0].getElementsByTagName('IFRAME')[0].contentWindow.document.body;
+		}else{
+			zoneBody = acyJquery('#' + id + "_ifr")[0].contentWindow.document.body;
+		}
 		acyJquery(zoneBody).children('.acyeditor_disable').removeClass('acyeditor_disable');
 		var zoneGlob = zoneBody.getElementsByTagName('*');
 		acyJquery('.acyeditor_action').remove();
@@ -1399,8 +1389,8 @@ function FireClick(itemElement, arretRecursif){
 			FireClick(itemElement, true);
 		}, 100);
 	}else if(isBrowserIE7() || isBrowserIE8()){
-		var popupTagContainer = parent.document.getElementById(boutonTags);
-		var popupMediaBrowserContainer = parent.document.getElementById(boutonMediaBrowser);
+		popupTagContainer = parent.document.getElementById(boutonTags);
+		popupMediaBrowserContainer = parent.document.getElementById(boutonMediaBrowser);
 		if(popupTagContainer != null
 		 && popupTagContainer != undefined
 		 && popupTagContainer.children[0] != null
@@ -1849,7 +1839,6 @@ function ClickTemplateCKEditor(id, idElement, e){
 					editor.on('selectionChange', function(e){ IeCursorFix(); });
 					editor.on('change', function(e){ ResizeIframe(id); });
 					editor.focus();
-
 					editorOnScreen();
 
 					var iframe = acyJquery('#editor_body_ifr');
@@ -1931,8 +1920,9 @@ function CheckDeselection(id, e){
 	var acyeditor_enedition = false;
 	while (parentElement != null && parentElement != undefined){
 		if((parentElement.className && parentElement.className.indexOf('acyeditor_enedition') >= 0)
-		 || parentElement.id == boutonTags
-		 || ClickSurPopup(parentElement)){
+			|| parentElement.id == boutonTags
+			|| parentElement.id == "AcyLienMediaBrowser"
+			|| ClickSurPopup(parentElement)){
 			acyeditor_enedition = true;
 		}
 		if(parentElement.parentElement == null && parentElement.tagName != "HTML"){
@@ -1969,7 +1959,7 @@ function CleanEditorContent(id, e){
 				enfantsFauxDiv[indexEnfantsFauxDiv].outerHTML = "";
 			}
 		}
-		if(Existe(id, enfantsFauxDiv[indexEnfantsFauxDiv].id)){
+		if(enfantsFauxDiv[indexEnfantsFauxDiv] && Existe(id, enfantsFauxDiv[indexEnfantsFauxDiv].id)){
 			enfantsFauxDiv[indexEnfantsFauxDiv].removeAttribute("id");
 		}
 	}
@@ -2270,4 +2260,7 @@ function AcyGetData(){
 	for(var myField in CKEDITOR.instances){
 		return CKEDITOR.instances[myField].getData();
 	}
+
+	var iframe = jQuery('#editor_body_ifr');
+	if(iframe) return iframe.contents().find("body").html();
 }

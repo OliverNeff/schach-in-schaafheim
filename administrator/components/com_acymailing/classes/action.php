@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -21,8 +22,7 @@ class actionClass extends acymailingClass{
 			acymailing_arrayToInteger($onlyActionIds);
 		}
 
-		$this->database->setQuery('SELECT * FROM '.acymailing_table('action').(empty($onlyActionIds) ? '' : ' WHERE listid IN ('.implode(',', $onlyActionIds).')').' ORDER BY ordering ASC');
-		return $this->database->loadObjectList($index);
+		return acymailing_loadObjectList('SELECT * FROM '.acymailing_table('action').(empty($onlyActionIds) ? '' : ' WHERE listid IN ('.implode(',', $onlyActionIds).')').' ORDER BY ordering ASC', $index);
 	}
 
 	function delete($elements){
@@ -34,26 +34,23 @@ class actionClass extends acymailingClass{
 	}
 
 	function get($actionid, $default = null){
-		$query = 'SELECT a.*, b.name AS creatorname, b.username AS creatorusername, b.email FROM '.acymailing_table('action').' AS a LEFT JOIN '.acymailing_table('users', false).' AS b on a.userid = b.id WHERE action_id = '.intval($actionid).' LIMIT 1';
-		$this->database->setQuery($query);
-		return $this->database->loadObject();
+		$query = 'SELECT a.*, b.'.$this->cmsUserVars->name.' AS creatorname, b.'.$this->cmsUserVars->username.' AS creatorusername, b.'.$this->cmsUserVars->email.' AS email FROM '.acymailing_table('action').' AS a LEFT JOIN '.acymailing_table($this->cmsUserVars->table, false).' AS b on a.userid = b.'.$this->cmsUserVars->id.' WHERE action_id = '.intval($actionid).' LIMIT 1';
+		return acymailing_loadObject($query);
 	}
 
 	function saveForm(){
-		$app = JFactory::getApplication();
-
 		$action = new stdClass();
 		$action->action_id = acymailing_getCID('action_id');
 
-		$formData = JRequest::getVar('data', array(), '', 'array');
+		$formData = acymailing_getVar('array', 'data', array(), '');
 
 		foreach($formData['action'] as $column => $value){
-			if($app->isAdmin() || $this->allowedField('action', $column)){
+			if(acymailing_isAdmin()){
 				acymailing_secureField($column);
 				$action->$column = strip_tags($value);
 			}
 		}
-		if(!empty($action->username) && version_compare(JVERSION, '3.1.2', '>=')) $action->username = JStringPunycode::emailToPunycode($action->username);
+		if(!empty($action->username)) $action->username = acymailing_punycode($action->username);
 
 		if(empty($action->action_id)) $action->nextdate = time() + intval($action->frequency);
 		if($action->password == '********') unset($action->password);
@@ -65,27 +62,25 @@ class actionClass extends acymailingClass{
 		$action_id = $this->save($action);
 		if(!$action_id) return false;
 
-		JRequest::setVar('action_id', $action_id);
+		acymailing_setVar('action_id', $action_id);
 		return true;
 	}
 
 	function save($action){
 		if(empty($action->action_id) && empty($action->userid)){
-			$user = JFactory::getUser();
-			$action->userid = $user->id;
+			$action->userid = acymailing_currentUserId();
 		}
 
-		JPluginHelper::importPlugin('acymailing');
-		$dispatcher = JDispatcher::getInstance();
+		acymailing_importPlugin('acymailing');
 		if(empty($action->action_id)){
-			$dispatcher->trigger('onAcyBeforeActionCreate', array(&$action));
-			$status = $this->database->insertObject(acymailing_table('action'), $action);
+			acymailing_trigger('onAcyBeforeActionCreate', array(&$action));
+			$status = acymailing_insertObject(acymailing_table('action'), $action);
 		}else{
-			$dispatcher->trigger('onAcyBeforeActionModify', array(&$action));
-			$status = $this->database->updateObject(acymailing_table('action'), $action, 'action_id');
+			acymailing_trigger('onAcyBeforeActionModify', array(&$action));
+			$status = acymailing_updateObject(acymailing_table('action'), $action, 'action_id');
 		}
 
-		if($status) return empty($action->action_id) ? $this->database->insertid() : $action->action_id;
+		if($status) return empty($action->action_id) ? $status : $action->action_id;
 		return false;
 	}
 }

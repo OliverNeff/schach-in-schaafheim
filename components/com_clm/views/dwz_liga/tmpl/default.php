@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2015 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -11,7 +11,6 @@
 */
 
 defined('_JEXEC') or die('Restricted access');
-//JHtml::_('behavior.tooltip', '.CLMTooltip', $params);
 JHtml::_('behavior.tooltip', '.CLMTooltip');
 
 $liga		= $this->liga;
@@ -28,7 +27,7 @@ $liga		= $this->liga;
 			$params[substr($value,0,$ipos)] = substr($value,$ipos+1);
 		}
 	}	
-	if (!isset($params['dwz_date'])) { $params['dwz_date'] = '0000-00-00'; $old=true; } else { $old=false; }
+	if (!isset($params['dwz_date'])) { $params['dwz_date'] = '1970-01-01'; $old=true; } else { $old=false; }
 $dwz		= $this->dwz;
 $spieler	= $this->spieler;
 $sid		= JRequest::getInt( 'saison','1');
@@ -51,14 +50,18 @@ require_once(JPATH_COMPONENT.DS.'includes'.DS.'css_path.php');
 <?php require_once(JPATH_COMPONENT.DS.'includes'.DS.'submenu.php'); ?>
 
 <?php
-if (!isset($dwz_date) || $params[$dwz_date] == '0000-00-00') {
+if (!isset($dwz_date) OR $params[$dwz_date] == '0000-00-00' OR $params[$dwz_date] == '1970-01-01') {
 	if (isset($dwz[0]) && $dwz[0]->dsb_datum  > 0) $hint_dwzdsb = JText::_('DWZ_DSB_COMMENT_RUN').' '.utf8_decode(JText::_('ON_DAY')).' '.JHTML::_('date',  $dwz[0]->dsb_datum, JText::_('DATE_FORMAT_CLM_F')); 
 	if (!isset($dwz[0]) || $dwz[0]->dsb_datum == 0) {$hint_dwzdsb = JText::_('DWZ_DSB_COMMENT_UNCLEAR');  }
 } else {
 	$hint_dwzdsb = JText::_('DWZ_DSB_COMMENT_LEAGUE').' '.utf8_decode(JText::_('ON_DAY')).' '.JHTML::_('date',  $params[$dwz_date], JText::_('DATE_FORMAT_CLM_F'));  
 }
 
-if ( !$dwz OR $dwz[0]->published == "0") { echo '<br><div class="wrong">'. JText::_('NOT_PUBLISHED').'<br>'.JText::_('GEDULD') .'</div><br>'; } 
+$archive_check = clm_core::$api->db_check_season_user($sid);
+if (!$archive_check) {
+	echo "<div id='wrong'>".JText::_('NO_ACCESS')."<br>".JText::_('NOT_REGISTERED')."</div>";
+}
+elseif ( !$dwz OR $dwz[0]->published == "0") { echo '<br><div class="wrong">'. JText::_('NOT_PUBLISHED').'<br>'.JText::_('GEDULD') .'</div><br>'; } 
 else {
 
 ?>
@@ -99,19 +102,20 @@ if (isset($spieler[$count-1]) AND $spieler[$count-1]->count > 0) {
 <table cellpadding="0" cellspacing="0" class="dwz_liga">
 <tr>
 <th><?php echo $liga->tln_nr;?></th>
-<th colspan="10"><a href="index.php?option=com_clm&amp;view=mannschaft&amp;saison=<?php echo $sid; ?>&amp;liga=<?php echo $lid; ?>&amp;tlnr=<?php echo $liga->tln_nr; ?>&amp;Itemid=<?php echo $item; ?>"><?php echo $liga->name;?></a></th>
+<th colspan="11"><a href="index.php?option=com_clm&amp;view=mannschaft&amp;saison=<?php echo $sid; ?>&amp;liga=<?php echo $lid; ?>&amp;tlnr=<?php echo $liga->tln_nr; ?>&amp;Itemid=<?php echo $item; ?>"><?php echo $liga->name;?></a></th>
 </tr>
 <tr>
 	<td><?php echo JText::_('DWZ_NR') ?></td>
 	<td><?php echo JText::_('DWZ_NAME') ?></td>
-	<td><a title="<?php echo $hint_dwzdsb; ?>" class="CLMTooltip"><?php echo JText::_('DWZ_OLD') //klkl ?></a></td>
+	<td><a title="<?php echo $hint_dwzdsb; ?>" class="Tooltip"><?php echo JText::_('DWZ_OLD') //klkl ?></a></td>
 	<td><?php echo JText::_('DWZ_W') ?></td>
 	<td><?php echo JText::_('DWZ_WE') ?></td>
 	<td><?php echo JText::_('DWZ_EF') ?></td>
 	<td><?php echo JText::_('DWZ_RATING') ?></td>
 	<td><?php echo JText::_('DWZ_LEVEL') ?></td>
 	<td><?php echo JText::_('DWZ_POINTS') ?></td>
-	<td colspan="2"><a title="<?php echo $hint_dwznew; ?>" class="CLMTooltip"><?php echo JText::_('DWZ_NEW') //klkl ?></a></td>
+	<td colspan="2"><?php echo JText::_('DWZ_NEW'); //klkl ?></td>
+
 </tr>
 
 <?php } ?>
@@ -176,10 +180,10 @@ if (isset($spieler[$count-1]) AND $spieler[$count-1]->count > 0) {
 </tr>
 <?php } ?>
 </table>
-<?php }} ?>
+<?php } ?>
 
 <?php echo '<div class="hint">'.$hint_dwzdsb.'</div>'; ?>
-
+<?php } ?>
 <?php require_once(JPATH_COMPONENT.DS.'includes'.DS.'copy.php'); ?>
 <div class="clr"></div>
 </div>

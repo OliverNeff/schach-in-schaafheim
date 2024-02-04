@@ -1,15 +1,63 @@
 /**
  * @package    AcyMailing for Joomla!
- * @version    5.7.0
+ * @version    5.10.2
  * @author     acyba.com
- * @copyright  (C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright  (C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license    GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
 
-function submitacymailingform(task, formName, allowSpecialChars){
+var task, formName;
+
+function submitacymailingform(newtask, newformName) {
+	task = newtask;
+	formName = newformName;
+
+	var recaptchaid = 'acymailing-captcha';
+	if(newformName) recaptchaid = newformName+'-captcha';
+
+	var invisibleRecaptcha = document.querySelector('#'+recaptchaid+'[class="g-recaptcha"][data-size="invisible"]');
+	if(invisibleRecaptcha && typeof grecaptcha == "object"){
+
+		var grcID = invisibleRecaptcha.getAttribute('grcID');
+
+		if(!grcID) {
+			grcID = grecaptcha.render(recaptchaid, {
+				'sitekey': invisibleRecaptcha.getAttribute("data-sitekey"),
+				'callback': 'acySubmitSubForm',
+				'size': 'invisible',
+				'expired-callback': 'resetRecaptcha'
+			});
+
+			invisibleRecaptcha.setAttribute('grcID', grcID);
+		}
+
+		var response = grecaptcha.getResponse(grcID);
+		if(response){
+			return acySubmitSubForm();
+		}else{
+			grecaptcha.execute(grcID);
+			return false;
+		}
+	}else{
+		return acySubmitSubForm();
+	}
+}
+
+function resetRecaptcha(){
+	var recaptchaid = 'acymailing-captcha';
+	if(formName) recaptchaid = formName+'-captcha';
+
+	var invisibleRecaptcha = document.querySelector('#'+recaptchaid+'[class="g-recaptcha"][data-size="invisible"]');
+	if(!invisibleRecaptcha) return;
+
+	var grcID = invisibleRecaptcha.getAttribute('grcID');
+	grecaptcha.reset(grcID);
+}
+
+function acySubmitSubForm(){
 	var varform = document[formName];
-	if(allowSpecialChars == 0) {
-		var filterEmail = /^([a-z0-9_'&\.\-\+=])+\@(([a-z0-9\-])+\.)+([a-z0-9]{2,10})+$/i;
+	if(typeof acymailingModule != 'undefined') {
+		var filterEmail = acymailingModule['emailRegex'];
 	}else{
 		var filterEmail = /\@/i;
 	}
@@ -24,8 +72,8 @@ function submitacymailingform(task, formName, allowSpecialChars){
 
 	if(task != 'optout'){
 		nameField = varform.elements['user[name]'];
-		if(nameField && typeof acymailing != 'undefined' && (((typeof acymailing['level'] == 'undefined' || acymailing['level'] != 'enterprise') && ((nameField.value == acymailing['NAMECAPTION'] || (typeof acymailing['excludeValues' + formName] != 'undefined' && typeof acymailing['excludeValues' + formName]['name'] != 'undefined' && nameField.value == acymailing['excludeValues' + formName]['name'])) || nameField.value.replace(/ /g, "").length < 2)) || (typeof acymailing['level'] != 'undefined' && acymailing['level'] == 'enterprise' && typeof acymailing['reqFields' + formName] != 'undefined' && acymailing['reqFields' + formName].indexOf('name') >= 0 && ((nameField.value == acymailing['NAMECAPTION'] || (typeof acymailing['excludeValues' + formName] != 'undefined' && typeof acymailing['excludeValues' + formName]['name'] != 'undefined' && nameField.value == acymailing['excludeValues' + formName]['name'])) || nameField.value.replace(/ /g, "").length < 2)))){
-			alert(acymailing['NAME_MISSING']);
+		if(nameField && typeof acymailingModule != 'undefined' && (typeof acymailingModule['reqFields' + formName] != 'undefined' && acymailingModule['reqFields' + formName].indexOf('name') >= 0 && ((nameField.value == acymailingModule['NAMECAPTION'] || (typeof acymailingModule['excludeValues' + formName] != 'undefined' && typeof acymailingModule['excludeValues' + formName]['name'] != 'undefined' && nameField.value == acymailingModule['excludeValues' + formName]['name'])) || nameField.value.replace(/ /g, "").length < 2))){
+			alert(acymailingModule['NAME_MISSING']);
 			nameField.className = nameField.className + ' invalid';
 			return false;
 		}
@@ -33,10 +81,10 @@ function submitacymailingform(task, formName, allowSpecialChars){
 
 	var emailField = varform.elements['user[email]'];
 	if(emailField){
-		if(typeof acymailing == 'undefined' || emailField.value != acymailing['EMAILCAPTION']) emailField.value = emailField.value.replace(/ /g, "");
-		if(!emailField || (typeof acymailing != 'undefined' && (emailField.value == acymailing['EMAILCAPTION'] || (typeof acymailing['excludeValues' + formName] != 'undefined' && typeof acymailing['excludeValues' + formName]['email'] != 'undefined' && emailField.value == acymailing['excludeValues' + formName]['email']))) || !filterEmail.test(emailField.value)){
-			if(typeof acymailing != 'undefined'){
-				alert(acymailing['VALID_EMAIL']);
+		if(typeof acymailingModule == 'undefined' || emailField.value != acymailingModule['EMAILCAPTION']) emailField.value = emailField.value.replace(/ /g, "");
+		if(!emailField || (typeof acymailingModule != 'undefined' && (emailField.value == acymailingModule['EMAILCAPTION'] || (typeof acymailingModule['excludeValues' + formName] != 'undefined' && typeof acymailingModule['excludeValues' + formName]['email'] != 'undefined' && emailField.value == acymailingModule['excludeValues' + formName]['email']))) || !filterEmail.test(emailField.value)){
+			if(typeof acymailingModule != 'undefined'){
+				alert(acymailingModule['VALID_EMAIL']);
 			}
 			emailField.className = emailField.className + ' invalid';
 			return false;
@@ -51,18 +99,17 @@ function submitacymailingform(task, formName, allowSpecialChars){
 				if(alllists[b].checked) listschecked = true;
 			}
 			if(!listschecked){
-				alert(acymailing['NO_LIST_SELECTED']);
+				alert(acymailingModule['NO_LIST_SELECTED']);
 				return false;
 			}
 		}
 	}
 
+	if(task != 'optout' && typeof acymailingModule != 'undefined'){
+		if(typeof acymailingModule['reqFields' + formName] != 'undefined' && acymailingModule['reqFields' + formName].length > 0){
 
-	if(task != 'optout' && typeof acymailing != 'undefined'){
-		if(typeof acymailing['reqFields' + formName] != 'undefined' && acymailing['reqFields' + formName].length > 0){
-
-			for(var i = 0; i < acymailing['reqFields' + formName].length; i++){
-				elementName = 'user[' + acymailing['reqFields' + formName][i] + ']';
+			for(var i = 0; i < acymailingModule['reqFields' + formName].length; i++){
+				elementName = 'user[' + acymailingModule['reqFields' + formName][i] + ']';
 				elementToCheck = varform.elements[elementName];
 				if(elementToCheck){
 					var isValid = false;
@@ -77,7 +124,7 @@ function submitacymailingform(task, formName, allowSpecialChars){
 							}
 						}else{
 							if(elementToCheck.value.replace(/ /g, "").length > 0){
-								if(typeof acymailing['excludeValues' + formName] == 'undefined' || typeof acymailing['excludeValues' + formName][acymailing['reqFields' + formName][i]] == 'undefined' || acymailing['excludeValues' + formName][acymailing['reqFields' + formName][i]] != elementToCheck.value) isValid = true;
+								if(typeof acymailingModule['excludeValues' + formName] == 'undefined' || typeof acymailingModule['excludeValues' + formName][acymailingModule['reqFields' + formName][i]] == 'undefined' || acymailingModule['excludeValues' + formName][acymailingModule['reqFields' + formName][i]] != elementToCheck.value) isValid = true;
 							}
 						}
 					}else{
@@ -90,7 +137,7 @@ function submitacymailingform(task, formName, allowSpecialChars){
 					}
 					if(!isValid){
 						elementToCheck.className = elementToCheck.className + ' invalid';
-						alert(acymailing['validFields' + formName][i]);
+						alert(acymailingModule['validFields' + formName][i]);
 						return false;
 					}
 				}else{
@@ -98,15 +145,15 @@ function submitacymailingform(task, formName, allowSpecialChars){
 						if(varform.elements[elementName + '[day]'] && varform.elements[elementName + '[day]'].value < 1) varform.elements[elementName + '[day]'].className = varform.elements[elementName + '[day]'].className + ' invalid';
 						if(varform.elements[elementName + '[month]'] && varform.elements[elementName + '[month]'].value < 1) varform.elements[elementName + '[month]'].className = varform.elements[elementName + '[month]'].className + ' invalid';
 						if(varform.elements[elementName + '[year]'] && varform.elements[elementName + '[year]'].value < 1902) varform.elements[elementName + '[year]'].className = varform.elements[elementName + '[year]'].className + ' invalid';
-						alert(acymailing['validFields' + formName][i]);
+						alert(acymailingModule['validFields' + formName][i]);
 						return false;
 					}
 
-					if((varform.elements[elementName + '[country]'] && varform.elements[elementName + '[country]'].value < 1) || (varform.elements[elementName + '[num]'] && (varform.elements[elementName + '[num]'].value < 3 || (typeof acymailing['excludeValues' + formName] != 'undefined' && typeof acymailing['excludeValues' + formName][acymailing['reqFields' + formName][i]] != 'undefined' && acymailing['excludeValues' + formName][acymailing['reqFields' + formName][i]] == varform.elements[elementName + '[num]'].value)))){
+					if((varform.elements[elementName + '[country]'] && varform.elements[elementName + '[country]'].value < 1) || (varform.elements[elementName + '[num]'] && (varform.elements[elementName + '[num]'].value < 3 || (typeof acymailingModule['excludeValues' + formName] != 'undefined' && typeof acymailingModule['excludeValues' + formName][acymailingModule['reqFields' + formName][i]] != 'undefined' && acymailingModule['excludeValues' + formName][acymailingModule['reqFields' + formName][i]] == varform.elements[elementName + '[num]'].value)))){
 						if((varform.elements[elementName + '[country]'] && varform.elements[elementName + '[country]'].parentElement.parentElement.style.display != 'none') || (varform.elements[elementName + '[num]'] && varform.elements[elementName + '[num]'].parentElement.parentElement.style.display != 'none')){
 							if(varform.elements[elementName + '[country]'] && varform.elements[elementName + '[country]'].value < 1) varform.elements[elementName + '[country]'].className = varform.elements[elementName + '[country]'].className + ' invalid';
-							if(varform.elements[elementName + '[num]'] && (varform.elements[elementName + '[num]'].value < 3 || (typeof acymailing['excludeValues' + formName] != 'undefined' && typeof acymailing['excludeValues' + formName][acymailing['reqFields' + formName][i]] != 'undefined' && acymailing['excludeValues' + formName][acymailing['reqFields' + formName][i]] == varform.elements[elementName + '[num]'].value))) varform.elements[elementName + '[num]'].className = varform.elements[elementName + '[num]'].className + ' invalid';
-							alert(acymailing['validFields' + formName][i]);
+							if(varform.elements[elementName + '[num]'] && (varform.elements[elementName + '[num]'].value < 3 || (typeof acymailingModule['excludeValues' + formName] != 'undefined' && typeof acymailingModule['excludeValues' + formName][acymailingModule['reqFields' + formName][i]] != 'undefined' && acymailingModule['excludeValues' + formName][acymailingModule['reqFields' + formName][i]] == varform.elements[elementName + '[num]'].value))) varform.elements[elementName + '[num]'].className = varform.elements[elementName + '[num]'].className + ' invalid';
+							alert(acymailingModule['validFields' + formName][i]);
 							return false;
 						}
 					}
@@ -114,13 +161,13 @@ function submitacymailingform(task, formName, allowSpecialChars){
 			}
 		}
 
-		if(typeof acymailing != 'undefined' && typeof acymailing['checkFields' + formName] != 'undefined' && acymailing['checkFields' + formName].length > 0){
-			for(var i = 0; i < acymailing['checkFields' + formName].length; i++){
-				elementName = 'user[' + acymailing['checkFields' + formName][i] + ']';
-				elementtypeToCheck = acymailing['checkFieldsType' + formName][i];
+		if(typeof acymailingModule != 'undefined' && typeof acymailingModule['checkFields' + formName] != 'undefined' && acymailingModule['checkFields' + formName].length > 0){
+			for(var i = 0; i < acymailingModule['checkFields' + formName].length; i++){
+				elementName = 'user[' + acymailingModule['checkFields' + formName][i] + ']';
+				elementtypeToCheck = acymailingModule['checkFieldsType' + formName][i];
 				elementToCheck = varform.elements[elementName].value;
-				if(typeof acymailing['excludeValues' + formName] != 'undefined'){
-					var excludedValues = acymailing['excludeValues' + formName][acymailing['checkFields' + formName][i]];
+				if(typeof acymailingModule['excludeValues' + formName] != 'undefined'){
+					var excludedValues = acymailingModule['excludeValues' + formName][acymailingModule['checkFields' + formName][i]];
 					if(typeof excludedValues != 'undefined' && elementToCheck == excludedValues){
 						continue;
 					}
@@ -136,11 +183,11 @@ function submitacymailingform(task, formName, allowSpecialChars){
 						myregexp = new RegExp('^[0-9a-zA-Z\u00C0-\u017F ]*$');
 						break;
 					case 'regexp':
-						myregexp = new RegExp(acymailing['checkFieldsRegexp' + formName][i]);
+						myregexp = new RegExp(acymailingModule['checkFieldsRegexp' + formName][i]);
 						break;
 				}
 				if(!myregexp.test(elementToCheck)){
-					alert(acymailing['validCheckFields' + formName][i]);
+					alert(acymailingModule['validCheckFields' + formName][i]);
 					return false;
 				}
 			}
@@ -150,8 +197,8 @@ function submitacymailingform(task, formName, allowSpecialChars){
 	var captchaField = varform.elements['acycaptcha'];
 	if(captchaField){
 		if(captchaField.value.length < 1){
-			if(typeof acymailing != 'undefined'){
-				alert(acymailing['CAPTCHA_MISSING']);
+			if(typeof acymailingModule != 'undefined'){
+				alert(acymailingModule['CAPTCHA_MISSING']);
 			}
 			captchaField.className = captchaField.className + ' invalid';
 			return false;
@@ -161,17 +208,17 @@ function submitacymailingform(task, formName, allowSpecialChars){
 	if(task != 'optout'){
 		var termsandconditions = varform.terms;
 		if(termsandconditions && !termsandconditions.checked){
-			if(typeof acymailing != 'undefined'){
-				alert(acymailing['ACCEPT_TERMS']);
+			if(typeof acymailingModule != 'undefined'){
+				alert(acymailingModule['ACCEPT_TERMS']);
 			}
 			termsandconditions.className = termsandconditions.className + ' invalid';
 			return false;
 		}
 
-		if(typeof acymailing != 'undefined' && typeof acymailing['excludeValues' + formName] != 'undefined'){
-			for(var fieldName in acymailing['excludeValues' + formName]){
-				if(!acymailing['excludeValues' + formName].hasOwnProperty(fieldName)) continue;
-				if(!varform.elements['user[' + fieldName + ']'] || varform.elements['user[' + fieldName + ']'].value != acymailing['excludeValues' + formName][fieldName]) continue;
+		if(typeof acymailingModule != 'undefined' && typeof acymailingModule['excludeValues' + formName] != 'undefined'){
+			for(var fieldName in acymailingModule['excludeValues' + formName]){
+				if(!acymailingModule['excludeValues' + formName].hasOwnProperty(fieldName)) continue;
+				if(!varform.elements['user[' + fieldName + ']'] || varform.elements['user[' + fieldName + ']'].value != acymailingModule['excludeValues' + formName][fieldName]) continue;
 
 				varform.elements['user[' + fieldName + ']'].value = '';
 			}
@@ -192,236 +239,80 @@ function submitacymailingform(task, formName, allowSpecialChars){
 		return false;
 	}
 
-	if(window.jQuery){
-		var form = jQuery('#' + formName);
-		form.addClass('acymailing_module_loading');
-		form.css("filter:", "alpha(opacity=50)");
-		form.css("-moz-opacity", "0.5");
-		form.css("-khtml-opacity", "0.5");
-		form.css("opacity", "0.5");
-		data = new FormData(form[0]);
+	var form = document.getElementById(formName);
 
-		jQuery.ajax({
-			url: document.getElementById(formName).action,
-			data: data,
-			type: 'POST',
-			async: true,
-			success: function(response){
-				response = JSON.parse(response);
-				acymailingDisplayAjaxResponseJQuery(unescape(response.message), response.type, formName);
-			},
-			error: function(){
-				acymailingDisplayAjaxResponseJQuery('Ajax Request Failure', 'error', formName);
-			},
-			cache: false,
-			contentType: false,
-			processData: false
-		});
-	}else{
-		try{
-			var form = document.id(formName);
-		}catch(err){
-			var form = $(formName);
+	var formData = new FormData(form);
+	form.className += ' acymailing_module_loading';
+	form.style.filter = "alpha(opacity=50)";
+	form.style.opacity = "0.5";
+
+	var xhr = new XMLHttpRequest();
+	xhr.open('POST', form.action);
+	xhr.onload = function(){
+		var message = 'Ajax Request Failure';
+		var type = 'error';
+
+		if (xhr.status === 200){
+			var response = JSON.parse(xhr.responseText);
+			message = response.message;
+			type = response.type;
 		}
-		data = form.toQueryString();
-
-		if(typeof Ajax == 'function'){
-			new Ajax(form.action, {
-				data: data, method: 'post', onRequest: function(){
-					form.addClass('acymailing_module_loading');
-					form.setStyle("filter:", "alpha(opacity=50)");
-					form.setStyle("-moz-opacity", "0.5");
-					form.setStyle("-khtml-opacity", "0.5");
-					form.setStyle("opacity", "0.5");
-				}, onSuccess: function(response){
-					response = Json.evaluate(response);
-					acymailingDisplayAjaxResponseMootools(unescape(response.message), response.type, formName);
-				}, onFailure: function(){
-					acymailingDisplayAjaxResponseMootools('Ajax Request Failure', 'error', formName);
-				}
-			}).request();
-		}else{
-			var formData = new FormData(form);
-
-			form.addClass('acymailing_module_loading');
-			form.setStyle("filter:", "alpha(opacity=50)");
-			form.setStyle("-moz-opacity", "0.5");
-			form.setStyle("-khtml-opacity", "0.5");
-			form.setStyle("opacity", "0.5");
-
-			var xhr = new XMLHttpRequest();
-			xhr.open('POST', document.id(formName).action);
-			xhr.onload = function(){
-				if (xhr.status === 200){
-					var response = JSON.parse(xhr.responseText);
-					acymailingDisplayAjaxResponseMootools(unescape(response.message), response.type, formName);
-				}else{
-					acymailingDisplayAjaxResponseMootools('Ajax Request Failure', 'error', formName);
-				}
-			};
-			xhr.send(formData);
-		}
-	}
+		acymailingDisplayAjaxResponse(decodeURIComponent(message), type, formName);
+	};
+	xhr.send(formData);
 
 	return false;
 }
 
-function acymailingDisplayAjaxResponseJQuery(message, type, formName){
-	var toggleButton = jQuery('#acymailing_togglemodule_' + formName);
+function acymailingDisplayAjaxResponse(message, type, formName){
+	var toggleButton = document.getElementById('acymailing_togglemodule_' + formName);
 
-	if(toggleButton && toggleButton.hasClass('acyactive')){
-		var wrapper = toggleButton.parent().parent().children()[1];
-		jQuery(wrapper).css('height', '');
+	if(toggleButton && toggleButton.className.indexOf('acyactive') > -1){
+		var wrapper = toggleButton.parentElement.parentElement.childNodes[1];
+		wrapper.style.height = '';
 	}
-	;
 
-	var responseContainer = jQuery('#acymailing_fulldiv_' + formName + ' .responseContainer')[0];
+	var responseContainer = document.querySelectorAll('#acymailing_fulldiv_' + formName + ' .responseContainer')[0];
 
 	if(typeof responseContainer == 'undefined'){
 		responseContainer = document.createElement('div');
-		var fulldiv = jQuery('#acymailing_fulldiv_' + formName);
-		fulldiv.prepend(responseContainer);
+		var fulldiv = document.getElementById('acymailing_fulldiv_' + formName);
+
+		if(fulldiv.firstChild){
+			fulldiv.insertBefore(responseContainer, fulldiv.firstChild);
+		}else{
+			fulldiv.appendChild(responseContainer);
+		}
+		
 		oldContainerHeight = '0px';
 	}else{
-		oldContainerHeight = jQuery(responseContainer).css('height');
+		oldContainerHeight = responseContainer.style.height;
 	}
 
 	responseContainer.className = 'responseContainer';
 
-	var form = jQuery('#' + formName);
+	var form = document.getElementById(formName);
 
-	form.removeClass('acymailing_module_loading');
-
-	responseContainer.innerHTML = message;
-
-	if(type == 'success'){
-		jQuery(responseContainer).addClass('acymailing_module_success');
-	}else{
-		jQuery(responseContainer).addClass('acymailing_module_error');
-		form.css("filter:", "alpha(opacity=100)");
-		form.css("-moz-opacity", "1");
-		form.css("-khtml-opacity", "1");
-		form.css("opacity", "1");
-	}
-
-	newContainerHeight = jQuery(responseContainer).css('height');
-
-	if(type == 'success'){
-		form.animate({
-						 'height': 0, 'opacity': 0
-					 });
-	}
-
-	jQuery(responseContainer).css({
-									  'height': oldContainerHeight, 'filter:': "alpha(opacity=0)", '-moz-opacity': 0, '-khtml-opacity': 0, 'opacity': 0
-								  });
-
-	jQuery(responseContainer).animate({
-										  'height': newContainerHeight, 'opacity': 1
-									  });
-}
-
-function acymailingDisplayAjaxResponseMootools(message, type, formName){
-	try{
-		var toggleButton = document.id('acymailing_togglemodule_' + formName);
-	}catch(err){
-		var toggleButton = $('acymailing_togglemodule_' + formName);
-	}
-
-	if(toggleButton && toggleButton.hasClass('acyactive')){
-		var wrapper = toggleButton.getParent().getParent().getChildren()[1];
-		wrapper.setStyle('height', '');
-	}
-	;
-
-	try{
-		var responseContainer = document.getElements('#acymailing_fulldiv_' + formName + ' .responseContainer')[0];
-	}catch(err){
-		var responseContainer = $$('#acymailing_fulldiv_' + formName + ' .responseContainer')[0];
-	}
-
-	if(typeof responseContainer == 'undefined'){
-		responseContainer = new Element('div');
-		try{
-			var fulldiv = document.id('acymailing_fulldiv_' + formName);
-		}catch(err){
-			var fulldiv = $('acymailing_fulldiv_' + formName);
-		}
-		responseContainer.inject(fulldiv, 'top');
-		oldContainerHeight = '0px';
-	}else{
-		oldContainerHeight = responseContainer.getStyle('height');
-	}
-
-	responseContainer.className = 'responseContainer';
-
-	try{
-		var form = document.id(formName);
-	}catch(err){
-		var form = $(formName);
-	}
-	form.removeClass('acymailing_module_loading');
+	var elclass = form.className;
+	var rmclass = 'acymailing_module_loading';
+	var res = elclass.replace(' '+rmclass, '', elclass);
+	if(res == elclass) res = elclass.replace(rmclass+' ', '', elclass);
+	if(res == elclass) res = elclass.replace(rmclass, '', elclass);
+	form.className = res;
 
 	responseContainer.innerHTML = message;
 
 	if(type == 'success'){
-		responseContainer.addClass('acymailing_module_success');
+		responseContainer.className += ' acymailing_module_success';
 	}else{
-		responseContainer.addClass('acymailing_module_error');
-		form.setStyle("filter:", "alpha(opacity=100)");
-		form.setStyle("-moz-opacity", "1");
-		form.setStyle("-khtml-opacity", "1");
-		form.setStyle("opacity", "1");
+		responseContainer.className += ' acymailing_module_error';
+		form.style.opacity = "1";
 	}
 
-	newContainerHeight = responseContainer.getStyle('height');
+	newContainerHeight = responseContainer.style.height;
 
-	if(typeof Ajax == 'function'){
-		if(type == 'success'){
-			var myEffect = new Fx.Styles(form, {duration: 500, transition: Fx.Transitions.linear});
-			myEffect.start({
-							   'height': [form.getSize().size.y, 0], 'opacity': [1, 0]
-						   });
-		}
-
-		try{
-			responseContainer.setStyle('height', oldContainerHeight + 'px');
-			responseContainer.setStyle("filter:", "alpha(opacity=0)");
-			responseContainer.setStyle("-moz-opacity", "0");
-			responseContainer.setStyle("-khtml-opacity", "0");
-			responseContainer.setStyle("opacity", "0");
-		}
-		catch(e){
-		}
-
-		var myEffect2 = new Fx.Styles(responseContainer, {duration: 500, transition: Fx.Transitions.linear});
-		myEffect2.start({
-							'height': [oldContainerHeight, newContainerHeight], 'opacity': [0, 1]
-						});
-
-	}else // Mootools >= 1.2
-	{
-		if(type == 'success'){
-			form.set('morph');
-			form.morph({
-						   'height': '0px', 'opacity': 0
-					   });
-
-			form.setStyles({
-							   'display': 'none'
-						   });
-		}
-
-		if(newContainerHeight != 'auto'){
-			responseContainer.setStyles({
-											'height': oldContainerHeight, 'opacity': 0
-										});
-
-			responseContainer.set('morph');
-			responseContainer.morph({
-										'height': newContainerHeight, 'opacity': 1
-									});
-		}
-	}
+	form.style.display = 'none';
+	responseContainer.className += ' slide_open';
 }
+
 

@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 if(!function_exists('ldap_connect')){
@@ -14,27 +15,22 @@ if(!function_exists('ldap_connect')){
 }
 
 $js = 'function updateldap(){
-					document.getElementById("ldap_fields").innerHTML = "<span class=\"onload\"></span>";
-					queryString = "index.php?option=com_acymailing&tmpl=component&ctrl=data&task=ajaxload&importfrom=ldap";
-					queryString += "&ldap_host="+document.getElementById("ldap_host").value;
-					queryString += "&ldap_port="+document.getElementById("ldap_port").value;
-					queryString += "&ldap_basedn="+document.getElementById("ldap_basedn").value;
-					queryString += "&ldap_username="+document.getElementById("ldap_username").value;
-					queryString += "&ldap_password="+document.getElementById("ldap_password").value;
-					try{
-						new Ajax(queryString,{ method: "post", update: document.getElementById("ldap_fields")}).request();
-					}catch(err){
-						new Request({
-						method: "post",
-						url: queryString,
-						onSuccess: function(responseText, responseXML) {
-							document.getElementById("ldap_fields").innerHTML = responseText;
-						}
-						}).send();
-					}
-				}';
-$doc = JFactory::getDocument();
-$doc->addScriptDeclaration($js);
+		document.getElementById("ldap_fields").innerHTML = "<span class=\"onload\"></span>";
+		queryString = "'.acymailing_prepareAjaxURL('data').'&task=ajaxload&importfrom=ldap";
+		queryString += "&ldap_host="+document.getElementById("ldap_host").value;
+		queryString += "&ldap_port="+document.getElementById("ldap_port").value;
+		queryString += "&ldap_basedn="+document.getElementById("ldap_basedn").value;
+		queryString += "&ldap_username="+document.getElementById("ldap_username").value;
+		queryString += "&ldap_password="+document.getElementById("ldap_password").value;
+
+		var xhr = new XMLHttpRequest();
+		xhr.open("GET", queryString);
+		xhr.onload = function(){
+			document.getElementById("ldap_fields").innerHTML = xhr.responseText;
+		}
+		xhr.send();
+	}';
+acymailing_addScript(true, $js);
 ?>
 <div class="onelineblockoptions">
 	<span class="acyblocktitle"><?php echo acymailing_translation('ACY_CONFIGURATION'); ?></span>
@@ -45,7 +41,7 @@ $doc->addScriptDeclaration($js);
 					<?php echo acymailing_translation('IMPORT_CONFIRMED'); ?>
 				</td>
 				<td>
-					<?php echo JHTML::_('acyselect.booleanlist', "ldap_import_confirm", '', $this->config->get('ldap_import_confirm', 1), acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO')); ?>
+					<?php echo acymailing_boolean("ldap_import_confirm", '', $this->config->get('ldap_import_confirm', 1), acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO')); ?>
 				</td>
 			</tr>
 		<?php } ?>
@@ -54,7 +50,7 @@ $doc->addScriptDeclaration($js);
 				<?php echo acymailing_translation('GENERATE_NAME'); ?>
 			</td>
 			<td>
-				<?php echo JHTML::_('acyselect.booleanlist', "ldap_generatename", '', $this->config->get('ldap_generatename', 1), acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO')); ?>
+				<?php echo acymailing_boolean("ldap_generatename", '', $this->config->get('ldap_generatename', 1), acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO')); ?>
 			</td>
 		</tr>
 		<tr>
@@ -62,7 +58,7 @@ $doc->addScriptDeclaration($js);
 				<?php echo acymailing_translation('OVERWRITE_EXISTING'); ?>
 			</td>
 			<td>
-				<?php echo JHTML::_('acyselect.booleanlist', "ldap_overwriteexisting", '', $this->config->get('ldap_overwriteexisting', 0), acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO')); ?>
+				<?php echo acymailing_boolean("ldap_overwriteexisting", '', $this->config->get('ldap_overwriteexisting', 0), acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO')); ?>
 			</td>
 		</tr>
 		<tr>
@@ -70,7 +66,7 @@ $doc->addScriptDeclaration($js);
 				<?php echo 'Delete AcyMailing user if it does not exists in LDAP'; ?>
 			</td>
 			<td>
-				<?php echo JHTML::_('acyselect.booleanlist', "ldap_deletenotexists", '', $this->config->get('ldap_deletenotexists', 0), acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO')); ?>
+				<?php echo acymailing_boolean("ldap_deletenotexists", '', $this->config->get('ldap_deletenotexists', 0), acymailing_translation('JOOMEXT_YES'), acymailing_translation('JOOMEXT_NO')); ?>
 			</td>
 		</tr>
 	</table>

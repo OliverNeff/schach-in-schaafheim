@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2016 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -22,7 +22,8 @@ $liga		= $this->liga;
 			$params[substr($value,0,$ipos)] = substr($value,$ipos+1);
 		}
 	}	
-	if (!isset($params['dwz_date'])) $params['dwz_date'] = '0000-00-00';
+	if (!isset($params['dwz_date'])) $params['dwz_date'] = '1971-01-01';
+	if (!isset($params['round_date'])) $params['round_date'] = '0';
 $termin		= $this->termin;
 $dwzschnitt	= $this->dwzschnitt;
 $dwzgespielt	= $this->dwzgespielt;
@@ -30,8 +31,8 @@ $paar		= $this->paar;
 $summe		= $this->summe;
 $rundensumme	= $this->rundensumme;
 $runden_modus = $liga[0]->runden_modus;
-$a_html = array('<b>','</b>');
-$a_pdf  = array('','');
+$a_html = array('<b>','</b>','<br>');
+$a_pdf  = array('','','/n');
  
 $runde_t = $liga[0]->runden + 1;  
 // Test alte/neue Standardrundenname bei 2 Durchgängen
@@ -73,7 +74,7 @@ if ( $liga[0]->published == 0) {
 //Array für DWZ Schnitt setzen
 $dwz = array();
 for ($y=1; $y< ($liga[0]->teil)+1; $y++){ 
-		if ($params['dwz_date'] == '0000-00-00') {
+		if ($params['dwz_date'] == '0000-00-00' OR $params['dwz_date'] == '1970-01-01') {
 			if(isset($dwzschnitt[($y-1)]->dwz)) {
 			$dwz[$dwzschnitt[($y-1)]->tlnr] = $dwzschnitt[($y-1)]->dwz; }
 		} else {
@@ -86,6 +87,13 @@ $zelle = 6;
 // Wert von Zellenbreite abziehen
 // Bspl. für Standard (Null) für Liga mit 7 Runden und 1 Durchgang
 $breite = 0;
+if ($params['round_date'] == '0') {
+	$nbreite = 50;
+	$rbreite = 25;
+} else {
+	$nbreite = 40;
+	$rbreite = 20;
+}
 // Überschrift Fontgröße Standard = 14
 $head_font = 12;
 // Fontgröße Standard = 12
@@ -145,7 +153,11 @@ if ($pdf->GetY() > $lspalte_paar) {
 
 if (isset($termin[$term]) AND $termin[$term]->nr == ($x+1)) { if ($termin[$term]->datum > 0) {
 	$datum = ', '.JHTML::_('date',  $termin[$term]->datum, JText::_('DATE_FORMAT_CLM_F')); 
-	if(isset($termin[$term]->startzeit) and $termin[$term]->startzeit != '00:00:00') { $datum .= '  '.substr($termin[$term]->startzeit,0,5).' Uhr'; } }		
+			if($params['round_date'] == '0' and isset($termin[$term]->startzeit) and $termin[$term]->startzeit != '00:00:00') { $datum .= '  '.substr($termin[$term]->startzeit,0,5).' Uhr'; }
+			if($params['round_date'] == '1' and isset($termin[$term]->enddatum) and $termin[$term]->enddatum > '1970-01-01' and $termin[$term]->enddatum != $termin[$term]->datum) { 
+				$datum .= ' - '.JHTML::_('date',  $termin[$term]->enddatum, JText::_('DATE_FORMAT_CLM_F')); } 
+	}
+//	if(isset($termin[$term]->startzeit) and $termin[$term]->startzeit != '00:00:00') { $datum .= '  '.substr($termin[$term]->startzeit,0,5).' Uhr'; } }		
 	else $datum = ''; 
 	$term++; } 
 	$pdf->SetFont('Times','',$head_font-1);
@@ -157,12 +169,15 @@ if (isset($termin[$term]) AND $termin[$term]->nr == ($x+1)) { if ($termin[$term]
 	$pdf->Cell(10,15,' ',0,0);
 	$pdf->Cell(8-$breite,$zelle,utf8_decode(JText::_('PAAR')),1,0,'C');
 	$pdf->Cell(8-$breite,$zelle,utf8_decode(JText::_('TLN')),1,0,'C');
-	$pdf->Cell(50-$breite,$zelle,utf8_decode(JText::_('HOME')),1,0,'C');
+	$pdf->Cell($nbreite-$breite,$zelle,utf8_decode(JText::_('HOME')),1,0,'C');
 	$pdf->Cell(12-$breite,$zelle,utf8_decode(JText::_('DWZ')),1,0,'C');
-	$pdf->Cell(25-$breite,$zelle,utf8_decode(JText::_('RESULT')),1,0,'C');
+	$pdf->Cell($rbreite-$breite,$zelle,utf8_decode(JText::_('RESULT')),1,0,'C');
 	$pdf->Cell(8-$breite,$zelle,utf8_decode(JText::_('TLN')),1,0,'C');
-	$pdf->Cell(50-$breite,$zelle,utf8_decode(JText::_('GUEST')),1,0,'C');
+	$pdf->Cell($nbreite-$breite,$zelle,utf8_decode(JText::_('GUEST')),1,0,'C');
 	$pdf->Cell(12-$breite,$zelle,utf8_decode(JText::_('DWZ')),1,0,'C');
+	if ($params['round_date'] == '1') { 
+		$pdf->Cell(25-$breite,$zelle,utf8_decode(JText::_('FIXTURE_DATE')),1,0,'C');
+	} 
 	$tbreite = (2 * (8+50+12)) + 25 - 7*$breite;
 	$pdf->Ln();
 
@@ -174,10 +189,10 @@ for ($y=0; $y< ($liga[0]->teil)/2; $y++){
 	$pdf->Cell(10,15,' ',0,0);
 	$pdf->Cell(8-$breite,$zelle,$paar[$z]->paar,1,0,'C');
 	$pdf->Cell(8-$breite,$zelle,$paar[$z]->tln_nr,1,0,'C');
-	$pdf->Cell(50-$breite,$zelle,utf8_decode($paar[$z]->hname),1,0,'C');
+	$pdf->Cell($nbreite-$breite,$zelle,utf8_decode($paar[$z]->hname),1,0,'C');
 
 	if (isset($dwzgespielt[$z2]) AND $dwzgespielt[$z2]->runde == ($x+1) AND $dwzgespielt[$z2]->paar == ($y+1) AND $dwzgespielt[$z2]->dg == 1 AND $paar[$z]->hmnr !=0 AND $paar[$z]->gmnr != 0)
-		{ if ($params['dwz_date'] == '0000-00-00') $pdf->Cell(12-$breite,$zelle,round($dwzgespielt[$z2]->dwz),1,0,'C'); 
+		{ if ($params['dwz_date'] == '0000-00-00' OR $params['dwz_date'] == '1970-01-01') $pdf->Cell(12-$breite,$zelle,round($dwzgespielt[$z2]->dwz),1,0,'C'); 
 			else $pdf->Cell(12-$breite,$zelle,round($dwzgespielt[$z2]->start_dwz),1,0,'C'); }
 
 		elseif (isset($dwz[($paar[$z]->htln)])) { $pdf->Cell(12-$breite,$zelle,round($dwz[($paar[$z]->htln)]),1,0,'C');}
@@ -185,22 +200,29 @@ for ($y=0; $y< ($liga[0]->teil)/2; $y++){
 // Wenn Paarung existiert dann Ergebnis-Summen anzeigen
 while ( $summe[$sum_paar]->runde < ($x+1) ) $sum_paar++;
 if ( $summe[$sum_paar]->runde == ($x+1) AND $summe[$sum_paar]->paarung == ($y+1)) {
-	$pdf->Cell(25-$breite,$zelle,$summe[$sum_paar]->sum.' : '.$summe[$sum_paar+1]->sum,1,0,'C');
+	$pdf->Cell($rbreite-$breite,$zelle,$summe[$sum_paar]->sum.' : '.$summe[$sum_paar+1]->sum,1,0,'C');
 	if (($runden_modus == 4 OR $runden_modus == 5) AND ($summe[$sum_paar]->sum == $summe[$sum_paar+1]->sum) AND ($summe[$sum_paar]->sum > 0)) $remis_com = 1; else $remis_com = 0;
 	$sum_paar = $sum_paar+2;
 }
-else { $pdf->Cell(25-$breite,$zelle,' --- ',1,0,'C'); }
+else { $pdf->Cell($rbreite-$breite,$zelle,' --- ',1,0,'C'); }
 
 	$pdf->Cell(8-$breite,$zelle,$paar[$z]->gtln,1,0,'C');
-	$pdf->Cell(50-$breite,$zelle,utf8_decode($paar[$z]->gname),1,0,'C');
+	$pdf->Cell($nbreite-$breite,$zelle,utf8_decode($paar[$z]->gname),1,0,'C');
 
 	if (isset($dwzgespielt[$z2]) AND $dwzgespielt[$z2]->runde == ($x+1) AND $dwzgespielt[$z2]->paar == ($y+1) AND $dwzgespielt[$z2]->dg == 1 AND $paar[$z]->hmnr !=0 AND $paar[$z]->gmnr != 0)
-		{ 	if ($params['dwz_date'] == '0000-00-00') $pdf->Cell(12-$breite,$zelle,round($dwzgespielt[$z2]->gdwz),1,0,'C');
+		{ 	if ($params['dwz_date'] == '0000-00-00' OR $params['dwz_date'] == '1970-01-01') $pdf->Cell(12-$breite,$zelle,round($dwzgespielt[$z2]->gdwz),1,0,'C');
 			else $pdf->Cell(12-$breite,$zelle,round($dwzgespielt[$z2]->gstart_dwz),1,0,'C'); 
 			$z2++;
 		}
 		elseif (isset($dwz[($paar[$z]->gtln)])) { $pdf->Cell(12-$breite,$zelle,round($dwz[($paar[$z]->gtln)]),1,0,'C'); }
 		else { $pdf->Cell(12-$breite,$zelle,'',1,0,'C');}
+	if ($params['round_date'] == '1') { 
+		if (isset($paar[$z]->pdate) AND $paar[$z]->pdate > '1970-01-01') {
+			$pdatum = JHTML::_('date',  $paar[$z]->pdate, JText::_('DATE_FORMAT_CLM_Y2')); 
+			if($paar[$z]->ptime > '00:00:00') { $pdatum .= '  '.substr($paar[$z]->ptime,0,5); } }
+		else $pdatum = '';
+		$pdf->Cell(25-$breite,$zelle,$pdatum,1,0,'C');
+	} 
 if ($remis_com == 1) { 
 	$pdf->Cell(1,$zelle,'',0,1);
 	$remis_com = 0; 
@@ -220,21 +242,23 @@ if ($remis_com == 1) {
 }
 if ($paar[$z]->comment != "") { 
 	$paar[$z]->comment = str_replace($a_html,$a_pdf,$paar[$z]->comment);
-	$a_comment = explode('<br>',$paar[$z]->comment);
-	foreach ($a_comment as $comment) { 
-		$pdf->Cell(1,$zelle,'',0,1);
-		$pdf->Cell(10,$zelle,' ',0,0);
-		$pdf->Cell(8-$breite,$zelle,$paar[$z]->paar,1,0,'C');
-		$ztext = JText::_('PAAR_COMMENT').$comment; 		
-		$pdf->SetFont('Times','',$font);
-		$pdf->Cell($tbreite,$zelle,utf8_decode($ztext),'TBR',0,'C');
-		$pdf->SetFont('Times','',$font); }
+	$pdf->Cell(1,$zelle,'',0,1);
+	$pdf->Cell(10,$zelle,' ',0,0);
+	$xx = $pdf->GetX(); $yy = $pdf->GetY();
+	$pdf->SetXY(($xx+8-$breite),$yy);
+	$ztext = JText::_('PAAR_COMMENT').$paar[$z]->comment; 		
+	$pdf->SetFont('Times','',$font);
+	$pdf->MultiCell($tbreite,$zelle,utf8_decode($ztext),'LTBR','L');
+	$pdf->SetFont('Times','',$font);
+	$yy1 = $pdf->GetY();
+	$pdf->SetXY($xx,$yy);
+	$pdf->Cell(8-$breite,($yy1-$yy),$paar[$z]->paar,1,0,'C');
+
 }
 $z++;
 	$pdf->Ln();
 }
-	//$pdf->Ln();
-	$pdf->Ln();
+	$pdf->Ln($zelle);
 }
 }
 ////////////////////
@@ -256,8 +280,12 @@ if ($pdf->GetY() > $lspalte_paar) {
 	}
 if (isset($termin[$term]) AND $termin[$term]->nr == ($x+1+$liga[0]->runden)) { if ($termin[$term]->datum > 0) { 
 	$datum = ', '.JHTML::_('date',  $termin[$term]->datum, JText::_('DATE_FORMAT_CLM_F')); 
-	if(isset($termin[$term]->startzeit) and $termin[$term]->startzeit != '00:00:00') { $datum .= '  '.substr($termin[$term]->startzeit,0,5).' Uhr'; } 		
-	else $datum = ''; }
+			if($params['round_date'] == '0' and isset($termin[$term]->startzeit) and $termin[$term]->startzeit != '00:00:00') { $datum .= '  '.substr($termin[$term]->startzeit,0,5).' Uhr'; }
+			if($params['round_date'] == '1' and isset($termin[$term]->enddatum) and $termin[$term]->enddatum > '1970-01-01' and $termin[$term]->enddatum != $termin[$term]->datum) { 
+				$datum .= ' - '.JHTML::_('date',  $termin[$term]->enddatum, JText::_('DATE_FORMAT_CLM_F')); } 
+	}
+//	if(isset($termin[$term]->startzeit) and $termin[$term]->startzeit != '00:00:00') { $datum .= '  '.substr($termin[$term]->startzeit,0,5).' Uhr'; } }		
+	else $datum = ''; 
 	$term++; } 
  
 	$pdf->SetFont('Times','',$head_font-1);
@@ -269,12 +297,15 @@ if (isset($termin[$term]) AND $termin[$term]->nr == ($x+1+$liga[0]->runden)) { i
 	$pdf->Cell(10,15,' ',0,0);
 	$pdf->Cell(8-$breite,$zelle,utf8_decode(JText::_('PAAR')),1,0,'C');
 	$pdf->Cell(8-$breite,$zelle,utf8_decode(JText::_('TLN')),1,0,'C');
-	$pdf->Cell(50-$breite,$zelle,utf8_decode(JText::_('HOME')),1,0,'C');
+	$pdf->Cell($nbreite-$breite,$zelle,utf8_decode(JText::_('HOME')),1,0,'C');
 	$pdf->Cell(12-$breite,$zelle,utf8_decode(JText::_('DWZ')),1,0,'C');
-	$pdf->Cell(25-$breite,$zelle,utf8_decode(JText::_('RESULT')),1,0,'C');
+	$pdf->Cell($rbreite-$breite,$zelle,utf8_decode(JText::_('RESULT')),1,0,'C');
 	$pdf->Cell(8-$breite,$zelle,utf8_decode(JText::_('TLN')),1,0,'C');
-	$pdf->Cell(50-$breite,$zelle,utf8_decode(JText::_('GUEST')),1,0,'C');
+	$pdf->Cell($nbreite-$breite,$zelle,utf8_decode(JText::_('GUEST')),1,0,'C');
 	$pdf->Cell(12-$breite,$zelle,utf8_decode(JText::_('DWZ')),1,0,'C');
+	if ($params['round_date'] == '1') { 
+		$pdf->Cell(25-$breite,$zelle,utf8_decode(JText::_('FIXTURE_DATE')),1,0,'C');
+	} 
 	$pdf->Ln();
 
 // Teilnehmerschleife 
@@ -285,7 +316,7 @@ for ($y=0; $y< ($liga[0]->teil)/2; $y++){
 	$pdf->Cell(10,15,' ',0,0);
 	$pdf->Cell(8-$breite,$zelle,$paar[$z]->paar,1,0,'C');
 	$pdf->Cell(8-$breite,$zelle,$paar[$z]->tln_nr,1,0,'C');
-	$pdf->Cell(50-$breite,$zelle,utf8_decode($paar[$z]->hname),1,0,'C');
+	$pdf->Cell($nbreite-$breite,$zelle,utf8_decode($paar[$z]->hname),1,0,'C');
 
 	if (isset($dwzgespielt[$z2]) AND $dwzgespielt[$z2]->runde == ($x+1) AND $dwzgespielt[$z2]->paar == ($y+1) AND $dwzgespielt[$z2]->dg == 2 AND $paar[$z]->hmnr !=0 AND $paar[$z]->gmnr != 0)
 		{ $pdf->Cell(12-$breite,$zelle,round($dwzgespielt[$z2]->dwz),1,0,'C'); }
@@ -294,13 +325,13 @@ for ($y=0; $y< ($liga[0]->teil)/2; $y++){
 // Wenn Paarung existiert dann Ergebnis-Summen anzeigen
 while ( $summe[$sum_paar]->runde < ($x+1) ) $sum_paar++;
 if ( $summe[$sum_paar]->runde == ($x+1) AND $summe[$sum_paar]->paarung == ($y+1)) {
-	$pdf->Cell(25-$breite,$zelle,$summe[$sum_paar]->sum.' : '.$summe[$sum_paar+1]->sum,1,0,'C');
+	$pdf->Cell($rbreite-$breite,$zelle,$summe[$sum_paar]->sum.' : '.$summe[$sum_paar+1]->sum,1,0,'C');
 	$sum_paar = $sum_paar+2;
 }
 else { $pdf->Cell(25-$breite,$zelle,' --- ',1,0,'C'); }
 
 	$pdf->Cell(8-$breite,$zelle,$paar[$z]->gtln,1,0,'C');
-	$pdf->Cell(50-$breite,$zelle,utf8_decode($paar[$z]->gname),1,0,'C');
+	$pdf->Cell($nbreite-$breite,$zelle,utf8_decode($paar[$z]->gname),1,0,'C');
 
 	if (isset($dwzgespielt[$z2]) AND $dwzgespielt[$z2]->runde == ($x+1) AND $dwzgespielt[$z2]->paar == ($y+1) AND $dwzgespielt[$z2]->dg == 1 AND $paar[$z]->hmnr !=0 AND $paar[$z]->gmnr != 0)
 		{ 	$pdf->Cell(12-$breite,$zelle,round($dwzgespielt[$z2]->gdwz),1,0,'C');
@@ -308,6 +339,13 @@ else { $pdf->Cell(25-$breite,$zelle,' --- ',1,0,'C'); }
 		}
 		elseif (isset($dwz[($paar[$z]->gtln)])) { $pdf->Cell(12-$breite,$zelle,round($dwz[($paar[$z]->gtln)]),1,0,'C');}
 		else { $pdf->Cell(12-$breite,$zelle,'',1,0,'C');}
+	if ($params['round_date'] == '1') { 
+		if (isset($paar[$z]->pdate) AND $paar[$z]->pdate > '1970-01-01') {
+			$pdatum = JHTML::_('date',  $paar[$z]->pdate, JText::_('DATE_FORMAT_CLM_Y2')); 
+			if($paar[$z]->ptime > '00:00:00') { $pdatum .= '  '.substr($paar[$z]->ptime,0,5); } }
+		else $pdatum = '';
+		$pdf->Cell(25-$breite,$zelle,$pdatum,1,0,'C');
+	} 
 $z++;
 	$pdf->Ln();
 }
@@ -333,8 +371,12 @@ if ($pdf->GetY() > $lspalte_paar) {
 	}
 if (isset($termin[$term]) AND $termin[$term]->nr == ($x+1+(2 * $liga[0]->runden))) { if ($termin[$term]->datum > 0) {
 	$datum = ', '.JHTML::_('date',  $termin[$term]->datum, JText::_('DATE_FORMAT_CLM_F')); 
-	if(isset($termin[$term]->startzeit) and $termin[$term]->startzeit != '00:00:00') { $datum .= '  '.substr($termin[$term]->startzeit,0,5).' Uhr'; } 		
-	else $datum = ''; }
+			if($params['round_date'] == '0' and isset($termin[$term]->startzeit) and $termin[$term]->startzeit != '00:00:00') { $datum .= '  '.substr($termin[$term]->startzeit,0,5).' Uhr'; }
+			if($params['round_date'] == '1' and isset($termin[$term]->enddatum) and $termin[$term]->enddatum > '1970-01-01' and $termin[$term]->enddatum != $termin[$term]->datum) { 
+				$datum .= ' - '.JHTML::_('date',  $termin[$term]->enddatum, JText::_('DATE_FORMAT_CLM_F')); } 
+	}
+//	if(isset($termin[$term]->startzeit) and $termin[$term]->startzeit != '00:00:00') { $datum .= '  '.substr($termin[$term]->startzeit,0,5).' Uhr'; } }		
+	else $datum = ''; 
 	$term++; } 
  
 	$pdf->SetFont('Times','',$head_font-1);
@@ -346,12 +388,15 @@ if (isset($termin[$term]) AND $termin[$term]->nr == ($x+1+(2 * $liga[0]->runden)
 	$pdf->Cell(10,15,' ',0,0);
 	$pdf->Cell(8-$breite,$zelle,utf8_decode(JText::_('PAAR')),1,0,'C');
 	$pdf->Cell(8-$breite,$zelle,utf8_decode(JText::_('TLN')),1,0,'C');
-	$pdf->Cell(50-$breite,$zelle,utf8_decode(JText::_('HOME')),1,0,'C');
+	$pdf->Cell($nbreite-$breite,$zelle,utf8_decode(JText::_('HOME')),1,0,'C');
 	$pdf->Cell(12-$breite,$zelle,utf8_decode(JText::_('DWZ')),1,0,'C');
-	$pdf->Cell(25-$breite,$zelle,utf8_decode(JText::_('RESULT')),1,0,'C');
+	$pdf->Cell($rbreite-$breite,$zelle,utf8_decode(JText::_('RESULT')),1,0,'C');
 	$pdf->Cell(8-$breite,$zelle,utf8_decode(JText::_('TLN')),1,0,'C');
-	$pdf->Cell(50-$breite,$zelle,utf8_decode(JText::_('GUEST')),1,0,'C');
+	$pdf->Cell($nbreite-$breite,$zelle,utf8_decode(JText::_('GUEST')),1,0,'C');
 	$pdf->Cell(12-$breite,$zelle,utf8_decode(JText::_('DWZ')),1,0,'C');
+	if ($params['round_date'] == '1') { 
+		$pdf->Cell(25-$breite,$zelle,utf8_decode(JText::_('FIXTURE_DATE')),1,0,'C');
+	} 
 	$pdf->Ln();
 
 // Teilnehmerschleife 
@@ -362,7 +407,7 @@ for ($y=0; $y< ($liga[0]->teil)/2; $y++){
 	$pdf->Cell(10,15,' ',0,0);
 	$pdf->Cell(8-$breite,$zelle,$paar[$z]->paar,1,0,'C');
 	$pdf->Cell(8-$breite,$zelle,$paar[$z]->tln_nr,1,0,'C');
-	$pdf->Cell(50-$breite,$zelle,utf8_decode($paar[$z]->hname),1,0,'C');
+	$pdf->Cell($nbreite-$breite,$zelle,utf8_decode($paar[$z]->hname),1,0,'C');
 
 	if (isset($dwzgespielt[$z2]) AND $dwzgespielt[$z2]->runde == ($x+1) AND $dwzgespielt[$z2]->paar == ($y+1) AND $dwzgespielt[$z2]->dg == 2 AND $paar[$z]->hmnr !=0 AND $paar[$z]->gmnr != 0)
 		{ $pdf->Cell(12-$breite,$zelle,round($dwzgespielt[$z2]->dwz),1,0,'C'); }
@@ -371,13 +416,13 @@ for ($y=0; $y< ($liga[0]->teil)/2; $y++){
 // Wenn Paarung existiert dann Ergebnis-Summen anzeigen
 while ( $summe[$sum_paar]->runde < ($x+1) ) $sum_paar++;
 if ( $summe[$sum_paar]->runde == ($x+1) AND $summe[$sum_paar]->paarung == ($y+1)) {
-	$pdf->Cell(25-$breite,$zelle,$summe[$sum_paar]->sum.' : '.$summe[$sum_paar+1]->sum,1,0,'C');
+	$pdf->Cell($rbreite-$breite,$zelle,$summe[$sum_paar]->sum.' : '.$summe[$sum_paar+1]->sum,1,0,'C');
 	$sum_paar = $sum_paar+2;
 }
 else { $pdf->Cell(25-$breite,$zelle,' --- ',1,0,'C'); }
 
 	$pdf->Cell(8-$breite,$zelle,$paar[$z]->gtln,1,0,'C');
-	$pdf->Cell(50-$breite,$zelle,utf8_decode($paar[$z]->gname),1,0,'C');
+	$pdf->Cell($nbreite-$breite,$zelle,utf8_decode($paar[$z]->gname),1,0,'C');
 
 	if (isset($dwzgespielt[$z2]) AND $dwzgespielt[$z2]->runde == ($x+1) AND $dwzgespielt[$z2]->paar == ($y+1) AND $dwzgespielt[$z2]->dg == 1 AND $paar[$z]->hmnr !=0 AND $paar[$z]->gmnr != 0)
 		{ 	$pdf->Cell(12-$breite,$zelle,round($dwzgespielt[$z2]->gdwz),1,0,'C');
@@ -385,6 +430,13 @@ else { $pdf->Cell(25-$breite,$zelle,' --- ',1,0,'C'); }
 		}
 		elseif (isset($dwz[($paar[$z]->gtln)])) { $pdf->Cell(12-$breite,$zelle,round($dwz[($paar[$z]->gtln)]),1,0,'C');}
 		else { $pdf->Cell(12-$breite,$zelle,'',1,0,'C');}
+	if ($params['round_date'] == '1') { 
+		if (isset($paar[$z]->pdate) AND $paar[$z]->pdate > '1970-01-01') {
+			$pdatum = JHTML::_('date',  $paar[$z]->pdate, JText::_('DATE_FORMAT_CLM_Y2')); 
+			if($paar[$z]->ptime > '00:00:00') { $pdatum .= '  '.substr($paar[$z]->ptime,0,5); } }
+		else $pdatum = '';
+		$pdf->Cell(25-$breite,$zelle,$pdatum,1,0,'C');
+	} 
 $z++;
 	$pdf->Ln();
 }
@@ -410,8 +462,12 @@ if ($pdf->GetY() > $lspalte_paar) {
 	}
 if (isset($termin[$term]) AND $termin[$term]->nr == ($x+1+(3 * $liga[0]->runden))) { if ($termin[$term]->datum > 0) {
 	$datum = ', '.JHTML::_('date',  $termin[$term]->datum, JText::_('DATE_FORMAT_CLM_F')); 
-	if(isset($termin[$term]->startzeit) and $termin[$term]->startzeit != '00:00:00') { $datum .= '  '.substr($termin[$term]->startzeit,0,5).' Uhr'; } 		
-	else $datum = ''; }
+			if($params['round_date'] == '0' and isset($termin[$term]->startzeit) and $termin[$term]->startzeit != '00:00:00') { $datum .= '  '.substr($termin[$term]->startzeit,0,5).' Uhr'; }
+			if($params['round_date'] == '1' and isset($termin[$term]->enddatum) and $termin[$term]->enddatum > '1970-01-01' and $termin[$term]->enddatum != $termin[$term]->datum) { 
+				$datum .= ' - '.JHTML::_('date',  $termin[$term]->enddatum, JText::_('DATE_FORMAT_CLM_F')); } 
+	}
+//	if(isset($termin[$term]->startzeit) and $termin[$term]->startzeit != '00:00:00') { $datum .= '  '.substr($termin[$term]->startzeit,0,5).' Uhr'; } }		
+	else $datum = ''; 
 	$term++; } 
 	$pdf->SetFont('Times','',$head_font-1);
 	$pdf->Cell(10,15,' ',0,0);
@@ -422,12 +478,15 @@ if (isset($termin[$term]) AND $termin[$term]->nr == ($x+1+(3 * $liga[0]->runden)
 	$pdf->Cell(10,15,' ',0,0);
 	$pdf->Cell(8-$breite,$zelle,utf8_decode(JText::_('PAAR')),1,0,'C');
 	$pdf->Cell(8-$breite,$zelle,utf8_decode(JText::_('TLN')),1,0,'C');
-	$pdf->Cell(50-$breite,$zelle,utf8_decode(JText::_('HOME')),1,0,'C');
+	$pdf->Cell($nbreite-$breite,$zelle,utf8_decode(JText::_('HOME')),1,0,'C');
 	$pdf->Cell(12-$breite,$zelle,utf8_decode(JText::_('DWZ')),1,0,'C');
-	$pdf->Cell(25-$breite,$zelle,utf8_decode(JText::_('RESULT')),1,0,'C');
+	$pdf->Cell($rbreite-$breite,$zelle,utf8_decode(JText::_('RESULT')),1,0,'C');
 	$pdf->Cell(8-$breite,$zelle,utf8_decode(JText::_('TLN')),1,0,'C');
-	$pdf->Cell(50-$breite,$zelle,utf8_decode(JText::_('GUEST')),1,0,'C');
+	$pdf->Cell($nbreite-$breite,$zelle,utf8_decode(JText::_('GUEST')),1,0,'C');
 	$pdf->Cell(12-$breite,$zelle,utf8_decode(JText::_('DWZ')),1,0,'C');
+	if ($params['round_date'] == '1') { 
+		$pdf->Cell(25-$breite,$zelle,utf8_decode(JText::_('FIXTURE_DATE')),1,0,'C');
+	} 
 	$pdf->Ln();
 
 // Teilnehmerschleife 
@@ -438,7 +497,7 @@ for ($y=0; $y< ($liga[0]->teil)/2; $y++){
 	$pdf->Cell(10,15,' ',0,0);
 	$pdf->Cell(8-$breite,$zelle,$paar[$z]->paar,1,0,'C');
 	$pdf->Cell(8-$breite,$zelle,$paar[$z]->tln_nr,1,0,'C');
-	$pdf->Cell(50-$breite,$zelle,utf8_decode($paar[$z]->hname),1,0,'C');
+	$pdf->Cell($nbreite-$breite,$zelle,utf8_decode($paar[$z]->hname),1,0,'C');
 
 	if (isset($dwzgespielt[$z2]) AND $dwzgespielt[$z2]->runde == ($x+1) AND $dwzgespielt[$z2]->paar == ($y+1) AND $dwzgespielt[$z2]->dg == 2 AND $paar[$z]->hmnr !=0 AND $paar[$z]->gmnr != 0)
 		{ $pdf->Cell(12-$breite,$zelle,round($dwzgespielt[$z2]->dwz),1,0,'C'); }
@@ -447,13 +506,13 @@ for ($y=0; $y< ($liga[0]->teil)/2; $y++){
 // Wenn Paarung existiert dann Ergebnis-Summen anzeigen
 while ( $summe[$sum_paar]->runde < ($x+1) ) $sum_paar++;
 if ( $summe[$sum_paar]->runde == ($x+1) AND $summe[$sum_paar]->paarung == ($y+1)) {
-	$pdf->Cell(25-$breite,$zelle,$summe[$sum_paar]->sum.' : '.$summe[$sum_paar+1]->sum,1,0,'C');
+	$pdf->Cell($rbreite-$breite,$zelle,$summe[$sum_paar]->sum.' : '.$summe[$sum_paar+1]->sum,1,0,'C');
 	$sum_paar = $sum_paar+2;
 }
 else { $pdf->Cell(25-$breite,$zelle,' --- ',1,0,'C'); }
 
 	$pdf->Cell(8-$breite,$zelle,$paar[$z]->gtln,1,0,'C');
-	$pdf->Cell(50-$breite,$zelle,utf8_decode($paar[$z]->gname),1,0,'C');
+	$pdf->Cell($nbreite-$breite,$zelle,utf8_decode($paar[$z]->gname),1,0,'C');
 
 	if (isset($dwzgespielt[$z2]) AND $dwzgespielt[$z2]->runde == ($x+1) AND $dwzgespielt[$z2]->paar == ($y+1) AND $dwzgespielt[$z2]->dg == 1 AND $paar[$z]->hmnr !=0 AND $paar[$z]->gmnr != 0)
 		{ 	$pdf->Cell(12-$breite,$zelle,round($dwzgespielt[$z2]->gdwz),1,0,'C');
@@ -461,6 +520,13 @@ else { $pdf->Cell(25-$breite,$zelle,' --- ',1,0,'C'); }
 		}
 		elseif (isset($dwz[($paar[$z]->gtln)])) { $pdf->Cell(12-$breite,$zelle,round($dwz[($paar[$z]->gtln)]),1,0,'C');}
 		else { $pdf->Cell(12-$breite,$zelle,'',1,0,'C');}
+	if ($params['round_date'] == '1') { 
+		if (isset($paar[$z]->pdate) AND $paar[$z]->pdate > '1970-01-01') {
+			$pdatum = JHTML::_('date',  $paar[$z]->pdate, JText::_('DATE_FORMAT_CLM_Y2')); 
+			if($paar[$z]->ptime > '00:00:00') { $pdatum .= '  '.substr($paar[$z]->ptime,0,5); } }
+		else $pdatum = '';
+		$pdf->Cell(25-$breite,$zelle,$pdatum,1,0,'C');
+	} 
 $z++;
 	$pdf->Ln();
 }
@@ -470,5 +536,5 @@ $z++;
 }
 
 $pdf->Output(utf8_decode(JText::_('PAAR_OVERVIEW')).' '.utf8_decode($liga[0]->name).'.pdf','D');
-
+exit;
 ?>

@@ -1,17 +1,19 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
-class charsetType{
+class charsetType extends acymailingClass{
 	var $addinfo = '';
 	function __construct(){
+		parent::__construct();
 		$charsets = array(
 					'BIG5'=>'BIG5',//Iconv,mbstring
 					'ISO-8859-1'=>'ISO-8859-1',//Iconv,mbstring
@@ -45,13 +47,13 @@ class charsetType{
 
 		$this->values = array();
 		foreach($charsets as $code => $charset){
-			$this->values[] = JHTML::_('select.option', $code,$charset);
+			$this->values[] = acymailing_selectOption($code, $charset);
 		}
 
 	}
 
 	function display($map,$value){
-		return JHTML::_('select.genericlist', $this->values, $map , 'size="1" style="width:150px;" '.$this->addinfo, 'value', 'text', $value);
+		return acymailing_select($this->values, $map , 'size="1" style="width:150px;" '.$this->addinfo, 'value', 'text', $value);
 	}
 
 }

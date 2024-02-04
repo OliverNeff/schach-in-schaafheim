@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -182,13 +183,13 @@ class acypluginsHelper{
 	private function _convertbase64pictures(&$html){
 		if(!preg_match_all('#<img[^>]*src=("data:image/([^;]{1,5});base64[^"]*")([^>]*)>#Uis', $html, $resultspictures)) return;
 
-		jimport('joomla.filesystem.file');
+		
 
 		$dest = ACYMAILING_MEDIA.'resized'.DS;
 		acymailing_createDir($dest);
 		foreach($resultspictures[2] as $i => $extension){
 			$pictname = md5($resultspictures[1][$i]).'.'.$extension;
-			$picturl = ACYMAILING_LIVE.'media/'.ACYMAILING_COMPONENT.'/resized/'.$pictname;
+			$picturl = ACYMAILING_LIVE.ACYMAILING_MEDIA_FOLDER.'/resized/'.$pictname;
 			$pictPath = $dest.$pictname;
 			$pictCode = trim($resultspictures[1][$i], '"');
 			if(file_exists($pictPath)){
@@ -233,7 +234,7 @@ class acypluginsHelper{
 					break;
 			}
 			$imageContent = ob_get_clean();
-			$status = $status && JFile::write($pictPath, $imageContent);
+			$status = $status && acymailing_writeFile($pictPath, $imageContent);
 
 			if(!$status) continue;
 			$html = str_replace($pictCode, $picturl, $html);
@@ -245,7 +246,6 @@ class acypluginsHelper{
 		$pregreplace['#<tr([^>"]*>([^<]*<td[^>]*>[ \n\s]*<img[^>]*>[ \n\s]*</ *td[^>]*>[ \n\s]*)*</ *tr)#Uis'] = '<tr style="line-height: 0px;" $1';
 		$pregreplace['#<td(((?!style|>).)*>[ \n\s]*(<a[^>]*>)?[ \n\s]*<img[^>]*>[ \n\s]*(</a[^>]*>)?[ \n\s]*</ *td)#Uis'] = '<td style="line-height: 0px;" $1';
 
-		$pregreplace['#<xml>.*</xml>#Uis'] = '';
 		$newbody = preg_replace(array_keys($pregreplace), $pregreplace, $html);
 		if(!empty($newbody)) $html = $newbody;
 	}
@@ -553,7 +553,7 @@ class acypluginsHelper{
 			$image = '';
 		}
 
-		if(!empty($format->link) && !empty($image)) $image = '<a target="_blank" href="'.$format->link.'">'.$image.'</a>';
+		if(!empty($format->link) && !empty($image)) $image = '<a target="_blank" href="'.$format->link.'" '.$style.'>'.$image.'</a>';
 
 		if($format->tag->format == 'TOP_IMG' && !empty($image)){
 			$result = $image;
@@ -627,12 +627,11 @@ class acypluginsHelper{
 
 		$pictureHelper = acymailing_get('helper.acypict');
 		if($tag->pict === 'resized'){
-			$app = JFactory::getApplication();
 			$pictureHelper->maxHeight = empty($tag->maxheight) ? 150 : $tag->maxheight;
 			$pictureHelper->maxWidth = empty($tag->maxwidth) ? 150 : $tag->maxwidth;
 			if($pictureHelper->available()){
 				$result = $pictureHelper->resizePictures($result);
-			}elseif($app->isAdmin()){
+			}elseif(acymailing_isAdmin()){
 				acymailing_enqueueMessage($pictureHelper->error, 'notice');
 			}
 		}elseif($tag->pict == '0'){
@@ -645,29 +644,27 @@ class acypluginsHelper{
 	function getOrderingField($values, $ordering, $direction, $function = 'updateTagAuto'){
 		$orderingValues = array();
 		foreach($values as $value => $title){
-			$orderingValues[] = JHTML::_('select.option', $value, acymailing_translation($title));
+			$orderingValues[] = acymailing_selectOption($value, acymailing_translation($title));
 		}
-		$orderingValues[] = JHTML::_('select.option', "rand", acymailing_translation('ACY_RANDOM'));
+		$orderingValues[] = acymailing_selectOption("rand", acymailing_translation('ACY_RANDOM'));
 
 		$orderingDirections = array();
-		$orderingDirections[] = JHTML::_('select.option', "DESC", 'DESC');
-		$orderingDirections[] = JHTML::_('select.option', "ASC", 'ASC');
+		$orderingDirections[] = acymailing_selectOption("DESC", 'DESC');
+		$orderingDirections[] = acymailing_selectOption("ASC", 'ASC');
 
-		return JHTML::_('select.genericlist', $orderingValues, 'contentorder', 'size="1" onchange="'.$function.'();" style="width:100px;"', 'value', 'text', $ordering).' '.JHTML::_('select.genericlist', $orderingDirections, 'contentorderdir', 'size="1" onchange="'.$function.'();" style="width:80px;"', 'value', 'text', $direction);
+		return acymailing_select($orderingValues, 'contentorder', 'size="1" onchange="'.$function.'();" style="width:100px;"', 'value', 'text', $ordering).' '.acymailing_select($orderingDirections, 'contentorderdir', 'size="1" onchange="'.$function.'();" style="width:80px;"', 'value', 'text', $direction);
 	}
 
 	function translateItem(&$item, &$tag, $referenceTable, $referenceId = 0){
-		if(empty($tag->lang) || (!file_exists(JPATH_SITE.DS.'components'.DS.'com_falang') && !file_exists(JPATH_SITE.DS.'components'.DS.'com_joomfish'))) return;
+		if(empty($tag->lang) || (!file_exists(ACYMAILING_ROOT.'components'.DS.'com_falang') && !file_exists(ACYMAILING_ROOT.'components'.DS.'com_joomfish'))) return;
 		$langid = (int)substr($tag->lang, strpos($tag->lang, ',') + 1);
 
 		if(empty($langid)) return;
 
-		$db = JFactory::getDBO();
 		if(empty($referenceId)) $referenceId = $tag->id;
-		$table = (ACYMAILING_J16 && file_exists(JPATH_SITE.DS.'components'.DS.'com_falang')) ? '`#__falang_content`' : '`#__jf_content`';
-		$query = "SELECT reference_field, value FROM ".$table." WHERE `published` = 1 AND `reference_table` = ".$db->Quote($referenceTable)." AND `language_id` = $langid AND `reference_id` = ".$referenceId;
-		$db->setQuery($query);
-		$translations = $db->loadObjectList();
+		$table = (ACYMAILING_J16 && file_exists(ACYMAILING_ROOT.'components'.DS.'com_falang')) ? '`#__falang_content`' : '`#__jf_content`';
+		$query = "SELECT reference_field, value FROM ".$table." WHERE `published` = 1 AND `reference_table` = ".acymailing_escapeDB($referenceTable)." AND `language_id` = $langid AND `reference_id` = ".$referenceId;
+		$translations = acymailing_loadObjectList($query);
 
 		if(empty($translations)) return;
 
@@ -690,9 +687,9 @@ class acypluginsHelper{
 		$reset = '';
 		if(file_exists(ACYMAILING_MEDIA.'plugins')){
 
-			jimport('joomla.filesystem.folder');
+			
 
-			$files = JFolder::files(ACYMAILING_MEDIA.'plugins', '^'.$plugin);
+			$files = acymailing_getFiles(ACYMAILING_MEDIA.'plugins', '^'.$plugin);
 			foreach($files as $oneFile){
 				$reset .= "document.getElementById('".$name.$oneFile."').style.backgroundPosition = '-480px -5px';document.getElementById('".$name.$oneFile."').style.boxShadow = 'inset 0 1px 0 rgba(255,255,255,.2), 0 1px 2px rgba(0,0,0,.05)';";
 				$result .= '<span id="'.$name.$oneFile.'" class="btn acybuttonformat" style="background-position: -480px -5px;height:34px;" onclick="selectFormat'.$name.'(\''.$oneFile.'\',\''.$oneFile.'\',true);"></span>'.substr($oneFile, 0, strlen($oneFile) - 4).'<br/>';
@@ -764,3 +761,4 @@ class acypluginsHelper{
 		return $result;
 	}
 }
+

@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -24,16 +25,14 @@ class archiveViewArchive extends acymailingView
 			$mailid = acymailing_getCID('mailid');
 
 		if(empty($mailid)){
-			$db=&JFactory::getDBO();
 			$query = 'SELECT m.`mailid` FROM `#__acymailing_list` as l LEFT JOIN `#__acymailing_listmail` as lm ON l.listid=lm.listid LEFT JOIN `#__acymailing_mail` as m on lm.mailid = m.mailid';
 			$query .= ' WHERE l.`visible` = 1 AND l.`published` = 1 AND m.`visible`= 1 AND m.`published` = 1';
 			if(!empty($listid)) $query .= ' AND l.`listid` = '.(int) $listid;
 			$query .= ' ORDER BY m.`mailid` DESC LIMIT 1';
-			$db->setQuery($query);
-			$mailid = $db->loadResult();
+			$mailid = acymailing_loadResult($query);
 
-			if(empty($mailid)) return JError::raiseError( 404, 'Newsletter not found');
-			}
+			if(empty($mailid)) return acymailing_raiseError(E_ERROR,  404, 'Newsletter not found');
+		}
 
 		$access_sub = true;
 
@@ -42,30 +41,29 @@ class archiveViewArchive extends acymailingView
 			$oneMail = $mailClass->load($mailid);
 
 			if(empty($oneMail->mailid)){
-				return JError::raiseError( 404, 'Newsletter not found : '.$mailid );
+				return acymailing_raiseError(E_ERROR,  404, 'Newsletter not found : '.$mailid );
 			}
 
 			if(!$access_sub OR !$oneMail->published OR !$oneMail->visible){
-				$key = JRequest::getString('key');
+				$key = acymailing_getVar('string', 'key');
 				if(empty($key) OR $key !== $oneMail->key){
-					$app = JFactory::getApplication();
-					$app->enqueueMessage('You can not have access to this e-mail','error');
-					$app->redirect(acymailing_completeLink('lists',false,true));
+					acymailing_enqueueMessage('You can not have access to this e-mail','error');
+					acymailing_redirect(acymailing_completeLink('lists',false,true));
 					return false;
 				}
 			}
 
-		$user = JFactory::getUser();
-		if(!empty($user->email)){
+		$currentEmail = acymailing_currentUserEmail();
+		if(!empty($currentEmail)){
 			$userClass = acymailing_get('class.subscriber');
-			$receiver = $userClass->get($user->email);
+			$receiver = $userClass->get($currentEmail);
 		}else{
 			$receiver = new stdClass();
 			$receiver->name = acymailing_translation('VISITOR');
 		}
 
 		$oneMail->sendHTML = true;
-		$mailClass->dispatcher->trigger('acymailing_replaceusertags',array(&$oneMail,&$receiver,false));
+		acymailing_trigger('acymailing_replaceusertags', array(&$oneMail, &$receiver, false));
 
 		acymailing_setPageTitle($oneMail->subject );
 

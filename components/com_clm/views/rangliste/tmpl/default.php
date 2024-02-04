@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2016 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2019 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -43,7 +43,7 @@ foreach ($paramsStringArray as $value) {
 		$params[substr($value,0,$ipos)] = substr($value,$ipos+1);
 	}
 }	
-if (!isset($params['dwz_date'])) $params['dwz_date'] = '0000-00-00';
+if (!isset($params['dwz_date'])) $params['dwz_date'] = '1970-01-01';
 if (!isset($params['noBoardResults'])) $params['noBoardResults'] = '0';
 if (!isset($params['pgnPublic'])) $params['pgnPublic'] = '0';
 if (!isset($params['pgnDownload'])) $params['pgnDownload'] = '0';
@@ -70,14 +70,6 @@ if ($sid == 0) {
 // Stylesheet laden
 require_once(JPATH_COMPONENT.DS.'includes'.DS.'css_path.php');
 
-echo '<div ><div id="rangliste">';
-
-if (!$liga OR $liga[0]->published == "0") {
-	
-	echo "<div id='wrong'>".JText::_('NOT_PUBLISHED')."<br>".JText::_('GEDULD')."</div>";
-
-} else {
-
 	// Browsertitelzeile setzen
 	$doc =JFactory::getDocument();
 	$doc->setTitle(JText::_('RANGLISTE').' '.$liga[0]->name);
@@ -91,10 +83,25 @@ if (!$liga OR $liga[0]->published == "0") {
 	$user	=JFactory::getUser();
 	$jid	= $user->get('id');
 
+echo '<div ><div id="rangliste">';
+
+require_once(JPATH_COMPONENT.DS.'includes'.DS.'submenu.php');
+
+$archive_check = clm_core::$api->db_check_season_user($sid);
+if (!$archive_check) {
+	echo "<div id='wrong'>".JText::_('NO_ACCESS')."<br>".JText::_('NOT_REGISTERED')."</div>";
+}
+// schon veröffentlicht
+elseif (!$liga OR $liga[0]->published == "0") {
+	
+	echo "<div id='wrong'>".JText::_('NOT_PUBLISHED')."<br>".JText::_('GEDULD')."</div>";
+
+} else {
+
 	// Array für DWZ Schnitt setzen
 	$dwz = array();
 	for ($y=1; $y< ($liga[0]->teil)+1; $y++) {
-		if ($params['dwz_date'] == '0000-00-00') {
+		if ($params['dwz_date'] == '0000-00-00' OR $params['dwz_date'] == '1970-01-01') {
 			if(isset($dwzschnitt[($y-1)]->dwz)) {
 				$dwz[$dwzschnitt[($y-1)]->tlnr] = $dwzschnitt[($y-1)]->dwz; 
 			}
@@ -138,8 +145,6 @@ if (!$liga OR $liga[0]->published == "0") {
 	?>
 	</div></div>
 	<div class="clr"></div>
-
-	<?php require_once(JPATH_COMPONENT.DS.'includes'.DS.'submenu.php'); ?>
 
 	<br>
 
@@ -195,6 +200,7 @@ if (!$liga OR $liga[0]->published == "0") {
 		<?php
 		// Anzahl der Teilnehmer durchlaufen
 		for ($x=0; $x< ($liga[0]->teil)-$diff; $x++) {
+			if (!isset($punkte[$x])) continue; 
 			// Farbgebung der Zeilen //
 			if ($x%2 != 0) { 
 				$zeilenr	= "zeile2";
@@ -433,7 +439,7 @@ if (!$liga OR $liga[0]->published == "0") {
 			
 				<?php 
 				if ($diff == 1 AND $liga[0]->ab ==1 ) { echo JText::_('ROUND_NO_RELEGATED_TEAM'); }
-				if ($diff == 1 AND $liga[0]->ab >1 ) { echo JText::_('ROUND_LESS_RELEGATED_TEAM'); }
+				//if ($diff == 1 AND $liga[0]->ab >1 ) { echo JText::_('ROUND_LESS_RELEGATED_TEAM'); }
 				?>
 			<?php 
 			}  

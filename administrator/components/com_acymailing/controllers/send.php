@@ -1,11 +1,12 @@
 <?php
 /**
  * @package	AcyMailing for Joomla!
- * @version	5.7.0
+ * @version	5.10.2
  * @author	acyba.com
- * @copyright	(C) 2009-2017 ACYBA S.A.R.L. All rights reserved.
+ * @copyright	(C) 2009-2018 ACYBA S.A.R.L. All rights reserved.
  * @license	GNU/GPLv3 http://www.gnu.org/licenses/gpl-3.0.html
  */
+
 defined('_JEXEC') or die('Restricted access');
 ?><?php
 
@@ -13,23 +14,22 @@ class SendController extends acymailingController{
 
 	function sendready(){
 		if(!$this->isAllowed('newsletters', 'send')) return;
-		JRequest::setVar('layout', 'sendconfirm');
+		acymailing_setVar('layout', 'sendconfirm');
 		return parent::display();
 	}
 
 	function send(){
 		if(!$this->isAllowed('newsletters', 'send')) return;
-		JRequest::checkToken() or die('Invalid Token');
+		acymailing_checkToken();
 
-		JRequest::setVar('tmpl', 'component');
+		acymailing_setNoTemplate();
 		$mailid = acymailing_getCID('mailid');
 		if(empty($mailid)) exit;
 
-		$user = JFactory::getUser();
 		$time = time();
 		$queueClass = acymailing_get('class.queue');
-		$queueClass->onlynew = JRequest::getInt('onlynew');
-		$queueClass->mindelay = JRequest::getInt('mindelay');
+		$queueClass->onlynew = acymailing_getVar('int', 'onlynew');
+		$queueClass->mindelay = acymailing_getVar('int', 'mindelay');
 		$totalSub = $queueClass->queue($mailid, $time);
 
 		if(empty($totalSub)){
@@ -41,11 +41,10 @@ class SendController extends acymailingController{
 		$mailObject->senddate = $time;
 		$mailObject->published = 1;
 		$mailObject->mailid = $mailid;
-		$mailObject->sentby = $user->id;
-		$db = JFactory::getDBO();
-		$db->updateObject(acymailing_table('mail'), $mailObject, 'mailid');
+		$mailObject->sentby = acymailing_currentUserId();
+		acymailing_updateObject(acymailing_table('mail'), $mailObject, 'mailid');
 
-		$config =& acymailing_config();
+		$config = acymailing_config();
 		$queueType = $config->get('queue_type');
 		if($queueType == 'onlyauto'){
 			$messages = array();
@@ -54,9 +53,8 @@ class SendController extends acymailingController{
 			acymailing_display($messages, 'success');
 			return;
 		}else{
-			JRequest::setVar('totalsend', $totalSub);
-			$app = JFactory::getApplication();
-			$app->redirect(acymailing_completeLink('send&task=continuesend&mailid='.$mailid.'&totalsend='.$totalSub, true, true));
+			acymailing_setVar('totalsend', $totalSub);
+			acymailing_redirect(acymailing_completeLink('send&task=continuesend&mailid='.$mailid.'&totalsend='.$totalSub, true, true));
 			exit;
 		}
 	}
@@ -65,7 +63,7 @@ class SendController extends acymailingController{
 		$config = acymailing_config();
 
 		if(acymailing_level(1) && $config->get('queue_type') == 'onlyauto'){
-			JRequest::setVar('tmpl', 'component');
+			acymailing_setNoTemplate();
 			acymailing_display(acymailing_translation('ACY_ONLYAUTOPROCESS'), 'warning');
 			return;
 		}
@@ -80,8 +78,8 @@ class SendController extends acymailingController{
 
 		$mailid = acymailing_getCID('mailid');
 
-		$totalSend = JRequest::getVar('totalsend', 0, '', 'int');
-		$alreadySent = JRequest::getVar('alreadysent', 0, '', 'int');
+		$totalSend = acymailing_getVar('int', 'totalsend', 0, '');
+		$alreadySent = acymailing_getVar('int', 'alreadysent', 0, '');
 
 		$helperQueue = acymailing_get('helper.queue');
 		$helperQueue->mailid = $mailid;
@@ -91,7 +89,7 @@ class SendController extends acymailingController{
 		$helperQueue->pause = $config->get('queue_pause');
 		$helperQueue->process();
 
-		JRequest::setVar('tmpl', 'component');
+		acymailing_setNoTemplate();
 
 
 
@@ -99,7 +97,7 @@ class SendController extends acymailingController{
 
 
 	function spamtest(){
-		$mailid = JRequest::getInt('mailid');
+		$mailid = acymailing_getVar('int', 'mailid');
 		if(empty($mailid)) return;
 
 		$config = acymailing_config();
@@ -111,7 +109,7 @@ class SendController extends acymailingController{
 		$warnings = ob_get_clean();
 
 		if(empty($spamtestSystem) || $spamtestSystem === false || !empty($warnings)){
-			acymailing_display('Could not load your information from our server'.((!empty($warnings) && defined('JDEBUG') && JDEBUG) ? $warnings : ''), 'error');
+			acymailing_display('Could not load your information from our server'.((!empty($warnings) && acymailing_isDebug()) ? $warnings : ''), 'error');
 			return;
 		}
 		$decodedInformation = json_decode($spamtestSystem, true);
@@ -146,10 +144,8 @@ class SendController extends acymailingController{
 			acymailing_display($mailerHelper->reportMessage, 'error');
 			return;
 		}
-
-		$app = JFactory::getApplication();
-		$app->redirect($decodedInformation['displayURL']);
-
+		
+		acymailing_redirect($decodedInformation['displayURL']);
 		return;
 	}
 }

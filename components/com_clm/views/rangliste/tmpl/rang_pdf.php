@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2016 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -42,7 +42,7 @@ $lid = JRequest::getInt( 'liga', '1' );
 			$params[substr($value,0,$ipos)] = substr($value,$ipos+1);
 		}
 	}	
-	if (!isset($params['dwz_date'])) $params['dwz_date'] = '0000-00-00';
+	if (!isset($params['dwz_date'])) $params['dwz_date'] = '1970-01-01';
 $sid = JRequest::getInt( 'saison','1');
 $view = JRequest::getVar( 'view');
 // Variablen ohne foreach setzen
@@ -57,7 +57,7 @@ $name_liga = $liga[0]->name;
 	// Array für DWZ Schnitt setzen
 	$dwz = array();
 	for ($y=1; $y< ($liga[0]->teil)+1; $y++){
-		if ($params['dwz_date'] == '0000-00-00') {
+		if ($params['dwz_date'] == '0000-00-00' OR $params['dwz_date'] == '1970-01-01') {
 			if(isset($dwzschnitt[($y-1)]->dwz)) {
 			$dwz[$dwzschnitt[($y-1)]->tlnr] = $dwzschnitt[($y-1)]->dwz; }
 		} else {
@@ -188,6 +188,7 @@ $pdf->SetTextColor(255);
 $pdf->SetFillColor(240);
 $pdf->SetTextColor(0);
 for ($x=0; $x< ($liga[0]->teil)-$diff; $x++){
+	if (!isset($punkte[$x])) continue; 
 	if ($x%2 != 0) { $fc = 1; } else { $fc = 0; }
 	$pdf->Cell($leer,$zelle,' ',0,0,'L');
 	$pdf->Cell(6-$rbreite,$zelle,$x+1,1,0,'C',$fc);
@@ -320,5 +321,5 @@ $pdf->Ln();
 
 // Ausgabe
 $pdf->Output(JText::_('RANGLISTE').' '.utf8_decode($liga[0]->name).'.pdf','D');
-
+exit;
 ?>

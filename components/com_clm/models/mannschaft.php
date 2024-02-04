@@ -27,7 +27,7 @@ class CLMModelMannschaft extends JModelLegacy
 		$id			= @$options['id'];
  
 		$query = "SELECT a.zps,a.sg_zps,u.name as mf_name,u.email as email, "
-			." u.tel_mobil,u.tel_fest, l.durchgang as dg, l.rang as lrang, l.params, "
+			." u.tel_mobil,u.tel_fest, l.durchgang as dg, l.rang as lrang, l.params, l.stamm, "
 			." l.name as liga_name, l.runden as runden, l.published as lpublished, l.anzeige_ma as anzeige_ma, a.* "
 			." FROM #__clm_mannschaften as a "
 			." LEFT JOIN #__clm_user AS u ON u.jid = a.mf AND  u.sid = a.sid "
@@ -107,7 +107,7 @@ class CLMModelMannschaft extends JModelLegacy
 		$rang	=$man[0]->rang;
 		$ersatz_regel	=$man[0]->ersatz_regel;
 	if ($rang > 0) {
-		$query = " SELECT a.start_dwz, m.tln_nr as tln_nr,a.snr,a.dwz,a.mgl_nr,a.zps, '' as PKZ, d.Spielername as name,d.DWZ as dwz "
+		$query = " SELECT a.start_dwz, m.tln_nr as tln_nr,a.snr,a.dwz,a.mgl_nr,a.zps, '' as PKZ, d.Spielername as name,d.DWZ as dwz,d.FIDE_Titel "
 			.",r.man_nr as rmnr, r.Rang as rrang "
 			." FROM #__clm_meldeliste_spieler as a "
 			." LEFT JOIN #__clm_rangliste_spieler as r on r.ZPS = a.zps AND r.Mgl_Nr = a.mgl_nr AND r.sid = a.sid "
@@ -140,7 +140,7 @@ class CLMModelMannschaft extends JModelLegacy
 			." ORDER BY a.mnr ASC, a.snr ASC ";
 	  } else {	//Schulschach u.ä.
 		$zps = "-1";
-		$query = " SELECT a.start_dwz,a.mgl_nr,a.zps,a.PKZ,a.attr, d.Spielername as name,d.DWZ as dwz "
+		$query = " SELECT a.start_dwz,a.mgl_nr,a.zps,a.PKZ,a.attr, d.Spielername as name,d.DWZ as dwz,d.FIDE_Titel "
 			." FROM #__clm_meldeliste_spieler as a ";
 		$query .= " LEFT JOIN #__clm_dwz_spieler as d on d.zps = a.zps AND d.mgl_nr = a.mgl_nr AND d.sid = a.sid";
 		$query .= " WHERE a.sid = ".$sid
