@@ -1,3 +1,25 @@
+# 09.11.2023 Version 1.4.7
+- Sprachdateien für de-AT und de-CH
+
+# 18.10.2023 Version 1.4.6
+- Joomla!5 kompatibilität
+
+# 18.10.2022 Version 1.4.5
+- Feature: Cookie-Einstellungen zu Secure-Attribut und sameSite-Attribut (Joomla! 3)
+- Feature: Cookie-Einstellungen zu Secure-Attribut und sameSite-Attribut (Joomla! 4)
+
+# 17.08.2022 Version 1.4.4
+- Fehler im JavaScript behoben (Joomla! 4)
+
+# 17.08.2022 Version 1.4.3
+- Fehler im JavaScript behoben (Joomla! 3)
+
+# 27.07.2022 Version 1.4.2
+- Probleme mit PHP 8 behoben
+
+# 29.06.2022 Version 1.4.1
+- Joomla!-Session-Cookie bleibt erhalten
+
 # 19.08.2021 Version 1.4.0
 - Scripte erweitert: default_form.php, defaultconfirm_form.php, redimstyle_form.php (Keine Links mehr)
 - CSS-Styles erweitert

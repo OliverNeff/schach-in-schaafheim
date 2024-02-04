@@ -7,7 +7,7 @@
     <license>GNU/GPL</license>
     <authorEmail>team@reDim.de</authorEmail>
     <authorUrl>http://www.redim.de</authorUrl>
-    <version>1.4.0</version>
+    <version>1.4.7</version>
     <description>PLG_SYSTEM_COOKIEHINT_DESCRIPTION</description>
     <files>
         <filename plugin="cookiehint">cookiehint.php</filename>
@@ -93,6 +93,19 @@
 				 <field name="cookieexpires" type="number" showon="cookiemode:0" default="365"
                        label="PLG_SYSTEM_COOKIEHINT_COOKIEEXPIRES"
                        description="PLG_SYSTEM_COOKIEHINT_COOKIEEXPIRES_DESC" />
+				
+				<field name="cookiesecure" type="radio" default="0" label="PLG_SYSTEM_COOKIEHINT_COOKIESECURE"
+					  description="PLG_SYSTEM_COOKIEHINT_COOKIESECURE_DESC" class="btn-group btn-group-yesno">
+					<option value="1">JYES</option>
+					<option value="0">JNO</option>
+				</field>
+				
+				<field name="cookiesamesite" type="list" default="none" label="PLG_SYSTEM_COOKIEHINT_COOKIESAMESITE"
+                       description="PLG_SYSTEM_COOKIEHINT_COOKIESAMESITE_DESC">
+					 <option value="none">PLG_SYSTEM_COOKIEHINT_COOKIESAMESITE_NONE</option>
+					 <option value="lax">PLG_SYSTEM_COOKIEHINT_COOKIESAMESITE_LAX</option>
+					 <option value="strict">PLG_SYSTEM_COOKIEHINT_COOKIESAMESITE_STRICT</option>
+                </field>
 				
 				<field type="note" label="PLG_SYSTEM_COOKIEHINT_NOTE_STYLE" />
                

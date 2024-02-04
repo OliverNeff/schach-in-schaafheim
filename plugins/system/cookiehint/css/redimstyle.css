@@ -116,10 +116,13 @@
 	margin: 2px 6px;
 }
 
-#cookiehintsubmit			{ background: #00bc13 !important; color: #fff !important}
-#cookiehintsubmit:hover		{ background: #008a13 !important; color: #fff !important}
+#cookiehintsubmit,#cookiehintsubmitno			{ background: #00bc13 !important; color: #fff !important}
+#cookiehintsubmit:hover,#cookiehintsubmitno:hover		{ background: #008a13 !important; color: #fff !important}
+/*
 #cookiehintsubmitno			{ background: #f7f7f7 !important; color: #707070 !important;}
 #cookiehintsubmitno:hover	{ background: #e8e8e8 !important; color: #707070 !important;}
+*/
+
 /*
 #redim-cookiehint .cookiebuttons p:last-child{
 	padding-top: 10px;

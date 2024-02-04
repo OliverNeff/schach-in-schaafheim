@@ -10,6 +10,7 @@
 // No direct access
 defined('_JEXEC') or die;
 
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\Uri\Uri;
 use Joomla\CMS\Factory;
 use Joomla\CMS\Document\HtmlDocument;
@@ -102,14 +103,14 @@ class JFormFieldcookiehint extends FormField
 	}	
 	
 	private function display_jtext() {
-		$output='<p>'.JText::_($this->getAttribute('value')).'</p>';
+		$output='<p>'.Text::_($this->getAttribute('value')).'</p>';
 		return $output;		
 	}
 	
 	private function display_headline() 
 	{
 		
-		$output='<h3>'.JText::_($this->getAttribute('description')).'</h3>';
+		$output='<h3>'.Text::_($this->getAttribute('description')).'</h3>';
 		return $output;
 		
 	}		
@@ -140,10 +141,10 @@ class JFormFieldcookiehint extends FormField
 	private function display_test() 
 	{
 			
-		$uri = URI::getInstance(JURI::root());
+		$uri = URI::getInstance(URI::root());
 		$uri->setVar('cookiehint','set');
 		$url = $uri->toString();
-		$output='<hr /><a class="btn" target="_blank" href="'.$url.'">'.JText::_($this->getAttribute('description')).'</a> | '.JText::sprintf('PLG_SYSTEM_COOKIEHINT_REVOKETXT',$url);
+		$output='<hr /><a class="btn" target="_blank" href="'.$url.'">'.Text::_($this->getAttribute('description')).'</a> | '.Text::sprintf('PLG_SYSTEM_COOKIEHINT_REVOKETXT',$url);
 		return $output;
 		
 	}

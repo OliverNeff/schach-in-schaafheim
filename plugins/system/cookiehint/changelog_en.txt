@@ -1,3 +1,25 @@
+# 09.11.2023 Version 1.4.7
+- Language files for de-AT and de-CH
+
+# 18.10.2023 Version 1.4.6
+- Joomla!5 compatibility
+
+# 18.10.2022 Version 1.4.5
+- Feature: cookie parameter options for secure- and sameSite parameter (Joomla! 3)
+- Feature: cookie parameter options for secure- and sameSite parameter (Joomla! 4)
+
+# 17.08.2022 Version 1.4.4
+- fixed bug in JavaScript (Joomla!4)
+
+# 17.08.2022 Version 1.4.3
+- fixed bug in JavaScript (Joomla!3)
+
+# 27.07.2022 Version 1.4.2
+- fixed problems with PHP 8
+
+# 29.06.2022 Version 1.4.1
+- Joomla!-Session-Cookie is preserved
+
 # 19.08.2021 Version 1.4.0
 - scripts expanded : default_form.php, defaultconfirm_form.php, redimstyle_form.php (no more links)
 - css-styles expanded
@@ -20,7 +42,7 @@
 - url-params https://www.domain.de/?rCH=3 reset the cookie-noticfication
 - removes the notification when cookies are deactivated
 - you can set imprint links
-- fixed problems with  joomla-cache
+- fixed problems with joomla-cache
 
 # 16.07.2020 Version 1.3.18
 - adjustment of the redirect

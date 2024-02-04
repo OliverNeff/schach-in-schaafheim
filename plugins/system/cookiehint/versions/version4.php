@@ -2,8 +2,8 @@
 # reDim GmbH - Norbert Bayer
 # Plugin: CookieHint
 # license GNU/GPL   www.redim.de
-# Version 1.4.0 (Joomla! 4.x)
- 
+# Version 1.4.5 (Joomla! 4.x)
+
 // No direct access
 defined('_JEXEC') or die;
 
@@ -78,14 +78,24 @@ class plgSystemCookieHint extends CMSPlugin
 	 */
 	private function cleanCookies()
 	{
+		# @header_remove('Set-Cookie');
+		if (isset($_COOKIE)) {
+			$sessionname=$this->app->getSession()->getName();
+			$host = URI::getInstance()->getHost();
+			$e=explode('.',$host);
+			$host2=array_pop($e);
+			$host2='.'.array_pop($e).'.'.$host2;
 
-		if (isset($_SERVER['HTTP_COOKIE'])) {
-			$cookies = explode(';', $_SERVER['HTTP_COOKIE']);
-			foreach($cookies as $cookie) {
-				$parts = explode('=', $cookie);
-				$name = trim($parts[0]);
-				setcookie($name, '', time()-86400);
-				setcookie($name, '', time()-86400, '/');
+			foreach($_COOKIE as $name => $value) {
+				if($name!=$sessionname) {
+					setcookie($name, '', -1, '', $host);
+					setcookie($name, '', -1, '/', $host);
+					if(!empty($host2)) {
+						setcookie($name, '', -1, '', $host2);
+						setcookie($name, '', -1, '/', $host2);
+					}
+					unset($_COOKIE[$name]);
+				}
 			}
 		}
 
@@ -161,7 +171,7 @@ class plgSystemCookieHint extends CMSPlugin
 			$tmp = (int) $this->params->get('cookieblocker', '0');
 			if ($tmp > 0)
 			{
-				@header_remove('Set-Cookie');
+				$this->cleanCookies();
 				if ($tmp == 2)
 				{
 					$tmp=trim($this->params->get('csp',"default-src 'self' 'unsafe-inline'"));
@@ -177,38 +187,64 @@ class plgSystemCookieHint extends CMSPlugin
 		if($rCH<>0) {
 			$this->setNoIndex();
 		}
-
+		
+		$cookie_name = 'reDimCookieHint';
+		$cookie_options = [
+			'expires' => 0,
+			'path' => '/',
+			'secure' => (bool) $this->params->get('cookiesecure', 0),
+			'samesite' => $this->params->get('cookiesamesite', 'none'),
+		];
+		
 		switch ($rCH)
 		{
 
 			case -3:
 			case 3:
-				setcookie('reDimCookieHint', NULL, time() - 3600,'/');
+				//setcookie('reDimCookieHint', NULL, time() - 3600,'/');
+				
+				$cookie_options['expires'] = time() - 3600;
+				setcookie($cookie_name, null, $cookie_options);
+				
 				$this->rCHredirect();
 				break;
 
 			case 2:
-				$d = $this->getCookieTime();
-				setcookie('reDimCookieHint', 1, $d, '/');
+				//$d = $this->getCookieTime();
+				//setcookie('reDimCookieHint', 1, $d, '/');
+				
+				$cookie_options['expires'] = $this->getCookieTime();
+				setcookie($cookie_name, 1, $cookie_options);
+				
 				$this->rCHredirect();
 				break;
 			case -2:
-				$d = $this->getCookieTime();
+				//$d = $this->getCookieTime();
 				#$this->cleanCookies();
-				setcookie('reDimCookieHint', -1, 0, '/');
+				//setcookie('reDimCookieHint', -1, 0, '/');
+				
+				setcookie($cookie_name, -1, $cookie_options);
 				$this->rCHredirect();
+				
 				break;
 
 			case 1:
-				$d = $this->getCookieTime();
-				setcookie('reDimCookieHint', 1, $d, '/');
+				//$d = $this->getCookieTime();
+				//setcookie('reDimCookieHint', 1, $d, '/');
+				
+				$cookie_options['expires'] = $this->getCookieTime();
+				setcookie($cookie_name, 1, $cookie_options);
+				
 				echo 'ok';
 				$this->app->close();
 				break;
 			case -1:
-				$d = $this->getCookieTime();
+				//$d = $this->getCookieTime();
 				#$this->cleanCookies();
-				setcookie('reDimCookieHint', -1, 0, '/');
+				//setcookie('reDimCookieHint', -1, 0, '/');
+				
+				setcookie($cookie_name, -1, $cookie_options);
+				
 				echo 'ok';
 				$this->app->close();
 				break;
@@ -357,56 +393,56 @@ class plgSystemCookieHint extends CMSPlugin
 	{
 		ob_start();
 		?>
-		(function(){
-		function blockCookies(disableCookies, disableLocal, disableSession){
-		if(disableCookies == 1){
-		if(!document.__defineGetter__){
-		Object.defineProperty(document, 'cookie',{
-		get: function(){ return ''; },
-		set: function(){ return true;}
-		});
-		}else{
-		var oldSetter = document.__lookupSetter__('cookie');
-		if(oldSetter) {
-		Object.defineProperty(document, 'cookie', {
-		get: function(){ return ''; },
-		set: function(v){
-		if(v.match(/reDimCookieHint\=/)) {
-		oldSetter.call(document, v);
-		}
-		return true;
-		}
-		});
-		}
-		}
-		var cookies = document.cookie.split(';');
-		for (var i = 0; i < cookies.length; i++) {
-		var cookie = cookies[i];
-		var pos = cookie.indexOf('=');
-		var name = '';
-		if(pos > -1){
-		name = cookie.substr(0, pos);
-		}else{
-		name = cookie;
-		}
+        (function(){
+        function blockCookies(disableCookies, disableLocal, disableSession){
+        if(disableCookies == 1){
+        if(!document.__defineGetter__){
+        Object.defineProperty(document, 'cookie',{
+        get: function(){ return ''; },
+        set: function(){ return true;}
+        });
+        }else{
+        var oldSetter = document.__lookupSetter__('cookie');
+        if(oldSetter) {
+        Object.defineProperty(document, 'cookie', {
+        get: function(){ return ''; },
+        set: function(v){
+		if(v.match(/reDimCookieHint\=/) || v.match(/<?PHP echo JFactory::getSession()->getName(); ?>\=/)) {
+        oldSetter.call(document, v);
+        }
+        return true;
+        }
+        });
+        }
+        }
+        var cookies = document.cookie.split(';');
+        for (var i = 0; i < cookies.length; i++) {
+        var cookie = cookies[i];
+        var pos = cookie.indexOf('=');
+        var name = '';
+        if(pos > -1){
+        name = cookie.substr(0, pos);
+        }else{
+        name = cookie;
+        }
 		if(name.match(/reDimCookieHint/)) {
-		document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-		}
-		}
-		}
-		if(disableLocal == 1){
-		window.localStorage.clear();
-		window.localStorage.__proto__ = Object.create(window.Storage.prototype);
-		window.localStorage.__proto__.setItem = function(){ return undefined; };
-		}
-		if(disableSession == 1){
-		window.sessionStorage.clear();
-		window.sessionStorage.__proto__ = Object.create(window.Storage.prototype);
-		window.sessionStorage.__proto__.setItem = function(){ return undefined; };
-		}
-		}
-		blockCookies(<?PHP echo $disableCookies; ?>,<?PHP echo $disableLocal; ?>,<?PHP echo $disableSession; ?>);
-		}());
+        document.cookie = name + '=; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+        }
+        }
+        }
+        if(disableLocal == 1){
+        window.localStorage.clear();
+        window.localStorage.__proto__ = Object.create(window.Storage.prototype);
+        window.localStorage.__proto__.setItem = function(){ return undefined; };
+        }
+        if(disableSession == 1){
+        window.sessionStorage.clear();
+        window.sessionStorage.__proto__ = Object.create(window.Storage.prototype);
+        window.sessionStorage.__proto__.setItem = function(){ return undefined; };
+        }
+        }
+        blockCookies(<?PHP echo $disableCookies; ?>,<?PHP echo $disableLocal; ?>,<?PHP echo $disableSession; ?>);
+        }());
 		<?PHP
 		return str_replace(array("\n", "\r", "\t", "    "), ' ', ob_get_clean());
 
@@ -571,7 +607,7 @@ class plgSystemCookieHint extends CMSPlugin
 		include_once(JPATH_SITE . '/plugins/system/cookiehint/include/' . $file);
 
 		?>
-		<script type="text/javascript">
+        <script type="text/javascript">
 
             document.addEventListener("DOMContentLoaded", function(event) {
                 if (!navigator.cookieEnabled){
@@ -612,7 +648,7 @@ class plgSystemCookieHint extends CMSPlugin
                 cookiehintfadeOut(document.getElementById('redim-cookiehint-<?PHP echo $position;?>'));
                 return true;
             }
-		</script>
+        </script>
 		<?PHP
 		return str_replace(array("\n", "\r", "\t", "  "), ' ', ob_get_clean());
 	}

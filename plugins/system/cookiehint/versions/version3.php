@@ -2,7 +2,7 @@
 # reDim GmbH - Norbert Bayer
 # Plugin: CookieHint
 # license GNU/GPL   www.redim.de
-# Version 1.4.0 (Joomla! 3.x)
+# Version 1.4.5 (Joomla! 3.x)
 
 // No direct access
 defined('JPATH_BASE') or die;
@@ -72,14 +72,24 @@ class plgSystemCookieHint extends JPlugin
 	 */
 	private function cleanCookies()
 	{
+		#@header_remove('Set-Cookie');
+		if (isset($_COOKIE)) {
+			$sessionname=JFactory::getSession()->getName();
+            $host = JURI::getInstance()->getHost();
+			$e=explode('.',$host);
+			$host2=array_pop($e);
+			$host2='.'.array_pop($e).'.'.$host2;
 
-		if (isset($_SERVER['HTTP_COOKIE'])) {
-			$cookies = explode(';', $_SERVER['HTTP_COOKIE']);
-			foreach($cookies as $cookie) {
-				$parts = explode('=', $cookie);
-				$name = trim($parts[0]);
-				setcookie($name, '', time()-86400);
-				setcookie($name, '', time()-86400, '/');
+			foreach($_COOKIE as $name => $value) {
+                if($name!=$sessionname) {
+	                setcookie($name, '', -1, '', $host);
+	                setcookie($name, '', -1, '/', $host);
+                    if(!empty($host2)) {
+	                    setcookie($name, '', -1, '', $host2);
+	                    setcookie($name, '', -1, '/', $host2);
+                    }
+	                unset($_COOKIE[$name]);
+                }
 			}
 		}
 
@@ -145,6 +155,7 @@ class plgSystemCookieHint extends JPlugin
 
 		$ch = $this->checkCookie();
 
+
 		if ($ch == 1)
 		{
 			return;
@@ -158,7 +169,7 @@ class plgSystemCookieHint extends JPlugin
 			$tmp = (int) $this->params->get('cookieblocker', '0');
 			if ($tmp > 0)
 			{
-				@header_remove('Set-Cookie');
+                $this->cleanCookies();
 				if ($tmp == 2)
 				{
 					$tmp=trim($this->params->get('csp',"default-src 'self' 'unsafe-inline'"));
@@ -178,37 +189,62 @@ class plgSystemCookieHint extends JPlugin
 			#  }
 		}
 
+		$cookie_name = 'reDimCookieHint';
+		$cookie_options = [
+			'expires' => 0,
+			'path' => '/',
+			'secure' => (bool) $this->params->get('cookiesecure', 0),
+			'samesite' => $this->params->get('cookiesamesite', 'none'),
+		];
+		
 		switch ($rCH)
 		{
 
 			case -3:
 			case 3:
-				setcookie('reDimCookieHint', NULL, time() - 3600,'/');
+				//setcookie('reDimCookieHint', NULL, time() - 3600,'/');
+				
+				$cookie_options['expires'] = time() - 3600;
+				setcookie($cookie_name, NULL, $cookie_options);
+				
 				$this->rCHredirect();
 				break;
-
 			case 2:
-				$d = $this->getCookieTime();
-				setcookie('reDimCookieHint', 1, $d, '/');
+				//$d = $this->getCookieTime();
+				//setcookie('reDimCookieHint', 1, $d, '/');
+				
+				$cookie_options['expires'] = $this->getCookieTime();
+				setcookie($cookie_name, 1, $cookie_options);
+				
 				$this->rCHredirect();
 				break;
 			case -2:
-				$d = $this->getCookieTime();
+				//$d = $this->getCookieTime();
 				#$this->cleanCookies();
-				setcookie('reDimCookieHint', -1, 0, '/');
+				//setcookie('reDimCookieHint', -1, 0, '/');
+				
+				setcookie($cookie_name, -1, $cookie_options);
+				
 				$this->rCHredirect();
 				break;
-
 			case 1:
-				$d = $this->getCookieTime();
-				setcookie('reDimCookieHint', 1, $d, '/');
+				//$d = $this->getCookieTime();
+				//setcookie('reDimCookieHint', 1, $d, '/');
+				
+				$cookie_options['expires'] = $this->getCookieTime();
+				setcookie($cookie_name, 1, $cookie_options);
+				
 				echo 'ok';
 				$this->app->close();
 				break;
 			case -1:
-				$d = $this->getCookieTime();
+				//$d = $this->getCookieTime();
 				#$this->cleanCookies();
-				setcookie('reDimCookieHint', -1, 0, '/');
+				//setcookie('reDimCookieHint', -1, 0, '/');
+				
+				$cookie_options['expires'] = $this->getCookieTime();
+				setcookie($cookie_name, -1, $cookie_options);
+				
 				echo 'ok';
 				$this->app->close();
 				break;
@@ -358,6 +394,7 @@ class plgSystemCookieHint extends JPlugin
 	 */
 	private function getHeadJava($disableCookies = 1, $disableLocal = 1, $disableSession = 1)
 	{
+
 		ob_start();
 		?>
 		(function(){
@@ -374,7 +411,7 @@ class plgSystemCookieHint extends JPlugin
 		Object.defineProperty(document, 'cookie', {
 		get: function(){ return ''; },
 		set: function(v){
-		if(v.match(/reDimCookieHint\=/)) {
+		if(v.match(/reDimCookieHint\=/) || v.match(/<?PHP echo JFactory::getSession()->getName(); ?>\=/)) {
 		oldSetter.call(document, v);
 		}
 		return true;

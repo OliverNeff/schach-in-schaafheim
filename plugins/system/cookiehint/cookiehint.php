@@ -2,8 +2,8 @@
 # reDim GmbH - Norbert Bayer
 # Plugin: CookieHint
 # license GNU/GPL   www.redim.de
-# Version 1.4.0
-# Update 19.08.2021
+# Version 1.4.6
+# Update 18.10.2023
 
 // No direct access
 defined('_JEXEC') or die;

@@ -2,7 +2,8 @@
 /**
  * @package    Joomla.Language
  *
- * @copyright  Copyright (C) 2005 - 2019 Open Source Matters, Inc. All rights reserved.
+ * @copyright  (C) 2005 Open Source Matters, Inc. <https://www.joomla.org>
+ * @copyright  (C) Translation 2008 - 2022 J!German <https://www.jgerman.de>
  * @license    GNU General Public License version 2 or later; see LICENSE.txt
  */
 
@@ -33,10 +34,10 @@ abstract class De_DELocalise
 
 		if ($count == 1)
 		{
-			return array('1');
+			return array('ONE', '1');
 		}
 
-		return array('MORE');
+		return array('OTHER', 'MORE');
 	}
 
 	/**

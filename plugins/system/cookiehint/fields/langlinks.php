@@ -13,6 +13,7 @@ defined('_JEXEC') or die;
 use Joomla\CMS\Factory;
 use Joomla\Registry\Registry;
 use Joomla\CMS\Language\Language;
+use Joomla\CMS\Language\Text;
 use Joomla\CMS\Language\LanguageHelper;
 use Joomla\CMS\Form\FormField;
 
@@ -94,7 +95,7 @@ class JFormFieldLangLinks extends FormField
 		foreach($languages as $lang) {
 
 			$value = $values->get($lang->lang_code,$default);
-			$output[]='<div class="input-append" style="margin-bottom: 2px;"><input class="form-control" type="text" id="'.$this->id.'_'.$lang->lang_code.'" name="'.$this->name.'['.$lang->lang_code.']'.'" placeholder="..." value="'.$value.'" /><span class="add-on">'.JText::_($lang->title).'</span></div><br />';
+			$output[]='<div class="input-append" style="margin-bottom: 2px;"><input class="form-control" type="text" id="'.$this->id.'_'.$lang->lang_code.'" name="'.$this->name.'['.$lang->lang_code.']'.'" placeholder="..." value="'.$value.'" /><span class="add-on">'.Text::_($lang->title).'</span></div><br />';
 
 		}
 		
