@@ -31,7 +31,7 @@
     <property name="WebServerToolWindowFactoryState" value="false" />
     <property name="aspect.path.notification.shown" value="true" />
     <property name="js-jscs-nodeInterpreter" value="D:\Programme\nodeJS\node.exe" />
-    <property name="last_opened_file_path" value="$PROJECT_DIR$" />
+    <property name="last_opened_file_path" value="$PROJECT_DIR$/../../../schach-in-schaafheim" />
   </component>
   <component name="RunManager">
     <configuration default="true" type="DartCommandLineRunConfigurationType" factoryName="Dart Command Line Application">
@@ -82,7 +82,7 @@
       <option name="number" value="Default" />
       <option name="presentableId" value="Default" />
       <updated>1454625771630</updated>
-      <workItem from="1707045377003" duration="483000" />
+      <workItem from="1707045377003" duration="893000" />
     </task>
     <servers />
   </component>
@@ -98,6 +98,10 @@
     </option>
   </component>
   <component name="WindowStateProjectService">
+    <state x="740" y="298" key="FileChooserDialogImpl" timestamp="1707046274015">
+      <screen x="0" y="0" width="1920" height="1080" />
+    </state>
+    <state x="740" y="298" key="FileChooserDialogImpl/-1920.0.1920.1080/1920.-350.2048.1152/0.0.1920.1080@0.0.1920.1080" timestamp="1707046274015" />
     <state x="668" y="367" key="com.intellij.ide.util.TipDialog" timestamp="1707045377597">
       <screen x="0" y="0" width="1920" height="1080" />
     </state>
