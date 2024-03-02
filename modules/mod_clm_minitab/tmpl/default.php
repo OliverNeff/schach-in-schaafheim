@@ -1,10 +1,17 @@
-<?php // no direct access
+<?php 
+/**
+ * @ Chess League Manager (CLM) Modul Minitabelle 
+ * @Copyright (C) 2011-2022 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
+// no direct access
 defined('_JEXEC') or die('Restricted access'); 
 
-$view	= JRequest::getVar( 'view' );
+$view	= clm_core::$load->request_string( 'view' );
 
-$dg	= JRequest::getInt( 'dg' );
-$itemid	= JRequest::getInt( 'Itemid' );
+$dg	= clm_core::$load->request_int( 'dg' );
+$itemid	= clm_core::$load->request_int( 'Itemid' );
 
 ?>
 
@@ -33,7 +40,8 @@ tr.bold { <?php echo $bold; ?> }
 for ($x=0; $x< ($liga[0]->teil); $x++){
 	if (!isset($punkte[$x]->zps)) break;
 ?>
-<tr <?php if ($show_zps == 1) { if ($punkte[$x]->zps == $zps) { echo 'class="bold"'; } else { } } ?>>
+<!-- <tr <?php if ($show_zps == 1) { if ($punkte[$x]->zps == $zps) { echo 'class="bold"'; } else { } } ?>> -->
+<tr <?php if ($show_zps == 1) { if ($punkte[$x]->zps == $zps) { echo 'style="'.$bold.'"'; } else { } } ?>>
 
 	<td class="rang<?php 
 	if ($show_aufab == 1) {

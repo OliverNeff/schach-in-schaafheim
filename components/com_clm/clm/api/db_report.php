@@ -1,6 +1,10 @@
 <?php
-// Eingang: Verband
-// Ausgang: Alle Vereine in diesem
+/**
+ * @ Chess League Manager (CLM) Component 
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
 function clm_api_db_report($liga, $runde, $dg, $paar) {
 
 	$liga = clm_core::$load->make_valid($liga, 0, -1);
@@ -29,6 +33,13 @@ function clm_api_db_report($liga, $runde, $dg, $paar) {
 	// Ist der Benutzer im CLM eingeloggt
 	if ($id==-1) {
 		return array(false, "e_reportLogin");
+	} 
+ 
+	$utype = clm_core::$access->getType();
+
+	// Ist der Benutzer 'nur' Spieler ohne Rechte
+	if ($utype == 'spl') {
+		return array(false, "e_reportRight");
 	} 
  
   	$paarModel = " SELECT a.*,g.id as gid, g.name as gname, g.tln_nr as gtln,"
@@ -103,7 +114,8 @@ function clm_api_db_report($liga, $runde, $dg, $paar) {
 			." AND a.runde = ".$runde
 			." AND a.paar = ".$paar
 			." AND a.dg = ".$dg
-			." AND a.heim = 1  ";		
+			." AND a.heim = 1  "		
+			." ORDER BY a.id"; 
 	$someData = clm_core::$db->loadObjectList($someData);
 
 	// Kein Ergebnis -> Daten Inkonsistent oder falsche Eingabe
@@ -122,7 +134,7 @@ function clm_api_db_report($liga, $runde, $dg, $paar) {
 		}
 		if($someData[0]->rang !="0") {
 			$Heim = $Heim
-		." LEFT JOIN #__clm_rangliste_spieler as r ON ( r.ZPS = a.zps AND r.Mgl_Nr= a.mgl_nr AND r.sid = a.sid AND a.status = r.Gruppe ) ";
+		." LEFT JOIN #__clm_rangliste_spieler as r ON ( r.ZPSmgl = a.zps AND r.Mgl_Nr= a.mgl_nr AND r.sid = a.sid AND a.status = r.Gruppe ) ";
 		}
 		$Heim = $Heim
 		." WHERE a.sid = ".$someData[0]->sid
@@ -167,7 +179,7 @@ function clm_api_db_report($liga, $runde, $dg, $paar) {
 		}
 		if($someData[0]->rang !="0") {
 			$Gast = $Gast
-		." LEFT JOIN #__clm_rangliste_spieler as r ON ( r.ZPS = a.zps AND r.Mgl_Nr= a.mgl_nr AND r.sid = a.sid AND a.status = r.Gruppe ) ";
+		." LEFT JOIN #__clm_rangliste_spieler as r ON ( r.ZPSmgl = a.zps AND r.Mgl_Nr= a.mgl_nr AND r.sid = a.sid AND a.status = r.Gruppe ) ";
 		}
 		$Gast = $Gast
 		." WHERE a.sid = ".$someData[0]->sid
@@ -241,7 +253,7 @@ function clm_api_db_report($liga, $runde, $dg, $paar) {
 		// Prüfen ob Datensatz schon vorhanden ist
 		$now = date('Y-m-d H:i:s'); 
 		$mdt = $finish[($runde+(($dg-1)*$out["liga"][0]->runden)-1)]->deadlineday.' ';
-		if ($finish[($runde+(($dg-1)*$out["liga"][0]->runden)-1)]->deadlinetime != '00:00:00') $mdt .= $finish[($runde+(($dg-1)*$out["liga"][0]->runden)-1)]->deadlinetime; else $mdt .= '24:00:00';
+		if ($finish[($runde+(($dg-1)*$out["liga"][0]->runden)-1)]->deadlinetime != '00:00:00') $mdt .= $finish[($runde+(($dg-1)*$out["liga"][0]->runden)-1)]->deadlinetime; else $mdt .= '00:00:00';
 		if ($out["access"][0]->gemeldet > 0 AND $mdt < $now) {
 		return array(false, "e_reportAlready", array($liga,$out["paar"][0]->sid));
 	}	

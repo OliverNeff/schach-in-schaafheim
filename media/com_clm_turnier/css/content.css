@@ -1,0 +1,160 @@
+@charset "UTF-8";
+
+/** enable background printing **/
+body {
+	color-adjust: exact; 
+	print-color-adjust: exact;
+	-webkit-print-color-adjust: exact; 
+}
+
+/* */
+.pull-right {
+	float: right;
+}
+
+/**** Chess League Manager ****/
+/******************************/
+#clm .clm th a {
+	color: #CCC !important;
+}
+
+/** Überschriften **/
+#clm .clm h1,
+#clm .clm h2,
+#clm .clm h3,
+#clm .clm h4,
+#clm .clm h5,
+#clm .clm h6,
+#clm .clm .componentheading,
+#clm .clm .contentheading {
+	margin: 0;
+	font-weight: normal;
+	text-transform: none;
+}
+
+#clm .clm h1 {
+	font-size: 22px;
+}
+
+#clm .clm h2,
+#clm .clm .contentheading {
+	font-size: 20px;
+}
+
+#clm .clm h3 {
+	font-size: 18px;
+	padding: 10px 0;
+}
+
+#clm .clm h4 {
+	font-size: 16px;
+	padding: 5px 0;
+	margin: 5px 0 10px 0 !important;
+}
+
+#clm .clm h5 {
+	font-size: 14px;
+}
+
+#clm .clm h6 {
+	font-size: 13px;
+	font-style: italic
+}
+
+/** Fehlermeldung **/
+#wrong, .wrong {
+	text-align: center !important;
+	padding: 10px 0;
+}
+
+/** Tabellen **/
+#clm .clm table {
+	border-collapse: collapse;
+	margin-bottom: 10px;
+	width: 100%;
+}
+
+#clm .clm table th {
+	font-size: 110%;
+}
+
+#clm .clm table * {
+	word-wrap: break-word;
+}
+
+#clm .clm table .anfang,
+#clm .clm table .ende {
+	font-weight: bold;
+}
+
+#clm .clm tr.ende {
+	border-top: 2px solid #999;
+}
+
+/**** Turniererweiterung ****/
+/****************************/
+
+/** Turnier Rangliste **/
+#turnier_rangliste table {
+	word-wrap: normal;
+	white-space: nowrap;
+}
+
+#turnier_rangliste table td,
+#turnier_rangliste table th {
+	padding: 0.3em !important;
+}
+
+#turnier_rangliste .rang {
+	width: 20px;
+	text-align: right !important;
+}
+
+#turnier_rangliste .titel {
+	width: 40px;
+	text-align: center;
+}
+
+/* Spielername darf die Breite nicht verlassen, sonst verzerrt das Layout */
+#turnier_rangliste .name {
+	max-width: 150px;
+	margin: auto;
+}
+
+#turnier_rangliste td.name,
+#turnier_rangliste th.name {
+	width: 150px;
+	overflow: hidden !important;
+}
+
+#turnier_rangliste .verein {
+	
+}
+
+#turnier_rangliste .twz {
+	width: 20px;
+	text-align: center !important;
+}
+
+#turnier_rangliste .erg {
+	width: 40px;
+	text-align: center;
+}
+
+#turnier_rangliste .gesamt {
+	width: 40px;
+	text-align: center;
+}
+
+/** Turnier DWZ Rangliste **/
+#turnier_rangliste .diff {
+	width: 50px;
+	text-align: center;
+	color: blue;
+}
+
+#turnier_rangliste .i0 {
+	width: 40px;
+	text-align: left;
+	border-left-style: none;
+}

@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2019 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -9,41 +9,40 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 defined('_JEXEC') or die('Restricted access');
-JHtml::_('behavior.tooltip', '.CLMTooltip');
+
+require_once (JPATH_COMPONENT . DS . 'includes' . DS . 'clm_tooltip.php');
 
 // Konfigurationsparameter auslesen
-$itemid 		= JRequest::getVar( 'Itemid' );
-$spRang		= JRequest::getVar( 'spRang' ,0);	//Sonderranglisten
+$itemid 	= clm_core::$load->request_int( 'Itemid' );
+$spRang		= clm_core::$load->request_int( 'spRang');	//Sonderranglisten
 		// Userkennung holen
 	$user	=JFactory::getUser();
 	$jid	= $user->get('id');
 
-$pgn		= JRequest::getInt('pgn','0'); 
-$option 	= JRequest::getCmd( 'option' );
+$pgn		= clm_core::$load->request_int('pgn'); 
+$option 	= clm_core::$load->request_string('option','com_clm' );
 $mainframe	= JFactory::getApplication();
 if ($pgn == 1 AND $spRang == 0) { 
 	$result = clm_core::$api->db_pgn_export($this->turnier->id,false);
-	//JFactory::getApplication()->close();
-	JRequest::setVar('pgn',0);
+	$_GET['pgn'] = 0;
 	if (!$result[0]) $msg = JText::_(strtoupper($result[1])).'<br><br>'; else $msg = '';
 	$link = 'index.php?option='.$option.'&view=turnier_rangliste&turnier='.$this->turnier->id.'&pgn=0';
 	if ($itemid != 0) $link .= '&Itemid='.$itemid;
-	$mainframe->redirect( $link, $msg );
+	$mainframe->enqueueMessage( $msg );
+	$mainframe->redirect( $link );
 }
 
 // Stylesheet laden
 require_once(JPATH_COMPONENT.DS.'includes'.DS.'css_path.php');
 
 
-// $turnierid		= JRequest::getInt('turnier','1');
 $config = clm_core::$db->config();
 // $pdf_melde = $config->pdf_meldelisten;
 $fixth_tkreuz = $config->fixth_tkreuz;
 
 // CLM-Container
-echo '<div ><div id="turnier_rangliste">';
+echo '<div id="clm"><div id="turnier_rangliste">';
 
 // Componentheading
 if($spRang != 0){			//Sonderranglisten
@@ -62,9 +61,11 @@ if (!$archive_check) {
 	echo CLMContent::clmWarning(JText::_('TOURNAMENT_NOTPUBLISHED')."<br/>".JText::_('TOURNAMENT_PATIENCE'));
 
 } elseif ($spRang == 0 and $this->turnier->playersCount < $this->turnier->teil) { //Änderung wegen Sonderranglisten
-	echo CLMContent::componentheading($heading);
-	require_once(JPATH_COMPONENT.DS.'includes'.DS.'submenu_t.php');
-	echo CLMContent::clmWarning(JText::_('TOURNAMENT_PLAYERLISTNOTCOMPLETE')."<br/>".JText::_('TOURNAMENT_NORANKINGEXISTING'));
+	$msg = JText::_('TOURNAMENT_PLAYERLISTNOTCOMPLETE')."<br/>".JText::_('TOURNAMENT_NORANKINGEXISTING');
+	$link = 'index.php?option='.$option.'&view=turnier_teilnehmer&turnier='.$this->turnier->id;
+	if ($itemid != 0) $link .= '&Itemid='.$itemid;
+	$mainframe->enqueueMessage( $msg );
+	$mainframe->redirect( $link );
 
 } elseif ($spRang != 0 and $this->turnier->playersCount == 0 ) { //Hinzugefügt wegen Sonderranglisten
 	echo CLMContent::componentheading($heading);
@@ -248,7 +249,6 @@ if (!$archive_check) {
 						// ergebnis ermitteln
 
 						if (isset($this->matrix[$this->players[$p]->snr][$rnd]->ergebnis)) {
-
 							echo '<a href="index.php?option=com_clm&amp;view=turnier_runde&amp;turnier='.$this->turnier->id.'&amp;runde='.$this->matrix[$this->players[$p]->snr][$rnd]->runde.'&Itemid='.$itemid.'">';
 							if (isset($this->posToPlayers[$this->matrix[$this->players[$p]->snr][$rnd]->gegner]))
 								echo $this->posToPlayers[$this->matrix[$this->players[$p]->snr][$rnd]->gegner];

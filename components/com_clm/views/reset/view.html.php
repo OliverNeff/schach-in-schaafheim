@@ -1,5 +1,11 @@
 <?php
 /**
+ * @ Chess League Manager (CLM) Component 
+ * @Copyright (C) 2008-2022 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
+/**
  * @version		$Id: view.html.php 7399 2007-05-14 04:10:09Z eddieajau $
  * @package		Joomla
  * @subpackage	User
@@ -46,10 +52,11 @@ class CLMViewReset extends JViewLegacy
 		$mainframe	= JFactory::getApplication();
 
 		// Load the form validation behavior
-		JHTML::_('behavior.formvalidation');
+//		JHTML::_('behavior.formvalidation');
 
 		// Add the tooltip behavior
-		JHTML::_('behavior.tooltip');
+//		JHtml::_('behavior.tooltip');
+		require_once (JPATH_COMPONENT . DS . 'includes' . DS . 'tooltip.php');
 
 		// Get the layout
 		$layout	= $this->getLayout();

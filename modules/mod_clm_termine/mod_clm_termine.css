@@ -1,8 +1,14 @@
+/**
+ * @ Chess League Manager (CLM) Component 
+ * @Copyright (C) 2011-2023 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
 
 @charset "utf-8";
 /* CSS Document */
 
-.kalender {
+.kalenderli {
     font-family:verdana;
     font-size:13px;
 }
@@ -22,7 +28,7 @@
 }
 .kalender .tag {
     float:left;
-    width: 23.7px  !important;
+    width: 24px  !important;
     height: 25px  !important;
     line-height: 25px;
     text-align: center;
@@ -33,16 +39,21 @@
 	background-color:#DDDDDD;
 	font-weight: bold;
 }
-.tag.heute {
+.kalender  .tag.heute {
 	font-weight: bold;
 	background-color: #5bc0de !important;
 }
-
-.tag.event {
-	font-weight:bold;
-	background-color: #d9534f !important;
+.kalender  .tag.heute  a{
+	color: red;
+							 
 }
-
+.kalender  .tag.event {
+	font-weight:bold;
+	background-color: #EEE !important;
+}
+.kalender  .tag.event  a{
+	color: blue;
+}
 .clear {
     clear:left;
 }

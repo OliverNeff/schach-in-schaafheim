@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2015 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -20,12 +20,12 @@ class CLMModelTurnier_Tabelle extends JModelLegacy {
 		
 		parent::__construct();
 
-		$this->turnierid = JRequest::getInt('turnier', 0);
-		$this->spRang = JRequest::getInt('spRang', 0); 		//Sonderranglisten
+		$this->turnierid = clm_core::$load->request_int('turnier');
+		$this->spRang = clm_core::$load->request_int('spRang'); 		//Sonderranglisten
 
 		$this->_getTurnierData();
-
 		$this->_getTurnierPlayers();
+		$this->_getTurnierTeams();
 
 	}
 	
@@ -52,7 +52,7 @@ class CLMModelTurnier_Tabelle extends JModelLegacy {
 	
 	function _getTurnierPlayers() {
 	
-		$query = "SELECT rankingPos, snr, name, birthYear, geschlecht, sid, zps, verein, twz, titel, anz_spiele, sum_punkte, sumTiebr1, sumTiebr2, sumTiebr3"
+		$query = "SELECT rankingPos, snr, name, birthYear, geschlecht, sid, zps, verein, twz, titel, anz_spiele, sum_punkte, sumTiebr1, sumTiebr2, sumTiebr3, '' AS quali, mtln_nr"
 			." FROM `#__clm_turniere_tlnr`"
 			." WHERE turnier = ".$this->turnierid
 			.$this->_getSpecialRankingWhere()		//Sonderranglisten
@@ -62,7 +62,8 @@ class CLMModelTurnier_Tabelle extends JModelLegacy {
 		$this->_db->setQuery($query);
 		$this->players = $this->_db->loadObjectList();
 		
-		$this->turnier->playersCount = count($this->players);
+		if (is_null($this->players)) $this->turnier->playersCount = 0;
+		else $this->turnier->playersCount = count($this->players);
 		
 		
 		//RankingPos neu berechnen für Sonderranglisten
@@ -79,8 +80,56 @@ class CLMModelTurnier_Tabelle extends JModelLegacy {
 				}
 			}
 		}
+		//Auf-Abstieg- bzw. Qualifikationmarker setzen
+			$turParams = new clm_class_params($this->turnier->params);
+			$qualiUp = (integer) $turParams->get('qualiUp', 0);
+			$qualiUpPoss = $qualiUp + (integer) $turParams->get('qualiUpPoss', 0);
+			$qualiDown = (integer) $turParams->get('qualiDown', 0);
+			$qualiDownPoss = $qualiDown + (integer) $turParams->get('qualiDownPoss', 0);
+			foreach ($this->players as $key => $value) {
+				if ($qualiUp > 0 AND $value->rankingPos <= $qualiUp) {
+					// Aufsteiger
+					$this->players[$key]->quali = '_auf';
+				} elseif ($qualiUpPoss > 0 AND $value->rankingPos <= $qualiUpPoss) {
+					// mgl. Aufsteiger
+					$this->players[$key]->quali = '_auf_evtl';
+				} elseif ($qualiDown > 0 AND $value->rankingPos > ($this->turnier->teil-$qualiDown)) {
+					// Absteiger
+					$this->players[$key]->quali = '_ab';
+				} elseif ($qualiDownPoss > 0 AND $value->rankingPos > ($this->turnier->teil-$qualiDownPoss)) {
+					// mgl. Absteiger
+					$this->players[$key]->quali = '_ab_evtl';
+				}
+			
+			}
 	}
 	
+	function _getTurnierTeams() {
+	
+		$query = "SELECT * FROM `#__clm_turniere_teams`"
+			." WHERE tid = ".$this->turnierid
+			;
+		
+		$this->_db->setQuery($query);
+		$this->teams = $this->_db->loadObjectList();
+		
+		if (is_null($this->teams)) $this->turnier->teamsCount = 0;
+		else $this->turnier->teamsCount = count($this->teams);
+		$this->a_teams = array();
+		foreach ($this->teams as $key => $value) {
+			$this->a_teams[$value->tln_nr] = new stdClass();
+			$this->a_teams[$value->tln_nr]->tln_nr = $value->tln_nr;
+			$this->a_teams[$value->tln_nr]->name = $value->name;
+			$this->a_teams[$value->tln_nr]->points = 0;
+		}
+		// Addition der Punkte pro Team
+		foreach ($this->players as $key => $value) {
+			if ($value->mtln_nr < 1) continue;
+			if (!isset($a_teams[$value->mtln_nr])) continue;
+			$this->a_teams[$value->mtln_nr] += $value->sum_punkte;
+		}
+	}
+		
 	
 	//Sonderranglisten
 	function _getSpecialRankingWhere()	{

@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2016 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2020 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -18,8 +18,8 @@ class CLMModelTabelle extends JModelLegacy
 	
 	function _getCLMLiga( &$options )
 	{
-	$sid	= JRequest::getInt('saison','1');
-	$liga	= JRequest::getInt('liga','1');
+	$sid	= clm_core::$load->request_int('saison',1);
+	$liga	= clm_core::$load->request_int('liga',1);
 	$db	= JFactory::getDBO();
 	$id	= @$options['id'];
  
@@ -40,8 +40,8 @@ class CLMModelTabelle extends JModelLegacy
 	}
 	function _getCLMSpielfrei( &$options )
 	{
-	$sid	= JRequest::getInt('saison','1');
-	$liga	= JRequest::getInt('liga','1');
+	$sid	= clm_core::$load->request_int('saison',1);
+	$liga	= clm_core::$load->request_int('liga',1);
 	$db	= JFactory::getDBO();
 	$id	= @$options['id'];
  
@@ -61,15 +61,14 @@ class CLMModelTabelle extends JModelLegacy
 
 	function _getCLMPunkte( &$options )
 	{
-	$sid	= JRequest::getInt('saison','1');
-	$liga	= JRequest::getInt('liga','1');
-	$runde	= JRequest::getInt('runde');
+	$sid	= clm_core::$load->request_int('saison',1);
+	$liga	= clm_core::$load->request_int('liga',1);
+	$runde	= clm_core::$load->request_int('runde');
 	$db	= JFactory::getDBO();
 	$id	= @$options['id'];
 	// ordering für Rangliste -> Ersatz für direkten Vergleich
 		$query = "SELECT a.* FROM #__clm_liga as a"
 			." WHERE id = ".$liga
-			//." AND sid = ".$sid
 			;
 		$db->setQuery($query);
  		$order = $db->loadObjectList();
@@ -114,10 +113,10 @@ class CLMModelTabelle extends JModelLegacy
 		return @$result;
 	}
 
-	function _getCLMDWZSchnitt ( &$options )
+/*	function _getCLMDWZSchnitt ( &$options )
 	{
-	$sid	= JRequest::getInt('saison','1');
-	$liga	= JRequest::getInt('liga','1');
+	$sid	= clm_core::$load->request_int('saison',1);
+	$liga	= clm_core::$load->request_int('liga',1);
 
 		$db	= JFactory::getDBO();
 		$id	= @$options['id'];
@@ -165,7 +164,7 @@ class CLMModelTabelle extends JModelLegacy
 			." FROM #__clm_meldeliste_spieler as a"
 			." LEFT JOIN #__clm_dwz_spieler AS d ON (d.Mgl_Nr = a.mgl_nr AND d.ZPS = a.zps AND d.sid = a.sid AND d.DWZ !=0)"
 //			." LEFT JOIN #__clm_mannschaften AS e ON (e.sid=a.sid AND e.liga= a.lid AND (e.zps=a.zps OR e.sg_zps=a.zps) AND e.man_nr = a.mnr AND e.man_nr !=0 AND e.liste !=0) "
-			." LEFT JOIN #__clm_mannschaften AS e ON (e.sid=a.sid AND e.liga= a.lid AND (e.zps=a.zps OR FIND_IN_SET(a.zps,e.sg_zps) != 0) AND e.man_nr = a.mnr AND e.man_nr !=0 AND e.liste !=0) "
+			." LEFT JOIN #__clm_mannschaften AS e ON (e.sid=a.sid AND e.liga= a.lid AND (e.zps=a.zps OR FIND_IN_SET(a.zps,e.sg_zps) != 0 OR (e.zps = '0' AND a.zps = '-1')) AND e.man_nr = a.mnr AND e.man_nr !=0 AND e.liste !=0) "
 			." WHERE a.lid = ".$liga
 			//." AND a.sid = ".$sid
 			." AND e.tln_nr IS NOT NULL "
@@ -188,7 +187,7 @@ class CLMModelTabelle extends JModelLegacy
 		$result = $this->_getList( $query );
 		return @$result;
 	}
-	
+*/	
 	public static function punkte_tlnr ( $sid, $lid, $tlnr, $dg, $runden_modus )
 	{
 	$db	= JFactory::getDBO();
@@ -213,8 +212,8 @@ class CLMModelTabelle extends JModelLegacy
 	//neu: Mannschaften der entspr. Liga (klkl)
 	function _getCLMMannschaft( &$options )
 	{
-	$sid = JRequest::getInt('saison','1');
-	$liga = JRequest::getInt('liga','1');
+	$sid	= clm_core::$load->request_int('saison',1);
+	$liga	= clm_core::$load->request_int('liga',1);
 	
 		$db			= JFactory::getDBO();
 		$id			= @$options['id'];
@@ -242,8 +241,8 @@ class CLMModelTabelle extends JModelLegacy
 	//neu: Mannschaftsleiter der entspr. Liga (klkl)
 	function _getCLMMLeiter( &$options )
 	{
-	$sid = JRequest::getInt('saison','1');
-	$liga = JRequest::getInt('liga','1');
+	$sid	= clm_core::$load->request_int('saison',1);
+	$liga	= clm_core::$load->request_int('liga',1);
 	
 		$db			= JFactory::getDBO();
 		$id			= @$options['id'];
@@ -272,8 +271,8 @@ class CLMModelTabelle extends JModelLegacy
 	//neu: Meldelisten der entspr. Mannschaften (klkl)
 	function _getCLMCount ( &$options )
 	{
-	$sid	= JRequest::getInt('saison','1');
-	$liga	= JRequest::getInt('liga','1');
+	$sid	= clm_core::$load->request_int('saison',1);
+	$liga	= clm_core::$load->request_int('liga',1);
 
 		$db			= JFactory::getDBO();
 		$id			= @$options['id'];
@@ -336,8 +335,8 @@ class CLMModelTabelle extends JModelLegacy
 	function _getCLMSaison ( &$options )
 	{
  
-		$sid	= JRequest::getInt('saison','1');
-		$liga	= JRequest::getInt('liga','1');
+	$sid	= clm_core::$load->request_int('saison',1);
+	$liga	= clm_core::$load->request_int('liga',1);
 		$db			= JFactory::getDBO();
 		$id			= @$options['id'];
 
@@ -359,8 +358,8 @@ class CLMModelTabelle extends JModelLegacy
 	
 	function _getCLMBP ( &$options )
 	{
-	$sid = JRequest::getInt('saison','1');
-	$liga = JRequest::getInt('liga','1');
+	$sid	= clm_core::$load->request_int('saison',1);
+	$liga	= clm_core::$load->request_int('liga',1);
 	
 		$db			= JFactory::getDBO();
 		$id			= @$options['id'];
@@ -383,8 +382,8 @@ class CLMModelTabelle extends JModelLegacy
 
 	function _getCLMSumBP ( &$options )
 	{
-	$sid = JRequest::getInt('saison','1');
-	$liga = JRequest::getInt('liga','1');
+	$sid	= clm_core::$load->request_int('saison',1);
+	$liga	= clm_core::$load->request_int('liga',1);
 	
 		$db			= JFactory::getDBO();
 		$id			= @$options['id'];
@@ -406,8 +405,8 @@ class CLMModelTabelle extends JModelLegacy
 
 	function _getCLMSumPlan ( &$options )
 	{
-	$sid = JRequest::getInt('saison','1');
-	$liga = JRequest::getInt('liga','1');
+	$sid	= clm_core::$load->request_int('saison',1);
+	$liga	= clm_core::$load->request_int('liga',1);
 	
 		$query = " SELECT a.dg,a.lid,a.sid,a.runde,a.paar,a.tln_nr,a.gegner "
 			//." ,t.name as dat_name, t.datum as datum "
@@ -434,8 +433,8 @@ class CLMModelTabelle extends JModelLegacy
 
 	function _getCLMTermin( &$options )
 	{
-	$sid = JRequest::getInt('saison','1');
-	$liga = JRequest::getInt('liga','1');
+	$sid	= clm_core::$load->request_int('saison',1);
+	$liga	= clm_core::$load->request_int('liga',1);
 	
 		$db			= JFactory::getDBO();
 		$id			= @$options['id'];
@@ -457,8 +456,8 @@ class CLMModelTabelle extends JModelLegacy
 	//neu: Einzelergebnisse (klkl)
 	function _getCLMEinzel ( &$options )
 	{
-	$sid = JRequest::getInt('saison','1');
-	$liga = JRequest::getInt('liga','1');
+	$sid	= clm_core::$load->request_int('saison',1);
+	$liga	= clm_core::$load->request_int('liga',1);
 	
 		$db			= JFactory::getDBO();
 		$id			= @$options['id'];

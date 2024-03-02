@@ -1,9 +1,9 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2018 CLM Team  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
- * @link http://www.fishpoke.de
+ * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
  * @email fishpoke@fishpoke.de
  * @author Andreas Dorn
@@ -11,103 +11,10 @@
 */
 defined('_JEXEC') or die('Restricted access');
 
-/**
- * @package     Joomla.Platform
- * @subpackage  HTML
- *
- * @copyright   Copyright (C) 2005 - 2011 Open Source Matters, Inc. All rights reserved.
- * @license     GNU General Public License version 2 or later; see LICENSE
- */
 $turParams = new clm_class_params($this->turnier->params);
+if (is_null($this->turnier->bemerkungen)) $this->turnier->bemerkungen = '';
+if (is_null($this->turnier->bem_int)) $this->turnier->bem_int = '';
 ?>
-
-	<script language="javascript" type="text/javascript">
-
-	function showFormRoundscount(){
-		if (document.getElementById('typ').value == 1) { // CH
-			document.getElementById('formRoundscountValue').innerHTML = jsform['runden'];
-			document.getElementById('formRoundscountText').innerHTML = '';
-			document.getElementById('formStagecount').innerHTML = '-';
-			//document.getElementById('formTiebreakers').innerHTML = jsform['tiebreakers'];
-		} else if (document.getElementById('typ').value == 2) { // voll
-			changeRoundscountModus2();
-			document.getElementById('formRoundscountText').innerHTML = jstext['roundscountgenerated'];
-			//document.getElementById('formStagecount').innerHTML = jsform['stages'];
-			//document.getElementById('formTiebreakers').innerHTML = jsform['tiebreakers'];
-		} else if ((document.getElementById('typ').value == 3) || (document.getElementById('typ').value == 5)) { // KO
-			changeRoundscountModus3();
-			document.getElementById('formRoundscountText').innerHTML = jstext['roundscountgenerated'];
-			document.getElementById('formStagecount').innerHTML = '-';
-			document.getElementById('formTiebreakers').innerHTML = '-';
-		} else { // keine Auswahl
-			document.getElementById('formRoundscountValue').innerHTML = jsform['runden'];
-			document.getElementById('formRoundscountText').innerHTML = '';
-			//document.getElementById('formStagecount').innerHTML = jsform['stages'];
-			//document.getElementById('formTiebreakers').innerHTML = jsform['tiebreakers'];
-		}
-	}	
-	
-	
-	function changeRoundscountModus2 () {
-		if (document.getElementById('teil').value > 0) {
-			var tempTeil = document.getElementById('teil').value;
-			if (document.getElementById('teil').value%2 != 0) { // gerade machen
-				tempTeil++;
-			}
-			var tempRunden = tempTeil-1;
-			document.getElementById('formRoundscountValue').innerHTML = tempRunden;
-		} else {
-			document.getElementById('formRoundscountValue').innerHTML = '?';
-		}
-	}
-	
-	function changeRoundscountModus3 () {
-		if (document.getElementById('teil').value > 0) {
-			var tempRunden = Math.ceil(Math.log(document.getElementById('teil').value)/Math.log(2));
-			document.getElementById('formRoundscountValue').innerHTML = tempRunden;
-		} else {
-			document.getElementById('formRoundscountValue').innerHTML = '?';
-		}
-	}
-	
-	Joomla.submitbutton = function (pressbutton) { 
-		var form = document.adminForm;
-		if (pressbutton == 'cancel') {
-			submitform( pressbutton );
-			return;
-		}
-		
-		// do field validation
-		if (form.name.value == "") {
-			alert( jserror['enter_name'] );
-		} else if ( getSelectedValue('adminForm','sid') == 0 ) {
-			alert( jserror['select_season'] );
-		} else if (form.typ.value == 0) {
-			alert( jserror['select_modus'] );
-		} else if (form.typ.value != 2 && form.typ.value != 3 && form.typ.value != 5 && form.runden.value == "") {
-			alert( jserror['enter_rounds'] );
-		} else if (form.typ.value != 2 && form.typ.value != 3 && form.typ.value != 5 && isNaN(form.runden.value)) {
-			alert( jserror['number_rounds'] );
-		} else if (form.teil.value == "" || form.teil.value == 0) {
-			alert( jserror['enter_participants'] );
-		} else if (isNaN(form.teil.value)) {
-			alert( jserror['number_participants'] );
-		} else if (form.typ.value != 3 && form.typ.value != 5 && form.tiebr2.value != 0 && form.tiebr2.value == form.tiebr1.value) {
-			alert( jserror['select_tiebreakers_12'] );
-		} else if (form.typ.value != 3 && form.typ.value != 5 && form.tiebr3.value != 0 && form.tiebr3.value == form.tiebr1.value) {
-			alert( jserror['select_tiebreakers_13'] );
-		} else if (form.typ.value != 3 && form.typ.value != 5 && form.tiebr3.value != 0 && form.tiebr3.value == form.tiebr2.value) {
-			alert( jserror['select_tiebreakers_23'] );
-		} else if (form.dateEnd.value != "" && form.dateStart.value == "") {
-			alert( jserror['nostartdate'] );
-		} else if (form.dateEnd.value != "" && form.dateStart.value > form.dateEnd.value) {
-			alert( jserror['enddatetoolow'] );
-		} else {
-			submitform( pressbutton );
-		}
-	}
-		  
-		</script>
 
 <form action="index.php" method="post" name="adminForm" id="adminForm">
 
@@ -224,9 +131,11 @@ $turParams = new clm_class_params($this->turnier->params);
 			<span id="formRoundscountValue">
 			<?php
 			// nur, wenn Runden noch nicht erstellt
-			if (IS_NULL($this->turnier->rnd) OR $this->turnier->rnd == 0) {
+			if (IS_NULL($this->turnier->rnd) OR $this->turnier->rnd == '0') {
 				if ($this->turnier->typ != 2 AND $this->turnier->typ != 3 AND $this->turnier->typ != 5) {
 					echo '<input class="inputbox" type="text" name="runden" id="runden" size="10" maxlength="5" value="'.$this->turnier->runden.'" />';
+				} else {
+					echo CLMForm::hidden('runden', $this->turnier->runden); // damit JavaScript funktioniert
 				}
 			} else {
 				echo $this->turnier->runden;
@@ -237,7 +146,7 @@ $turParams = new clm_class_params($this->turnier->params);
 			<span id="formRoundscountText">
 			<?php
 			// nur, wenn Runden noch nicht erstellt
-			if (IS_NULL($this->turnier->rnd) OR $this->turnier->rnd == 0) {
+			if (IS_NULL($this->turnier->rnd) OR $this->turnier->rnd == '0') {
 				if ($this->turnier->typ == 2 OR $this->turnier->typ == 3 OR $this->turnier->typ == 5) {
 					echo $this->turnier->runden." (".JText::_('ROUNDS_COUNT_GENERATED').")";
 				}
@@ -309,6 +218,24 @@ $turParams = new clm_class_params($this->turnier->params);
 			}
 			?>
 		</td>
+		<td class="paramlist_value">
+			<label for="teamranking">
+				<?php echo JText::_( 'TEAMRANKING' ); ?>:
+			</label>
+			<br>
+			<?php 
+			$options = array();
+			$options[0] = JText::_('TEAMRKG_0');
+			$options[2] = JText::_('TEAMRKG_2');
+			$options[3] = JText::_('TEAMRKG_3');
+			$options[4] = JText::_('TEAMRKG_4');
+			$options[99] = JText::_('TEAMRKG_99');
+			$optionlist = array();
+			foreach ($options as $key => $val) {
+				$optionlist[]	= JHtml::_('select.option', $key, $val, 'id', 'name' );
+			}
+			echo JHtml::_('select.genericlist', $optionlist, 'params[teamranking]', 'class="inputbox"', 'id', 'name', $turParams->get('teamranking', 0)); ?>
+		</td>
 	</tr>
 	<tr>
 		<td class="paramlist_key" title="<?php echo JText::_( 'OPTION_TIEBREAKERSFIDECORRECT_HINT' );?>" >
@@ -316,6 +243,20 @@ $turParams = new clm_class_params($this->turnier->params);
 		</td>
 		<td class="paramlist_value"><fieldset class="radio">
 			<?php echo JHtml::_('select.booleanlist', 'params[optionTiebreakersFideCorrect]', 'class="inputbox"', $turParams->get('optionTiebreakersFideCorrect', 0)); ?>
+		</fieldset></td>
+		<td class="paramlist_key" title="<?php echo JText::_( 'OPTION_ELO_ANALYSIS_HINT' );?>" >
+			<?php echo JText::_('OPTION_ELO_ANALYSIS'); ?>:
+		</td>
+		<td class="paramlist_value"><fieldset class="radio">
+			<?php echo JHtml::_('select.booleanlist', 'params[optionEloAnalysis]', 'class="inputbox"', $turParams->get('optionEloAnalysis', 0)); ?>
+		</fieldset></td>
+	</tr>
+	<tr>
+		<td class="paramlist_key" title="<?php echo JText::_( 'OPTION_50PERCENTRULE_HINT' );?>" >
+			<?php echo JText::_('OPTION_50PERCENTRULE'); ?>:
+		</td>
+		<td class="paramlist_value"><fieldset class="radio">
+			<?php echo JHtml::_('select.booleanlist', 'params[option50PercentRule]', 'class="inputbox"', $turParams->get('option50PercentRule', 0)); ?>
 		</fieldset></td>
 	</tr>
 
@@ -338,9 +279,13 @@ $turParams = new clm_class_params($this->turnier->params);
 		<td class="paramlist_value">
 			<?php 
 			$options = array();
-			$options[0] = JText::_('OPTION_USEASTWZ_0');
-			$options[1] = JText::_('OPTION_USEASTWZ_1');
-			$options[2] = JText::_('OPTION_USEASTWZ_2');
+			if ($turParams->get('useAsTWZ', 0) == 8) {
+				$options[8] = JText::_('OPTION_USEASTWZ_8');
+			} else {
+				$options[0] = JText::_('OPTION_USEASTWZ_0');
+				$options[1] = JText::_('OPTION_USEASTWZ_1');
+				$options[2] = JText::_('OPTION_USEASTWZ_2');
+			}
 			$optionlist = array();
 			foreach ($options as $key => $val) {
 				$optionlist[]	= JHtml::_('select.option', $key, $val, 'id', 'name' );
@@ -407,7 +352,7 @@ $turParams = new clm_class_params($this->turnier->params);
   
   
   <fieldset class="adminform">
-   <legend><?php echo JText::_( 'PERSONALIA' ); ?></legend>
+   <legend><?php echo "<br>".JText::_( 'PERSONALIA' ); ?></legend>
       <table class="paramlist admintable">
 	
 	<tr>
@@ -420,7 +365,16 @@ $turParams = new clm_class_params($this->turnier->params);
 			<?php echo $this->form['tl']; ?>
 		</td>
 	</tr>
-
+	<tr>
+	<td width="40%" class="paramlist_key">
+			<label for="torg">
+				<?php echo JText::_( 'TOURNAMENT_ORGANIZER' ); ?>:
+			</label>
+		</td>
+		<td class="paramlist_value">
+			<?php echo $this->form['torg']; ?>
+		</td>
+	</tr>
 
 	<tr>
 		<td width="40%" class="paramlist_key">
@@ -446,8 +400,84 @@ $turParams = new clm_class_params($this->turnier->params);
 		</td>
 	</tr>
 	
+	<tr>
+		<td width="30%" class="paramlist_key">
+			<label for="dateRegistration">
+				<?php echo JText::_( 'TOURNAMENT_DATE_REGISTRATION' ); ?>:
+			</label>
+		</td>
+		<td class="paramlist_value">
+			<?php
+			echo CLMForm::calendar($this->turnier->dateRegistration, 'dateRegistration', 'dateRegistration', '%Y-%m-%d', array('class'=>'text_area', 'size'=>'32',  'maxlength'=>'19')); ?>
+		</td>
+	</tr>
+	
+	<tr>
+		<td width="30%" class="paramlist_key">
+			<?php echo JText::_('OPTION_REGISTRATION'); ?>:
+		</td>
+		<td class="paramlist_value">
+			<?php 
+			$options = array();
+			$options[0] = JText::_('OPTION_REGISTRATION_0');
+			$options[5] = JText::_('OPTION_REGISTRATION_5');
+			//$options[2] = JText::_('OPTION_AUTODWZ_2');
+			$optionlist = array();
+			foreach ($options as $key => $val) {
+				$optionlist[]	= JHtml::_('select.option', $key, $val, 'id', 'name' );
+			}
+			echo JHtml::_('select.genericlist', $optionlist, 'params[typeRegistration]', 'class="inputbox"', 'id', 'name', $turParams->get('typeRegistration', 0)); ?>
+		</td>
+	</tr>
+
+	<tr>
+		<td width="30%" class="paramlist_key">
+			<?php echo JText::_('OPTION_ACCOUNT'); ?>:
+		</td>
+		<td class="paramlist_value">
+			<?php 
+			$options = array();
+			$options[0] = JText::_('OPTION_ACCOUNT_0');
+			$options[1] = JText::_('OPTION_ACCOUNT_1');
+			//$options[2] = JText::_('OPTION_ACCOUNT_2');
+			$optionlist = array();
+			foreach ($options as $key => $val) {
+				$optionlist[]	= JHtml::_('select.option', $key, $val, 'id', 'name' );
+			}
+			echo JHtml::_('select.genericlist', $optionlist, 'params[typeAccount]', 'class="inputbox"', 'id', 'name', $turParams->get('typeAccount', 0)); ?>
+		</td>
+	</tr>
+
 			</table>
 		</fieldset>
+	<?php // if (JComponentHelper::isInstalled ( 'com_clm_pairing' ) AND $this->turnier->typ == 1) { ?>
+	<?php if (JPluginHelper::isEnabled('xxx', 'clm_pairing_files') AND $this->turnier->typ == 1) { ?>  
+	<fieldset class="adminform">
+	<legend><?php echo "<br>".JText::_( 'DRAWING' ); ?></legend>
+      <table class="paramlist admintable">
+	
+		<tr>
+			<td width="30%" class="paramlist_key">
+				<?php echo JText::_('DRAWING_MODE'); ?>:
+			</td>
+			<td class="paramlist_value">
+				<?php 
+				$options = array();
+				$options[0] = JText::_('DRAWING_MODE_0');
+				$options[1] = JText::_('DRAWING_MODE_1');
+//				$options[2] = JText::_('DRAWING_MODE_2');
+				$optionlist = array();
+				foreach ($options as $key => $val) {
+					$optionlist[]	= JHtml::_('select.option', $key, $val, 'id', 'name' );
+				}
+				echo JHtml::_('select.genericlist', $optionlist, 'params[drawing_mode]', 'class="inputbox"', 'id', 'name', $turParams->get('drawing_mode', 0)); ?>
+			</td>
+		</tr>
+	
+	  </table>
+	</fieldset>
+	<?php } ?>
+	
 	</div>
 
 	<div class="width-40 fltrt">
@@ -689,7 +719,7 @@ $turParams = new clm_class_params($this->turnier->params);
 
 	<div class="width-60 fltlft">
 		<fieldset class="adminform">
-			
+			<br>
 			<legend><?php echo JText::_( 'REMARKS' ); ?></legend>
 		
 			<table class="paramlist admintable">
@@ -722,6 +752,10 @@ $turParams = new clm_class_params($this->turnier->params);
 	<input type="hidden" name="id" value="<?php echo $this->turnier->id; ?>" />
 	<input type="hidden" name="controller" value="turform" />
 	<input type="hidden" name="task" value="" />
+	<input type="hidden" name="rnd" value="<?php echo $this->turnier->rnd; ?>" />
+	<input type="hidden" name="ordering" value="<?php echo $this->turnier->ordering; ?>" />
+	<input type="hidden" name="params[inofDWZ]" id="params[inofDWZ]" value="<?php echo $turParams->get('inofDWZ', '0'); ?>" />
+	<input type="hidden" name="params[import_source]" id="params[import_source]" value="<?php echo $turParams->get('import_source', '0'); ?>" />
 	<?php echo JHtml::_( 'form.token' ); ?>
 
 </form>

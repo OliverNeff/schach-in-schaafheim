@@ -1,7 +1,13 @@
-	function submitbutton(pressbutton) {
+/*
+ * @ Chess League Manager (CLM) Component 
+ * @Copyright (C) 2008-2019 CLM Team  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
+	Joomla.submitbutton = function (pressbutton) { 
 		var form = document.adminForm;
 		if (pressbutton == 'cancel') {
-			submitform( pressbutton );
+			Joomla.submitform( pressbutton );
 			return;
 		}
 		// do field validation
@@ -12,6 +18,6 @@
 		} else if (isNaN(form.twz.value)) {
 			alert( jtext['number_twz'] );
 		} else {
-			submitform( pressbutton );
+			Joomla.submitform( pressbutton );
 		}
 	}

@@ -11,6 +11,22 @@ $ -> Language fix or change
 - -> Removed
 ! -> Note
 
+- - - - - 4.1.0 - [29-11-2023] - - - - - - - - - - - - - - - - - - - -
+^ Code-Anpassung Joomla 4.4.1: Aufbau der Sprachdateien
+
+- - - - - 4.0.1 - [09-10-2022] - - - - - - - - - - - - - - - - - - - -
+# Code-Anpassung Joomla 4: SEF-Funktionalität (Nachbesserung)
+
+- - - - - 4.0.0 - [30-09-2022] - - - - - - - - - - - - - - - - - - - -
+# Code-Anpassung Joomla 4: SEF-Funktionalität
+
+- - - - - 3.5.0 - [02-12-2020] - - - - - - - - - - - - - - - - - - - -
++ neuer Parameter: Saison
+
+- - - - - 3.4.1 - [14-09-2020] - - - - - - - - - - - - - - - - - - - -
++ neuer Link: Infokarte
+^ Code-Anpassung Joomla 4
+
 - - - - - 3.4.0 - [26-11-2018] - - - - - - - - - - - - - - - - - - - -
 ^ GET-Parameter url ersetzt durch GET-Parameter source bei Extern Lösung
 

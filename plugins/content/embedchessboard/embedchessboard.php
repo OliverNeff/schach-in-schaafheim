@@ -1,8 +1,8 @@
 <?php
 /**********************************************************************************
  * @package Embed Chessboard plugin for joomla 1.6 or later
- * @version 3.04.00
- * @copyright copyright (c) 2009-2019 Paolo Casaschi
+ * @version 3.06.01
+ * @copyright copyright (c) 2009-2023 Paolo Casaschi
  * @license GNU General Public License version 2
  * @author: http://pgn4web.casaschi.net
  * @tutorial: http://pgn4web-project.casaschi.net/wiki/User_Notes_joomla/
@@ -121,6 +121,10 @@
  * 3.02.00: upgraded pgn4web to 3.02
  * 3.03.00: upgraded pgn4web to 3.03
  * 3.04.00: upgraded pgn4web to 3.04
+ * 3.05.00: upgraded pgn4web to 3.05
+ * 3.05.01: fixed issue with php 8.1, see https://sourceforge.net/p/pgn4web/tickets/173/
+ * 3.06.00: upgraded pgn4web to 3.06
+ * 3.06.01: fixed issue with php 8.x, see https://sourceforge.net/p/pgn4web/tickets/175/
  **********************************************************************************/
 
 // No direct access allowed to this file
@@ -155,6 +159,9 @@ class plgContentEmbedchessboard extends JPlugin {
 		// check whether plugin has been unpublished
 		if ( !$this->params->get( 'enabled', 1 ) ) { return true; }
 
+		// make sure there is content to process
+		if ( is_null($row->text) ) { return true; }
+
 		// expression to search for
 		$regex = "#\[(pgn|pgn4web)(\b.*?)?\](.*?)\[/\\1\]#s";
 
@@ -165,38 +172,38 @@ class plgContentEmbedchessboard extends JPlugin {
 		$count = count( $matches[0] );
 
 		// Read plugin parameters
-		$hl_site = trim($this->params->get('horizontalLayout'));
+		$hl_site = trim((string) $this->params->get('horizontalLayout'));
 		if (strlen($hl_site) == 0) { $hl_site = "t"; }
-		$height_site = trim($this->params->get('height'));
+		$height_site = trim((string) $this->params->get('height'));
 		if (strlen($height_site) == 0) { $height_site = "auto"; }
 
-		$bch = trim($this->params->get('backgroundColor'));
+		$bch = trim((string) $this->params->get('backgroundColor'));
 		if (strlen($bch) == 0) { $bch = "F6F6F6"; }
-		$lch = trim($this->params->get('lightColor'));
+		$lch = trim((string) $this->params->get('lightColor'));
 		if (strlen($lch) == 0) { $lch = "F6F6F6"; }
-		$dch = trim($this->params->get('darkColor'));
+		$dch = trim((string) $this->params->get('darkColor'));
 		if (strlen($dch) == 0) { $dch = "E0E0E0"; }
-		$bbch = trim($this->params->get('boardBorderColor'));
+		$bbch = trim((string) $this->params->get('boardBorderColor'));
 		if (strlen($bbch) == 0) { $bbch = "E0E0E0"; }
-		$hch = trim($this->params->get('highlightColor'));
+		$hch = trim((string) $this->params->get('highlightColor'));
 		if (strlen($hch) == 0) { $hch = "ABABAB"; }
-		$cbch = trim($this->params->get('controlBackgroundColor'));
+		$cbch = trim((string) $this->params->get('controlBackgroundColor'));
 		if (strlen($cbch) == 0) { $cbch = "F0F0F0"; }
-		$ctch = trim($this->params->get('controlTextColor'));
+		$ctch = trim((string) $this->params->get('controlTextColor'));
 		if (strlen($ctch) == 0) { $ctch = "696969"; }
-		$fhch = trim($this->params->get('fontHeaderColor'));
+		$fhch = trim((string) $this->params->get('fontHeaderColor'));
 		if (strlen($fhch) == 0) { $fhch = "000000"; }
-		$fmch = trim($this->params->get('fontMovesColor'));
+		$fmch = trim((string) $this->params->get('fontMovesColor'));
 		if (strlen($fmch) == 0) { $fmch = "000000"; }
-		$hmch = trim($this->params->get('highlightMovesColor'));
+		$hmch = trim((string) $this->params->get('highlightMovesColor'));
 		if (strlen($hmch) == 0) { $hmch = "E0E0E0"; }
-		$fcch = trim($this->params->get('fontCommentsColor'));
+		$fcch = trim((string) $this->params->get('fontCommentsColor'));
 		if (strlen($fcch) == 0) { $fcch = "808080"; }
 
-		$am_site = trim($this->params->get('autoplayMode'));
+		$am_site = trim((string) $this->params->get('autoplayMode'));
 		if (strlen($am_site) == 0) { $am_site = "l"; }
 
-		$cs = trim($this->params->get('containerStyle'));
+		$cs = trim((string) $this->params->get('containerStyle'));
 		if (strlen($cs) == 0) { $csDef = ""; }
 		else { $csDef = " style='" . $cs . "' "; }
 
@@ -248,7 +255,7 @@ class plgContentEmbedchessboard extends JPlugin {
 			$skipParameters = array('layout', 'l', 'showmoves', 'sm', 'height', 'h', 'initialgame', 'ig', 'initialvariation', 'iv', 'initialhalfmove', 'ih', 'autoplaymode', 'am', 'extendedoptions', 'eo');
 			$pgnParameters = array('pgntext', 'pt', 'pgnencoded', 'pe', 'fenstring', 'fs', 'pgnid', 'pi', 'pgndata', 'pd');
                         $pgnSourceOverride = false;
-                        $extendedOptionsString = trim($this->params->get('extendedOptions'));
+                        $extendedOptionsString = trim((string) $this->params->get('extendedOptions'));
 			if ($extendedOptionsString != '') {
 				$extendedOptionsString = preg_replace('/^\s+/', '', $extendedOptionsString);
 				$extendedOptionsString = preg_replace('/\s+$/', '', $extendedOptionsString);

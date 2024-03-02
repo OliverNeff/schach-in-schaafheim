@@ -1,8 +1,7 @@
 <?php
-
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -10,7 +9,6 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 class CLMViewErgebnisse
 {
 static function setErgebnisseToolbar($val, $rows, $f_lid, $f_runde, $f_dg)
@@ -54,7 +52,8 @@ static function ergebnisse ( $rows, $lists, $pageNav, $option )
 	//Ordering allowed ?
 	$ordering = ($lists['order'] == 'a.ordering');
 
-	JHtml::_('behavior.tooltip');
+//	JHtml::_('behavior.tooltip');
+	require_once (JPATH_COMPONENT_SITE . DS . 'includes' . DS . 'tooltip.php');
 	?>
 	<form action="index.php?option=com_clm&section=ergebnisse" method="post" name="adminForm" id="adminForm">
 
@@ -147,9 +146,11 @@ static function ergebnisse ( $rows, $lists, $pageNav, $option )
 			//$row = &$rows[$i];
 			// load the row from the db table
 			$row->load( $rows[$i]->id );
-		$link 		= JRoute::_( 'index.php?option=com_clm&section=ergebnisse&task=edit&cid[]='. $row->id );
+//		$link 		= JRoute::_( 'index.php?option=com_clm&section=ergebnisse&task=edit&cid[]='. $row->id );
+			$link 		= JRoute::_( 'index.php?option=com_clm&section=ergebnisse&task=edit&id='. $row->id );
 			$checked 	= JHtml::_('grid.checkedout',   $row, $i );
-			$published 	= JHtml::_('grid.published', $row, $i );
+//			$published 	= JHtml::_('grid.published', $row, $i );
+			$published 	= JHtml::_('jgrid.published', $row->published, $i );
 			?>
 			<tr class="<?php echo 'row'. $k; ?>">
 				<td align="center">
@@ -215,11 +216,12 @@ static function ergebnisse ( $rows, $lists, $pageNav, $option )
 
 static function setErgebnisToolbar($runde)
 	{
-		if (JRequest::getVar( 'task') == 'edit') { $text = JText::_( 'Edit' );}
+		if (clm_core::$load->request_string( 'task') == 'edit') { $text = JText::_( 'Edit' );}
 			else { $text = JText::_( 'New' );}
 		JToolBarHelper::title(  JText::_( 'TITLE_RESULTS_8').' '.$runde[0]->hname.' - '.$runde[0]->gname .': [ '. $text.' ]' );
 		JToolBarHelper::save();
 		JToolBarHelper::apply();
+		JToolBarHelper::custom('update_remarks','save.png','save_f2.png',JText::_('BUTTON_UPDATE_REMARKS'),false);
 		JToolBarHelper::cancel();
 		JToolBarHelper::help( 'screen.clm.edit' );
 	}
@@ -227,7 +229,7 @@ static function setErgebnisToolbar($runde)
 static function Ergebnis( $row, $runde, $heim, $hcount, $gast, $gcount, $bretter, $ergebnis, $option, $hvoraufstellung, $gvoraufstellung)
 	{
 		CLMViewErgebnisse::setErgebnisToolbar($runde);
-		JRequest::setVar( 'hidemainmenu', 1 );
+		JFactory::getApplication()->input->set('hidemainmenu', true);
 		JFilterOutput::objectHTMLSafe( $row, ENT_QUOTES, 'extrainfo' );
 	//CLM parameter auslesen
 	$config = clm_core::$db->config();
@@ -406,7 +408,7 @@ static function Ergebnis( $row, $runde, $heim, $hcount, $gast, $gcount, $bretter
 <?php // Konfigurationsparameter auslesen
 	$config = clm_core::$db->config();
 	$pcomment = $config->kommentarfeld;
-	if (($pcomment == 1) OR ($pcomment == 2 AND ($runde[0]->runden_modus == 4 OR $runde[0]->runden_modus == 5))) {    // Kommentarfeld ?>			
+//	if (($pcomment == 1) OR ($pcomment == 2 AND ($runde[0]->runden_modus == 4 OR $runde[0]->runden_modus == 5))) {    // Kommentarfeld ?>			
 	<div class="width-40 fltrt">
 	  <fieldset class="adminform">
 		<legend><?php echo JText::_( 'RESULTS_COMMENT_LEGEND' ); ?></legend>
@@ -416,14 +418,33 @@ static function Ergebnis( $row, $runde, $heim, $hcount, $gast, $gcount, $bretter
 			<label for="comment"><?php echo JText::_( 'RESULTS_COMMENT' ); ?></label>
 			</td>
 			<td class="inputbox" nowrap="nowrap" width="100%" valign="top">
-			<textarea name="comment" id="comment" cols="40" rows="3" style="width:90%"><?php echo str_replace('&','&amp;',$runde[0]->comment);?></textarea>
+<!--			<textarea name="comment" id="comment" cols="40" rows="3" style="width:90%"><?php echo str_replace('&','&amp;',$runde[0]->comment);?></textarea> -->
+			<textarea name="comment" id="comment" cols="40" rows="3" style="width:90%"><?php echo $runde[0]->comment;?></textarea>
 			</td>
 		</tr>
 		</table>
 	  </fieldset>	
 	</div>		
-<?php } ?> 		
-	
+<?php // }  		
+	$picomment = $config->ikommentarfeld;
+//	if (($picomment == 1) OR ($picomment == 2 AND ($runde[0]->runden_modus == 4 OR $runde[0]->runden_modus == 5))) {    // int. Kommentarfeld ?>			
+	<div class="width-40 fltrt">
+	  <fieldset class="adminform">
+		<legend><?php echo JText::_( 'RESULTS_ICOMMENT_LEGEND' ); ?></legend>
+		<table class="admintable">
+		<tr>
+			<td class="key" nowrap="nowrap">
+			<label for="icomment"><?php echo JText::_( 'RESULTS_COMMENT' ); ?></label>
+			</td>
+			<td class="inputbox" nowrap="nowrap" width="100%" valign="top">
+<!--			<textarea name="icomment" id="icomment" cols="40" rows="3" style="width:90%"><?php echo str_replace('&','&amp;',$runde[0]->icomment);?></textarea> -->
+			<textarea name="icomment" id="icomment" cols="40" rows="3" style="width:90%"><?php echo $runde[0]->icomment;?></textarea>
+			</td>
+		</tr>
+		</table>
+	  </fieldset>	
+	</div>		
+<?php // } ?>	
 		<div class="width-40 fltrt">
 		<fieldset class="adminform">
 		<legend><?php echo JText::_( 'RESULTS_DETAILS_DETAILS' ); ?></legend>
@@ -525,7 +546,7 @@ public static function setWertungToolbar($row)
 public static function Wertung( &$row, $runde, $bretter, $ergebnis, $option, $lists)
 	{
 		CLMViewErgebnisse::setWertungToolbar($row);
-		JRequest::setVar( 'hidemainmenu', 1 );
+		JFactory::getApplication()->input->set('hidemainmenu', true);
 		JFilterOutput::objectHTMLSafe( $row, ENT_QUOTES, 'extrainfo' );
 	?>
 
@@ -539,7 +560,7 @@ public static function Wertung( &$row, $runde, $bretter, $ergebnis, $option, $li
 	</div>
 
 	<form action="index.php" method="post" name="adminForm" id="adminForm">
-
+	<br>
 <!--	<div> -->
 	<div class="width-60 fltlft">
 	<fieldset class="adminform">
@@ -675,9 +696,28 @@ public static function Wertung( &$row, $runde, $bretter, $ergebnis, $option, $li
 		</table>
 	  </fieldset>	
 	</div>		
+<?php }  		
+	$picomment = $config->ikommentarfeld;
+	if (($picomment == 1) OR ($picomment == 2 AND ($runde[0]->runden_modus == 4 OR $runde[0]->runden_modus == 5))) {    // internes Kommentarfeld ?>			
+	<div class="width-40 fltrt">
+	  <fieldset class="adminform">
+		<br>
+		<legend><?php echo JText::_( 'RESULTS_ICOMMENT_LEGEND' ); ?></legend>
+		<table class="admintable">
+		<tr>
+			<td class="key" nowrap="nowrap">
+			<label for="icomment"><?php echo JText::_( 'RESULTS_COMMENT' ); ?></label>
+			</td>
+			<td class="inputbox" nowrap="nowrap" width="100%" valign="top">
+			<textarea name="icomment" id="icomment" cols="40" rows="3" style="width:90%"><?php echo str_replace('&','&amp;',$runde[0]->icomment);?></textarea>
+			</td>
+		</tr>
+		</table>
+	  </fieldset>	
+	</div>		
 <?php } ?> 		
 
-		<div class="width-100">
+		<div class="width-40 fltrt">
 		<fieldset class="adminform">
 		<legend><?php echo JText::_( 'RESULTS_DETAILS_DETAILS' ); ?></legend>
 

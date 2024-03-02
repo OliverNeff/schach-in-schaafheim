@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -25,13 +25,14 @@ public static function setUsersToolbar()
 		if($clmAccess->access('BE_accessgroup_general') === true) {
 			JToolBarHelper::custom('showaccessgroups','specialrankings.png','specialrankings_f2.png', JText::_('ACCESSGROUPS_BUTTON'), false);
 			}
-		JToolBarHelper::custom('send','send.png','send_f2.png','USER_ACCOUNT',false);
+		JToolBarHelper::custom('send','mail.png','mail_f2.png','USER_ACCOUNT');
 		JToolBarHelper::publishList();
 		JToolBarHelper::unpublishList();
 		JToolBarHelper::custom( 'copy', 'copy.png', 'copy_f2.png', JText::_('COPY') ); 
 		JToolBarHelper::deleteList();
 		JToolBarHelper::editList();
 		JToolBarHelper::addNew();
+		JToolBarHelper::custom( 'email', 'mail.png', 'mail_f2.png', JText::_('USER_MAIL') ); 
 	}
 	JToolBarHelper::help( 'screen.clm.user' );
 	}
@@ -43,7 +44,8 @@ public static function users( &$rows, &$lists, &$pageNav, $option )
 		$user =JFactory::getUser();
 		//Ordering allowed ?
 		$ordering = ($lists['order'] == 'a.ordering');
-		JHtml::_('behavior.tooltip');
+//		JHtml::_('behavior.tooltip');
+		require_once (JPATH_COMPONENT_SITE . DS . 'includes' . DS . 'tooltip.php');
 		?>
 		<form action="index.php?option=com_clm&section=users" method="post" name="adminForm" id="adminForm">
 
@@ -123,9 +125,10 @@ public static function users( &$rows, &$lists, &$pageNav, $option )
 				//$row = &$rows[$i];
 				//$row = $value;
 				$row->load( $rows[$i]->id );
-				$link 		= JRoute::_( 'index.php?option=com_clm&section=users&task=edit&cid[]='. $row->id );
+				$link 		= JRoute::_( 'index.php?option=com_clm&section=users&task=edit&id='. $row->id );
 				$checked 	= JHtml::_('grid.checkedout',   $row, $i );
-				$published 	= JHtml::_('grid.published', $row, $i );
+//				$published 	= JHtml::_('grid.published', $row, $i );
+				$published 	= JHtml::_('jgrid.published', $row->published, $i );
 
 				?>
 				<tr class="<?php echo 'row'. $k; ?>">
@@ -199,9 +202,7 @@ public static function users( &$rows, &$lists, &$pageNav, $option )
 public static function setUserToolbar()
 	{
 
-		$cid = JRequest::getVar( 'cid', array(0), '', 'array' );
-		JArrayHelper::toInteger($cid, array(0));
-		if (JRequest::getVar( 'task') == 'edit') { 
+		if (clm_core::$load->request_string('task') == 'edit') { 
 			$text = JText::_( 'Edit' );
 		} else { 
 			$text = JText::_( 'New' );
@@ -218,59 +219,18 @@ public static function setUserToolbar()
 public static function user( &$row,$lists, $option )
 	{
 		CLMViewUsers::setUserToolbar();
-		JRequest::setVar( 'hidemainmenu', 1 );
+		$_REQUEST['hidemainmenu'] = 1;
 		JFilterOutput::objectHTMLSafe( $row, ENT_QUOTES, 'extrainfo' );
 
 	// Konfigurationsparameter auslesen
 	$config = clm_core::$db->config();
 	$conf_user_member	= $config->user_member;
 	$countryversion = $config->countryversion;
+	
+		$_REQUEST['clm_user_member'] = $conf_user_member;
+		clm_core::$load->load_js("users");
 		?>
 
-	<script language="javascript" type="text/javascript">
-		 Joomla.submitbutton = function (pressbutton) { 	
-			var form = document.adminForm;
-			if (pressbutton == 'cancel') {
-				submitform( pressbutton );
-				return;
-			}
-			var conf_user_member ="<?php echo $conf_user_member; ?>";
-			if (form.pid.value =="0") {
-			// do field validation
-			if (form.name.value == "") {
-					alert( "<?php echo JText::_( 'USER_NAME_ANGEBEN', true ); ?>" );
-				} else if (form.username.value == "") {
-					alert( "<?php echo JText::_( 'USER_USER_ANGEBEN', true ); ?>" );
-				} else if (form.email.value == "") {
-					alert( "<?php echo JText::_( 'USER_MAIL_ANGEBEN', true ); ?>" );
-				} else if ( getSelectedValue('adminForm','usertype') == "" ) {
-					alert( "<?php echo JText::_( 'USER_FUNKTION_AUSWAEHLEN', true ); ?>" );  
-				} else if ( getSelectedValue('adminForm','zps') == 0 ) {
-					alert( "<?php echo JText::_( 'USER_VEREIN_AUSWAEHLEN', true ); ?>" );
-				} else if ( conf_user_member == "1" && form.org_exc.value == "0" && form.mglnr.value == "" && form.PKZ.value == "") {
-					alert( "<?php echo JText::_( 'USER_MGLNR_PKZ_ANGEBEN', true ); ?>" );
-				} else if ( conf_user_member == "1" && form.org_exc.value == "1" && form.bem_int.value == "") {
-					alert( "<?php echo JText::_( 'USER_BEM_INT_ANGEBEN', true ); ?>" );
-				} else {
-					submitform( pressbutton );
-				}
-			} else {
-			// do field validation
-				if ( getSelectedValue('adminForm','usertype') == "" ) {
-					alert( "<?php echo JText::_( 'USER_FUNKTION_AUSWAEHLEN', true ); ?>" );
-				} else if ( getSelectedValue('adminForm','zps') == 0 ) {
-					alert( "<?php echo JText::_( 'USER_VEREIN_AUSWAEHLEN', true ); ?>" );
-				} else if ( getSelectedValue('adminForm','sid') == 0 ) {
-					alert( "<?php echo JText::_( 'USER_SAISON_AUSWAEHLEN', true ); ?>" );
-				} else if ( conf_user_member == "1" && form.org_exc.value == "1" && form.bem_int.value == "") {
-					alert( "<?php echo JText::_( 'USER_BEM_INT_ANGEBEN', true ); ?>" );
-				} else {
-					submitform( pressbutton );
-				}
-			}
-		}
-		 
-		</script>
 
 		<form action="index.php" method="post" name="adminForm" id="adminForm">
 
@@ -405,7 +365,7 @@ public static function user( &$row,$lists, $option )
 	</tr>
 	</table>
   </fieldset>
-<?php if( JRequest::getVar( 'task') =='add') { ?>
+<?php if( clm_core::$load->request_string('task') =='add') { ?>
 <br>
   <fieldset class="adminform">
 	<table class="adminlist">
@@ -432,7 +392,7 @@ public static function user( &$row,$lists, $option )
 		<input type="hidden" name="id" value="<?php echo $row->id; ?>" />
 		<input type="hidden" name="jid" id="jid" value="<?php echo $row->jid; ?>" />
 		<input type="hidden" name="aktive" value="<?php echo $row->aktive; ?>" />
-		<input type="hidden" name="script_task" value="<?php echo JRequest::getVar( 'task'); ?>" />
+		<input type="hidden" name="script_task" value="<?php echo clm_core::$load->request_string('task'); ?>" />
 		<input type="hidden" name="task" value="" />
 		<?php echo JHtml::_( 'form.token' ); ?>
 		</form>

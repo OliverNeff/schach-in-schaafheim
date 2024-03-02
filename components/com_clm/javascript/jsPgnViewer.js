@@ -31,6 +31,12 @@
 	which piece was taken.
 */
 
+/** Updated by
+ * @ Chess League Manager (CLM) Component 
+ * @Copyright (C) 2008-2023 CLM Team. All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
 
 function Converter(pgn) {
 	this.pgn = pgn;
@@ -1916,7 +1922,7 @@ function Move(white, black) {
 		this.opts['altPlayMove'] = "Play one move";
 		this.opts['altFastForward'] = "Fast-forward to the end";
 		this.opts['moveBorder'] = "0px solid #000000";
-		this.opts['downloadURL'] = "http://www.chesspastebin.com/asPgn.php?PGN=";
+		this.opts['downloadURL'] = "https://www.chesspastebin.com/asPgn.php?PGN=";
 		this.opts['skipToMove'] = null;
 
 		var optionNames = ['flipped', 'moveFontSize', 'moveFontColor',
@@ -2083,6 +2089,7 @@ function Move(white, black) {
 			var input = this.getImg("rwind","btns");
 			input.alt = this.opts['altRewind'];
 			input.title = this.opts['altRewind'];;
+			input.style.display = 'inline';
 			href.appendChild(input);
 			
 			input.onclick = function() {
@@ -2094,6 +2101,7 @@ function Move(white, black) {
 			input = this.getImg("back","btns");
 			input.alt = this.opts['altBack'];
 			input.title = this.opts['altBack'];
+			input.style.display = 'inline';
 			href = hrefS.cloneNode(false);
 			href.appendChild(input);
 			
@@ -2107,6 +2115,7 @@ function Move(white, black) {
 			input = this.getImg("flip","btns");
 			input.alt = this.opts['altFlip'];
 			input.title = this.opts['altFlip'];
+			input.style.display = 'inline';
 			href = hrefS.cloneNode(false);
 			href.appendChild(input);
 			
@@ -2131,6 +2140,7 @@ function Move(white, black) {
 			input = this.getImg("toggle","btns");
 			input.alt = this.opts['altShowMoves'];
 			input.title = this.opts['altShowMoves'];
+			input.style.display = 'inline';
 			href = hrefS.cloneNode(false);
 			href.appendChild(input);
 
@@ -2144,6 +2154,7 @@ function Move(white, black) {
 			input = this.getImg("comments","btns");
 			input.alt = this.opts['altComments'];
 			input.title = this.opts['altComments'];
+			input.style.display = 'inline';
 			href = hrefS.cloneNode(false);
 			href.appendChild(input);
 
@@ -2157,6 +2168,7 @@ function Move(white, black) {
 			input = this.getImg("forward","btns");
 			input.alt = this.opts['altPlayMove'];
 			input.title = this.opts['altPlayMove'];
+			input.style.display = 'inline';
 			href = hrefS.cloneNode(false);
 			href.appendChild(input);
 
@@ -2170,6 +2182,7 @@ function Move(white, black) {
 			input = this.getImg("ffward","btns");
 			input.alt = this.opts['altFastForward'];
 			input.title = this.opts['altFastForward'];
+			input.style.display = 'inline';
 			href = hrefS.cloneNode(false);
 			href.appendChild(input);
 

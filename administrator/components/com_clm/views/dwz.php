@@ -1,8 +1,7 @@
 <?php
-
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2016 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -10,7 +9,6 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 class CLMViewDWZ
 {
 
@@ -41,10 +39,15 @@ static function DWZ( $spieler,$verein,$verein_from,$lists, $pageNav, $option )
 	$config = clm_core::$db->config();
 	$countryversion= $config->countryversion;	
 		CLMViewDWZ::setDWZToolbar($countryversion);
-		JRequest::setVar( 'hidemainmenu', 1 );
+		$_REQUEST['hidemainmenu'] = 1;
 		JFilterOutput::objectHTMLSafe( $row, ENT_QUOTES, 'extrainfo' );
 		
 	$clmAccess = clm_core::$access;      
+		
+	if (count($spieler) == 0) {
+		$spieler[0] = new stdClass();
+		$spieler[0]->Geschlecht = "";
+	}
 		?>
 
 <script language="javascript" type="text/javascript">
@@ -64,7 +67,7 @@ static function DWZ( $spieler,$verein,$verein_from,$lists, $pageNav, $option )
 
 		if (pre_task.value == 'add') {
 			if (pressbutton == 'cancel') {
-				submitform( pressbutton );
+				Joomla.submitform( pressbutton );
 				return;
 			}
 			// do field validation
@@ -75,12 +78,20 @@ static function DWZ( $spieler,$verein,$verein_from,$lists, $pageNav, $option )
 			} else if (form.filter_gid.value == "0") {
 				alert( "<?php echo JText::_( 'MEMBER_JS_3', true ); ?>" );
 			} else {
-				submitform( pressbutton );
+				Joomla.submitform( pressbutton );
 			}
 		} else {
-			submitform( pressbutton );
+			Joomla.submitform( pressbutton );
 		}
 	}
+	
+	function change_vid()	{
+		var form = document.adminForm;
+
+		form.filter_mgl.value = 0;
+		document.adminForm.submit();
+	}
+
  
 </script>
 
@@ -102,6 +113,12 @@ static function DWZ( $spieler,$verein,$verein_from,$lists, $pageNav, $option )
 		<option value="Spielername ASC" <?php if ($filter_sort =="Spielername ASC") { ?>selected="selected"<?php } ?>><?php echo JText::_( 'MEMBER_DD_5');?></option>
 		<option value="DWZ DESC" <?php if ($filter_sort =="DWZ DESC") { ?>selected="selected"<?php } ?>><?php echo JText::_( 'MEMBER_DD_6');?></option>
 		<option value="DWZ ASC" <?php if ($filter_sort =="DWZ ASC") { ?>selected="selected"<?php } ?>><?php echo JText::_( 'MEMBER_DD_7');?></option>
+		<option value="Geburtsjahr DESC" <?php if ($filter_sort =="Geburtsjahr DESC") { ?>selected="selected"<?php } ?>><?php echo JText::_( 'MEMBER_DD_8');?></option>
+		<option value="Geburtsjahr ASC" <?php if ($filter_sort =="Geburtsjahr ASC") { ?>selected="selected"<?php } ?>><?php echo JText::_( 'MEMBER_DD_9');?></option>
+		<option value="Geschlecht DESC, Spielername ASC" <?php if ($filter_sort =="Geschlecht DESC, Spielername ASC") { ?>selected="selected"<?php } ?>><?php echo JText::_( 'MEMBER_DD_10');?></option>
+		<option value="Geschlecht ASC, Spielername ASC" <?php if ($filter_sort =="Geschlecht ASC, Spielername ASC") { ?>selected="selected"<?php } ?>><?php echo JText::_( 'MEMBER_DD_11');?></option>
+		<option value="Status DESC, Spielername ASC" <?php if ($filter_sort =="Status DESC, Spielername ASC") { ?>selected="selected"<?php } ?>><?php echo JText::_( 'MEMBER_DD_12');?></option>
+		<option value="Status ASC, Spielername ASC" <?php if ($filter_sort =="Status ASC, Spielername ASC") { ?>selected="selected"<?php } ?>><?php echo JText::_( 'MEMBER_DD_13');?></option>
 		</select>
 		</fieldset>
 		</td>
@@ -109,6 +126,7 @@ static function DWZ( $spieler,$verein,$verein_from,$lists, $pageNav, $option )
 	</table>
 
 <?php	 $filter_vid	= $mainframe->getUserStateFromRequest( "$option.filter_vid",'filter_vid',0,'var' ); ?>
+<?php	 $filter_mgl	= $mainframe->getUserStateFromRequest( "$option.filter_mgl",'filter_mgl',0,'int' ); ?>
 
 	<div class="width-40 fltlft">
 	<fieldset class="adminform">
@@ -301,8 +319,9 @@ static function DWZ( $spieler,$verein,$verein_from,$lists, $pageNav, $option )
 	<div>
 	<?php 	$zps = $mainframe->getUserStateFromRequest( "$option.filter_vid",'filter_vid',0,'var' );
 		$spl = CLMControllerDWZ::spieler($zps); ?>
+	<br>
 	<fieldset class="adminform">
-	<legend><?php echo JText::_( 'MEMBER_TABLE_27' ); ?></legend>
+	<legend style="margin-bottom:0"><?php echo JText::_( 'MEMBER_TABLE_27' ); ?></legend>
 	<?php if ($filter_vid !="0") { ?>
 		<table class="admintable">
 			<tr>
@@ -326,8 +345,9 @@ static function DWZ( $spieler,$verein,$verein_from,$lists, $pageNav, $option )
 	<div>
 	<?php 	$zps = $mainframe->getUserStateFromRequest( "$option.filter_vid",'filter_vid',0,'var' );
 		$spl = CLMControllerDWZ::spieler($zps); ?>
+	<br>
 	<fieldset class="adminform">
-	<legend><?php echo JText::_( 'MEMBER_TABLE_30' ); ?></legend>
+	<legend style="margin-bottom:0"><?php echo JText::_( 'MEMBER_TABLE_30' ); ?></legend>
 	<?php if ($filter_vid !="0") { ?>
 		<table class="admintable">
 			<tr>
@@ -352,8 +372,9 @@ static function DWZ( $spieler,$verein,$verein_from,$lists, $pageNav, $option )
 	<div>
 	<?php 	$zps = $mainframe->getUserStateFromRequest( "$option.filter_vid",'filter_vid',0,'var' );
 		$spl = CLMControllerDWZ::spieler($zps); ?>
+	<br>
 	<fieldset class="adminform">
-	<legend><?php echo JText::_( 'MEMBER_TABLE_MOVE_0' ); ?></legend>
+	<legend style="margin-bottom:0"><?php echo JText::_( 'MEMBER_TABLE_MOVE_0' ); ?></legend>
 	<?php if ($filter_vid !="0") { ?>
 		<table class="admintable">
 			<tr>
@@ -380,8 +401,9 @@ static function DWZ( $spieler,$verein,$verein_from,$lists, $pageNav, $option )
 	<div>
 	<?php 	//$zps = $mainframe->getUserStateFromRequest( "$option.filter_vid",'filter_vid',0,'var' );
 		//$spl = CLMControllerDWZ::spieler($filter_vid_from); ?>
+	<br>
 	<fieldset class="adminform">
-	<legend><?php echo JText::_( 'MEMBER_TABLE_MOVE_1' ); ?></legend>
+	<legend style="margin-bottom:0"><?php echo JText::_( 'MEMBER_TABLE_MOVE_1' ); ?></legend>
 <!---	<?php if ($filter_vid_from !="0") { ?>  -->
 		<table class="admintable">
 			<tr>

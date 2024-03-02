@@ -1,8 +1,7 @@
 <?php
-
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2014 Thomas Schwietert & Andreas Dorn. All rights reserved
+ * @Copyright (C) 2008-2022 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -10,7 +9,6 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 // no direct access
 defined( '_JEXEC' ) or die( 'Restricted access' );
 
@@ -22,19 +20,21 @@ class CLMControllerTurRoundForm extends JControllerLegacy {
 		
 		parent::__construct( $config );
 		
-		$this->_db		= JFactory::getDBO();
+		$this->_db	= JFactory::getDBO();
+		$this->app	= JFactory::getApplication();
 		
 		// Register Extra tasks
 		$this->registerTask( 'apply', 'save' );
 	
+		if (!isset($this->param) OR is_null($this->param)) $this->param = array();	// seit J 4.2 nötig um notice zu vermeiden
 		// turnierid
-		$this->param['turnierid'] = JRequest::getInt('turnierid');
+		$this->param['turnierid'] = clm_core::$load->request_int('turnierid');
 		
 		// roundid
-		$this->param['roundid'] = JRequest::getInt('roundid');
+		$this->param['roundid'] = clm_core::$load->request_int('roundid');
 	
 		// task
-		$this->task = JRequest::getCmd('task');
+		$this->task = clm_core::$load->request_string('task');
 	
 		// Weiterleitung
 		$this->adminLink = new AdminLink();
@@ -50,7 +50,7 @@ class CLMControllerTurRoundForm extends JControllerLegacy {
 		$this->_saveDo();
 	
 		$this->adminLink->makeURL();
-		$this->setRedirect( $this->adminLink->url );
+		$this->app->redirect( $this->adminLink->url );
 	
 	}
 
@@ -58,39 +58,39 @@ class CLMControllerTurRoundForm extends JControllerLegacy {
 	function _saveDo() {
 	
 		// Check for request forgeries
-		JRequest::checkToken() or die( 'Invalid Token' );
+		defined('_JEXEC') or die( 'Invalid Token' );
 	
 		// Instanz der Tabelle
 		$row = JTable::getInstance( 'turniere', 'TableCLM' );
 		$row->load($this->param['turnierid']);
 
 		$clmAccess = clm_core::$access;      
-		if (($row->tl != clm_core::$access->getJid() AND $clmAccess->access('BE_tournament_edit_round') !== true) OR $clmAccess->access('BE_tournament_edit_round') === false) {
-		//if (clm_core::$access->getType() != 'admin' AND clm_core::$access->getType() != 'tl') {
-			JError::raiseWarning(500, JText::_('TOURNAMENT_NO_ACCESS') );
+		if (($row->tl != clm_core::$access->getJid() AND $clmAccess->access('BE_tournament_edit_round') !== true) OR $clmAccess->access('BE_tournament_edit_round') === false) {																						   
+			$this->app->enqueueMessage( JText::_('TOURNAMENT_NO_ACCESS'),'warning' );
 			return false;
 		}
 	
 		// Task
-		$task = JRequest::getVar('task');
+		$task = clm_core::$load->request_string('task');
 		
 		// Instanz der Tabelle
 		$row = JTable::getInstance( 'turnier_runden', 'TableCLM' );
 		$row->load($this->param['roundid']);
 	
 		// bind
-		if (!$row->bind(JRequest::get('post'))) {
-			JError::raiseError(500, $row->getError() );
+		$post = $_POST; 
+		if (!$row->bind($post)) {
+			$this->app->enqueueMessage( $row->getError(),'error' );
 			return false;
 		}
 		// check
 		if (!$row->checkData()) {
-			JError::raiseWarning(500, $row->getError() );
+			$this->app->enqueueMessage( $row->getError(),'warning' );
 			return false;
 		}
 			// save the changes
 		if (!$row->store()) {
-			JError::raiseError(500, $row->getError() );
+			$this->app->enqueueMessage( $row->getError(),'error' );
 			return false;
 		}
 		
@@ -104,8 +104,9 @@ class CLMControllerTurRoundForm extends JControllerLegacy {
 				." AND sid = ".$row->sid
 				." AND startzeit = '00:00:00' "
 			;
-			$db->setQuery($query);
-			$db->query();
+//			$db->setQuery($query);
+//			$db->query();
+			clm_core::$db->query($query);
 		}
 		if ($this->task == 'apply') {
 			$this->adminLink->view = "turroundform";
@@ -117,8 +118,7 @@ class CLMControllerTurRoundForm extends JControllerLegacy {
 		
 		$stringAktion = JText::_('ROUND_EDITED');
 		
-		$app =JFactory::getApplication();
-		$app->enqueueMessage($stringAktion);
+		$this->app->enqueueMessage($stringAktion);
 	
 		// Log schreiben
 		$clmLog = new CLMLog();
@@ -136,7 +136,7 @@ class CLMControllerTurRoundForm extends JControllerLegacy {
 		$this->adminLink->view = "turrounds";
 		$this->adminLink->more = array('id' => $this->param['turnierid']);
 		$this->adminLink->makeURL();
-		$this->setRedirect( $this->adminLink->url );
+		$this->app->redirect( $this->adminLink->url );
 		
 	}
 

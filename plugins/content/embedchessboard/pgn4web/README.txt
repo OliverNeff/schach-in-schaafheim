@@ -1,6 +1,6 @@
 #
 #  pgn4web javascript chessboard
-#  copyright (C) 2009-2019 Paolo Casaschi
+#  copyright (C) 2009-2023 Paolo Casaschi
 #  see README file and http://pgn4web.casaschi.net
 #  for credits, license and more details
 #
@@ -398,7 +398,7 @@ http://pgn4web-project.casaschi.net/tickets/23/
 PGN STANDARD SUPPORT
 
 pgn4web mostly supports the PGN standard for chess games notation (see
-http://www.tim-mann.org/Standard).
+https://www.tim-mann.org/Standard).
 
 The general design principle is for pgn4web to try as much as possible
 to automatically recover from minor errors in the PGN data and only stop
@@ -413,7 +413,7 @@ the language issue should not be much of a problem, just make sure your
 chess software produces PGN data with English pieces initials).
 
 pgn4web also follows a set of proposed extensions to the PGN standard
-(see http://www.enpassant.dk/chess/palview/enhancedpgn.htm), more
+(see https://www.enpassant.dk/chess/palview/enhancedpgn.htm), more
 specifically:
 
 - understands the [%clk 1:59:58] tag in the PGN comment section as the
@@ -451,11 +451,11 @@ the X-FEN and the Shredder-FEN extensions to the FEN notation.
 JAVASCRIPT CODING
 
 As of pgn4web version 1.72, the pgn4web.js code is checked with the lint
-tool (see online version at http://www.javascriptlint.com/online_lint.php).
+tool (see https://www.javascriptlint.com).
 Plase note that warnings "lint warning: increment (++) and decrement (--)
 operators used as part of greater statement" are ignored.
 Lint validation should allow for easy compression of the javascript code,
-for instance using http://javascriptcompressor.com/
+for instance using https://javascriptcompressor.com/
 Although a compression beyond 50% can be achieved, only the uncompressed
 version is distributed, but if you want to use a compressed version on your
 site, the pgn4web.js code should support it.
@@ -472,44 +472,44 @@ Commemts starting with "bugfix:" highlight workarounds coping with issues of spe
 CREDITS AND LICENSE
 
 javascript modifications of Paolo Casaschi (pgn4web@casaschi.net) on code
-from the http://ficsgames.org database, in turn likely based on code from the
+from the https://ficsgames.org database, in turn likely based on code from the
 LT PGN viewer at http://www.lutanho.net/pgn/pgnviewer.html
 
 PNG images from http://ixian.com/chess/jin-piece-sets (creative commons
 attribution 4.0 international license) by Eric De Mund.
-SVG images from http://commons.wikimedia.org/wiki/Category:SVG_chess_pieces
+SVG images from https://commons.wikimedia.org/wiki/Category:SVG_chess_pieces
 by Colin M.L. Burnett; licensed under GFDL (www.gnu.org/copyleft/fdl.html),
 CC-BY-SA-3.0 (www.creativecommons.org/licenses/by-sa/3.0/) or
 GPL (www.gnu.org/licenses/gpl.html), via Wikimedia Commons. SVG images from
-http://openclipart.org/search/?query=chess+symbols+set by Igor Krizanovskij
-and from http://openclipart.org/search/?query=Chess+tile both dedicated to
-the Public Domain (http://creativecommons.org/publicdomain/zero/1.0/) as any
+https://openclipart.org/search/?query=chess+symbols+set by Igor Krizanovskij
+and from https://openclipart.org/search/?query=Chess+tile both dedicated to
+the Public Domain (https://creativecommons.org/publicdomain/zero/1.0/) as any
 openclipart.org content.
 
 The figurine fonts are derived from the Liberation Sans font (released under
-GNU General Public License, see https://pagure.io/liberation-fonts/)
+GNU General Public License, see https://github.com/liberationfonts)
 with the addition of chess pieces from freeware fonts: the alpha2 font (Peter
 Strickland), the good companion font (David L. Brown), the merida font (Armando
 H. Marroquin), the pirate font (Klaus Wolf) and the chess usual font (Armando
 H. Marroquin). The original chess fonts and more details are available at
-http://www.enpassant.dk/chess/fonteng.htm
+https://www.enpassant.dk/chess/fonteng.htm
 The chess informant symbols font is used with permission from the Chess
 Informant publishing company (https://www.sahovski.com/). The chess ole figurin
 font is from the ChessOLE project (David Frank) and it is available at the en
-passant site (http://www.enpassant.dk/chess/fonteng.htm).
+passant site (https://www.enpassant.dk/chess/fonteng.htm).
 
 Some of the PGN files for the examples are coming from "The Week in Chess" at
-http://www.theweekinchess.com (file twic944.pgn), from the scid project at
+https://www.theweekinchess.com (file twic944.pgn), from the scid project at
 http://scid.sourceforge.net (file tactics.pgn, with minor modifications), and
 from the Chess Informant publishing company at https://www.sahovski.com/ (file
 chess-informant-sample.pgn).
 
 The jscolor javascript code is maintained by Honza Odvarko
-(http://odvarko.cz/) and released under the GNU Lesser General Public License
-(http://www.gnu.org/copyleft/lesser.html)
-See http://jscolor.com/
+(https://odvarko.cz/) and released under the GNU Lesser General Public License
+(https://www.gnu.org/copyleft/lesser.html)
+See https://jscolor.com/
 
-The ECO code (http://en.wikipedia.org/wiki/Encyclopaedia_of_Chess_Openings) for
+The ECO code (https://en.wikipedia.org/wiki/Encyclopaedia_of_Chess_Openings) for
 game opening classification is a trademark of the Chess Informant publishing
 company (https://www.sahovski.com/).
 
@@ -517,7 +517,7 @@ company (https://www.sahovski.com/).
 The above items remains subject to their original licenses (if any).
 
 
-Remaining pgn4web code is copyright (C) 2009-2019 Paolo Casaschi
+Remaining pgn4web code is copyright (C) 2009-2023 Paolo Casaschi
 
 This program is free software; you can redistribute it and/or modify
 it under the terms of the GNU General Public License as published by

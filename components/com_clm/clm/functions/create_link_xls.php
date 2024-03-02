@@ -12,7 +12,7 @@ function clm_function_create_link_xls($view, $title, $params = array()) {
 		$string = '<div class="pdf">';
 		
 		// imageTag zusammensetzen
-		$imageTag = '<img src="'.clm_core::$load->gen_image_url("table/doc_excel_csv").'" width="16" height="19" title="'.$title.'" alt="XLS" class="Tooltip" />';
+		$imageTag = '<img src="'.clm_core::$load->gen_image_url("table/doc_excel_csv").'" width="16" height="19" title="'.$title.'" alt="XLS" class="CLMTooltip" />';
  
 		// Format ergänzen
 		$params['format'] = 'xls';

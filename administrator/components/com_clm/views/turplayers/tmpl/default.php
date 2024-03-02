@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2017 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -21,7 +21,7 @@ $turParams = new clm_class_params($this->turnier->params);
 		<tr>
 			<td align="left" width="100%">
 				<?php echo JText::_( 'FILTER' ); ?>:
-		<input type="text" name="search" id="search" value="<?php echo $this->form['search'];?>" class="text_area" onchange="document.adminForm.submit();" />
+		<input type="text" name="search" id="search" value="<?php echo $this->param['search'];?>" class="text_area" onchange="document.adminForm.submit();" />
 		<button onclick="this.form.submit();"><?php echo JText::_( 'GO' ); ?></button>
 		<button onclick="document.getElementById('search').value='';this.form.getElementById('filter_vid').value='0';this.form.submit();"><?php echo JText::_( 'RESET' ); ?></button>
 			</td>
@@ -74,7 +74,7 @@ $turParams = new clm_class_params($this->turnier->params);
 					if ($turParams->get('displayPlayerFederation', 0) == 1) {
 					?>
 					<th width="5%">
-						<?php echo JHtml::_('grid.sort', JText::_('FEDERATION'), 'twz', $this->param['order_Dir'], $this->param['order'] ); ?>
+						<?php echo JHtml::_('grid.sort', JText::_('FEDERATION'), 'FIDEcco', $this->param['order_Dir'], $this->param['order'] ); ?>
 					</th>
 					<?php
 					}
@@ -88,6 +88,15 @@ $turParams = new clm_class_params($this->turnier->params);
 					<th width="5%">
 						<?php echo JHtml::_('grid.sort', JText::_('FIDE_ELO'), 'FIDEelo', $this->param['order_Dir'], $this->param['order'] ); ?>
 					</th>
+					<?php 
+					if ($turParams->get('optionEloAnalysis', 0) == 1) {
+					?>
+					<th width="3%">
+						<?php echo JHtml::_('grid.sort', JText::_('FIDE_ID'), 'FIDEid', $this->param['order_Dir'], $this->param['order'] ); ?>
+					</th>
+					<?php 
+					} 
+					?>
 					
 					<th width="5%">
 						<?php 
@@ -143,7 +152,8 @@ $turParams = new clm_class_params($this->turnier->params);
 				// $row = &$rows[$i];			
 				//$link 		= JRoute::_( 'index.php?option=com_clm&section=t&task=edit&cid[]='. $row->id );
 				$checked 	= JHtml::_('grid.checkedout',   $row, $i );
-				$published 	= JHtml::_('grid.published', $row, $i );
+//				$published 	= JHtml::_('grid.published', $row, $i );
+				$published 	= JHtml::_('jgrid.published', $row->published, $i );
 				?>
 				<tr class="<?php echo 'row'. $k; ?>">
 					<td align="center">
@@ -172,11 +182,10 @@ $turParams = new clm_class_params($this->turnier->params);
 						<td align="center">
 					<?php 
 						// Teilnehmer aktiv
-						//echo "<br>ii:".$i; var_dump($row);
-						if ($row->tlnrStatus == '1') { 
-							echo '<a href="javascript:void(0);" onclick="return listItemTask(\'cb'.($i).'\', \'unactive\')" title="'.JText::_('SET_DEACTIVE').'"><img width="16" height="16" src="components/com_clm/images/apply_f2.png" /></a>';
+						if ($row->tlnrStatus == 1) { 
+							echo '<a href="javascript:void(0);" onclick="Joomla.listItemTask(\'cb'.($i).'\', \'unactive\')" title="'.JText::_('SET_DEACTIVE').'"><img width="16" height="16" src="components/com_clm/images/apply_f2.png" /></a>';
 						} else {
-							echo '<a href="javascript:void(0);" onclick="return listItemTask(\'cb'.($i).'\', \'active\')" title="'.JText::_('SET_ACTIVE').'"><img width="16" height="16" src="components/com_clm/images/cancel_f2.png" /></a>';
+							echo '<a href="javascript:void(0);" onclick="Joomla.listItemTask(\'cb'.($i).'\', \'active\')" title="'.JText::_('SET_ACTIVE').'"><img width="16" height="16" src="components/com_clm/images/cancel_f2.png" /></a>';
 						}
 					?>
 					</td>
@@ -252,6 +261,18 @@ $turParams = new clm_class_params($this->turnier->params);
 						}
 						?>
 					</td>
+					<?php 
+					if ($turParams->get('optionEloAnalysis', 0) == 1) {
+					?>
+					<td align="center">
+						<?php if ($row->FIDEid > 0) { ?>
+							<a href="https://ratings.fide.com/profile/<?php echo $row->FIDEid;?>" target="_blank"><?php echo $row->FIDEid; ?></a>
+						<?php } else {  
+							echo '-'; } ?>
+					</td>
+					<?php 
+					} 
+					?>
 					
 						<?php 
 						if ($this->turnier->typ != 3) { // Punkte
@@ -287,8 +308,8 @@ $turParams = new clm_class_params($this->turnier->params);
 					?>
 					
 					<td class="order" width="10%">
-						<span><?php echo $this->pagination->orderUpIcon($i, true, 'orderup()', 'Move Up', $this->param['order'] ); ?></span>
-						<span><?php echo $this->pagination->orderDownIcon($i, $n, true, 'orderdown()', 'Move Down', $this->param['order'] ); ?></span>
+						<span><?php echo $this->pagination->orderUpIcon($i, true, 'orderup', 'Move Up', $this->param['order'] ); ?></span>
+						<span><?php echo $this->pagination->orderDownIcon($i, $n, true, 'orderdown', 'Move Down', $this->param['order'] ); ?></span>
 						<?php $disabled = $this->param['order'] ?  '' : 'disabled="disabled"'; ?>
 						<input type="text" name="order[]" size="5" value="<?php echo $row->ordering;?>" <?php echo $disabled ?> class="text_area" style="text-align: center" />
 					</td>

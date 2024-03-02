@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2017 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2022 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -48,12 +48,13 @@ class CLMModelTurPlayers extends JModelLegacy {
 			$option = $mainframe->scope;
 		}
 	
+		if (!isset($this->param) OR is_null($this->param)) $this->param = array();	// seit J 4.2 nötig um notice zu vermeiden	
 		// turnierid
-		$this->param['id'] = JRequest::getInt('id');
+		$this->param['id'] = clm_core::$load->request_int('id');
 	
 		// search
 		$this->param['search'] = $mainframe->getUserStateFromRequest( "$option.search", 'search', '', 'string' );
-		$this->param['search'] = JString::strtolower( $this->param['search'] );
+		$this->param['search'] = strtolower( $this->param['search'] );
 	
 		// club
 		$this->param['vid'] = $mainframe->getUserStateFromRequest( "$option.filter_vid", 'filter_vid', '0', 'string' );
@@ -76,7 +77,7 @@ class CLMModelTurPlayers extends JModelLegacy {
 	function _getData() {
 	
 		// turnier
-		$query = 'SELECT id, name, teil, typ, tiebr1, tiebr2, tiebr3, tl, params'
+		$query = 'SELECT * '
 			. ' FROM #__clm_turniere'
 			. ' WHERE id = '.$this->param['id']
 			;
@@ -91,6 +92,10 @@ class CLMModelTurPlayers extends JModelLegacy {
 		$this->playersTotal = $this->_getListCount($query);
 		
 		if ($this->limit > 0) {
+			if ($this->limitstart > $this->playersTotal) {
+				$this->limitstart = $this->playersTotal - $this->limit;
+				if ($this->limitstart < 0) $this->limitstart = 0;
+			}
 			$query .= $this->_sqlOrder().' LIMIT '.$this->limitstart.', '.$this->limit;
 		}
 		
@@ -104,9 +109,8 @@ class CLMModelTurPlayers extends JModelLegacy {
 		
 		// wenn nicht gestartet, check, ob Startnummern okay
 		if (!$tournament->started AND !$tournament->checkCorrectSnr()) {
-			
-			JError::raiseWarning(500, JText::_('PLEASE_CORRECT_SNR') );
-		
+			$mainframe = JFactory::getApplication();
+			$mainframe->enqueueMessage( JText::_('PLEASE_CORRECT_SNR'), 'warning' );
 		}
 		
 		
@@ -138,14 +142,14 @@ class CLMModelTurPlayers extends JModelLegacy {
 	function _sqlOrder() {
 		
 		// array erlaubter order-Felder:
-		$arrayOrderAllowed = array('name', 'rankingPos', 'titel', 'snr', 'start_dwz', 'FIDEelo', 'twz', 'verein', 'ordering', 'sum_punkte');
+		$arrayOrderAllowed = array('rankingPos', 'snr', 'tlnrStatus', 'titel', 'name', 'verein', 'twz', 'start_dwz', 'FIDEelo', 'FIDEcco', 'sum_punkte', 'ordering', 'id');
 		if (!in_array($this->param['order'], $arrayOrderAllowed)) {
 			$this->param['order'] = 'id';
 		}
 		
 		// normale Sortierung
 		if ($this->param['order'] != 'sum_punkte') {
-			$orderby = ' ORDER BY '. $this->param['order'] .' '. $this->param['order_Dir'] .', id';
+			$orderby = ' ORDER BY '. $this->param['order'] .' '. $this->param['order_Dir'] .', id';		
 		
 		// Sortierung nach Punkten
 		} else {
@@ -154,7 +158,7 @@ class CLMModelTurPlayers extends JModelLegacy {
 			// alle durchgehen
 			for ($f=1; $f<=3; $f++) {
 				$fieldName = 'tiebr'.$f; // Feldname in #_turniere
-				if ($this->turnier->$fieldName > 0) {
+				if ($this->turnier->$fieldName > 0 AND $this->turnier->$fieldName < 4) {
 					$orderby .= ', '.$fwFieldNames[$this->turnier->$fieldName].' '.$this->param['order_Dir'];
 				}
 			}

@@ -16,7 +16,7 @@ if (!JFactory::getUser()->authorise('core.manage', 'com_clm_turnier')) {
 }
 
 // Component definitions
-if (! jimport('components.com_clm_turnier.includes.defines', JPATH_SITE)) {
+if (! jimport('components.com_clm_turnier.defines', JPATH_SITE)) {
     throw new Exception(JText::_('COM_CLM_TURNIER_ERROR'), '404');
 }
 
@@ -24,6 +24,9 @@ if (! jimport('components.com_clm_turnier.includes.defines', JPATH_SITE)) {
 if (! jimport('clm.index', JPATH_CLM_COMPONENT)) {
     throw new Exception(JText::_('COM_CLM_TURNIER_REQ_COM_CLM'), '404');
 }
+
+// Add include path for ...
+JHtml::addIncludePath(JPATH_CLM_TURNIER_COMPONENT . '/helpers/html');
 
 echo '<div id="clm"><div class="clm">';
 

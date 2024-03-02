@@ -1,8 +1,7 @@
 <?php
-
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2017 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -10,7 +9,6 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 class CLMViewGruppen
 {
 public static function setGruppenToolbar()
@@ -37,7 +35,8 @@ public static function gruppen( &$rows, &$lists, &$pageNav, $option )
 		//Ordering allowed ?
 		$ordering = ($lists['order'] == 'a.ordering');
 
-		JHtml::_('behavior.tooltip');
+//		JHtml::_('behavior.tooltip');
+		require_once (JPATH_COMPONENT_SITE . DS . 'includes' . DS . 'tooltip.php');
 		?>
 		<form action="index.php?option=com_clm&section=gruppen" method="post" name="adminForm" id="adminForm">
 
@@ -106,10 +105,11 @@ public static function gruppen( &$rows, &$lists, &$pageNav, $option )
 			for ($i=0, $n=count( $rows ); $i < $n; $i++) {
 				$row = &$rows[$i];
 
-				$link 		= JRoute::_( 'index.php?option=com_clm&section=gruppen&task=edit&cid[]='. $row->id );
+				$link 		= JRoute::_( 'index.php?option=com_clm&section=gruppen&task=edit&id='. $row->id );
 
 				$checked 	= JHtml::_('grid.checkedout',   $row, $i );
-				$published 	= JHtml::_('grid.published', $row, $i );
+//				$published 	= JHtml::_('grid.published', $row, $i );
+				$published 	= JHtml::_('jgrid.published', $row->published, $i );
 
 				?>
 				<tr class="<?php echo 'row'. $k; ?>">
@@ -172,9 +172,8 @@ public static function gruppen( &$rows, &$lists, &$pageNav, $option )
 public static function setGruppeToolbar()
 	{
 
-		$cid = JRequest::getVar( 'cid', array(0), '', 'array' );
-		JArrayHelper::toInteger($cid, array(0));
-		if (JRequest::getVar( 'task') == 'edit') { $text = JText::_( 'Edit' );}
+		$cid = clm_core::$load->request_array_int('cid');
+		if (clm_core::$load->request_string('task') == 'edit') { $text = JText::_( 'Edit' );}
 			else { $text = JText::_( 'New' );}
 		JToolBarHelper::title(  JText::_( 'TITLE_GROUPS_2' ).': [ '. $text.' ]' );
 		JToolBarHelper::save();
@@ -186,35 +185,15 @@ public static function setGruppeToolbar()
 public static function gruppe( &$row,$lists, $option, $jid)
 	{
 		CLMViewGruppen::setGruppeToolbar();
-		JRequest::setVar( 'hidemainmenu', 1 );
+		$_REQUEST['hidemainmenu'] = 1;
 		JFilterOutput::objectHTMLSafe( $row, ENT_QUOTES, 'extrainfo' );
-		?>
-	<script language="javascript" type="text/javascript">
-
-		 Joomla.submitbutton = function (pressbutton) { 	
-			var form = document.adminForm;
-			if (pressbutton == 'cancel') {
-				submitform( pressbutton );
-				return;
-			}
-			// do field validation
-			if (form.Gruppe.value == "") {
-				alert( "<?php echo JText::_( 'GROUPS_OVERVIEW_SCRIPT_GROUP', true ); ?>" );
-			} else if (form.Meldeschluss.value == "") {
-				alert( "<?php echo JText::_( 'GROUPS_OVERVIEW_SCRIPT_END', true ); ?>" );
-			}
-			 else if ( getSelectedValue('adminForm','sid') == 0 ) {
-				alert( "<?php echo JText::_( 'GROUPS_OVERVIEW_SCRIPT_SEASON', true ); ?>" );
-			} else {
-				submitform( pressbutton );
-			}
-		}
 		
-		</script>
+		clm_core::$load->load_js("gruppen");
+		?>
 
 		<form action="index.php" method="post" name="adminForm" id="adminForm">
 
-		<div class="width-50 fltlft">
+		<div class="width-40 fltlft">
 		<fieldset class="adminform">
 		<legend><?php echo JText::_( 'GROUPS_OVERVIEW_DETAILS' ); ?></legend>
 
@@ -224,7 +203,7 @@ public static function gruppe( &$row,$lists, $option, $jid)
 			<label for="Gruppe"><?php echo JText::_( 'GROUPS_OVERVIEW_GROUP_NAME' ); ?></label>
 			</td>
 			<td>
-			<input class="inputbox" type="text" name="Gruppe" id="Gruppe" size="50" maxlength="60" value="<?php echo $row->Gruppe; ?>" />
+			<input class="inputbox" type="text" name="Gruppe" id="Gruppe" size="40" maxlength="60" value="<?php echo $row->Gruppe; ?>" />
 			</td>
 		</tr>
 
@@ -246,7 +225,7 @@ public static function gruppe( &$row,$lists, $option, $jid)
 			</td>
 			<td>
 			<select name="geschlecht" id="geschlecht">" size="1">
-			<option>- wählen -</option>
+			<option value="9">- wählen -</option>
 			<option <?php if ($row->geschlecht == "1") {echo 'selected="selected"';} ?> value="1"><?php echo JText::_( 'GROUPS_OVERVIEW_SEX_DD1' );?></option>
 			<option <?php if ($row->geschlecht == "2") {echo 'selected="selected"';} ?> value="2"><?php echo JText::_( 'GROUPS_OVERVIEW_SEX_DD2' );?></option>
 			<option <?php if ($row->geschlecht == 0) {echo 'selected="selected"';} ?> value="0"><?php echo JText::_( 'GROUPS_OVERVIEW_SEX_DD3' );?></option>
@@ -256,7 +235,7 @@ public static function gruppe( &$row,$lists, $option, $jid)
 
 		<tr>
 			<td class="key" nowrap="nowrap">
-			<label for="durchgang">
+			<label for="alter_grenze">
 			<?php echo JText::_( 'GROUPS_OVERVIEW_AGE_DD1' ); ?>
 			</label>
 			</td>
@@ -282,29 +261,27 @@ public static function gruppe( &$row,$lists, $option, $jid)
 		</tr>
 
 		<tr>
+			<td class="key" nowrap="nowrap">
+			<label for="status">
+			<?php echo JText::_( 'GROUPS_OVERVIEW_STATUS_DD1' ); ?>
+			</label>
+			</td>
+			<td>
+			<select name="status" id="status" >" size="1">
+			<option <?php if ($row->status == "") {echo 'selected="selected"';} ?> value=""><?php echo JText::_( 'GROUPS_OVERVIEW_STATUS_DD2' );?></option>
+			<option <?php if ($row->status == "A") {echo 'selected="selected"';} ?> value="A"><?php echo JText::_( 'GROUPS_OVERVIEW_STATUS_DD3' );?></option>
+			</select>
+			</td>
+		</tr>
+
+		<tr>
 			<td class="key" nowrap="nowrap"><label for="sid"><?php echo JText::_( 'GROUPS_OVERVIEW_TEXT_SEASON' ); ?></label>
 			</td>
 			<td>
 			<?php echo $lists['saison']; ?>
 			</td>
 		</tr>
-<!---
-		<tr>
-			<td class="key" nowrap="nowrap"><label for="delete"><?php echo JText::_( 'GROUPS_OVERVIEW_TEXT_DELETE' ); ?></label>
-			</td>
-			<td>
-				<input type="checkbox" id="delete" name="delete" value="1" /><?php echo JText::_( 'GROUPS_OVERVIEW_TEXT_DELETE_HINT' );?>
-			</td>
-		</tr>
 
-		<tr>
-			<td class="key" nowrap="nowrap"><label for="create"><?php echo JText::_( 'GROUPS_OVERVIEW_TEXT_LEVEL' ); ?></label>
-			</td>
-			<td>
-				<input type="checkbox" id="create" name="create" value="1" /><?php echo JText::_( 'GROUPS_OVERVIEW_TEXT_LEVEL_HINT' );?>
-			</td>
-		</tr>
---->		
 		<tr>
 			<td class="key" nowrap="nowrap"><label for="published"><?php echo JText::_( 'JPUBLISHED' ); ?></label>
 			</td>

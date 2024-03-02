@@ -1,8 +1,7 @@
 <?php
-
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -10,7 +9,6 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 class CLMViewMTurniere
 {
 	public static function setMTurnierToolbar($new, $sid)
@@ -28,8 +26,8 @@ class CLMViewMTurniere
 
 	public static function mturnier(&$row, $lists, $option, $new)
 	{
+	JFactory::getApplication()->input->set('hidemainmenu', true);
 	CLMViewMTurniere::setMTurnierToolbar($new, $row->sid);
-	JRequest::setVar( 'hidemainmenu', 1 );
 
 	// Konfigurationsparameter auslesen
 	$config = clm_core::$db->config();
@@ -64,6 +62,8 @@ class CLMViewMTurniere
 		$row->params['pgnlname'] = ''; }
 	if (!isset($row->params['anz_sgp']))  {   //Standardbelegung
 		$row->params['anz_sgp'] = 1; }
+	if (!isset($row->params['deadline_roster']))  {   //Standardbelegung
+		$row->params['deadline_roster'] = '1970-01-01'; }
 	if (!isset($row->params['color_order']))  {   //Standardbelegung
 		$row->params['color_order'] = '1'; }
 	if (!isset($row->params['incl_to_season']))  {   //Standardbelegung
@@ -77,6 +77,8 @@ class CLMViewMTurniere
 		$row->params['noOrgReference'] = '0'; }
 	if (!isset($row->params['noBoardResults']))  {   //Standardbelegung
 		$row->params['noBoardResults'] = '0'; }
+	if (!isset($row->params['inofDWZ']))  {   //Standardbelegung
+		$row->params['inofDWZ'] = '0'; }
 	if (!isset($row->params['optionTiebreakersFideCorrect']))  {   //Standardbelegung
 		$row->params['optionTiebreakersFideCorrect'] = '0'; }
 	if (!isset($row->params['ReportForm']))  {   //Standardbelegung
@@ -89,6 +91,16 @@ class CLMViewMTurniere
 		$row->params['pgnDownload'] = '0'; }
 	if (!isset($row->params['firstView']))  {   //Standardbelegung
 		$row->params['firstView'] = '0'; }
+	if (!isset($row->params['time_control']))  {   //Standardbelegung
+		$row->params['time_control'] = ''; }
+	if (!isset($row->params['waiting_period']))  {   //Standardbelegung
+		$row->params['waiting_period'] = ''; }
+	if (!isset($row->params['pseudo_dwz']))  {   //Standardbelegung
+		$row->params['pseudo_dwz'] = '0'; }
+	if (!isset($row->params['dwz_date']))  {   //Standardbelegung
+		$row->params['dwz_date'] = '1970-01-01'; }
+	if (!isset($row->params['import_date']))  {   //Standardbelegung
+		$row->params['import_date'] = '1970-01-01'; }
 	?>
 	
 	<script language="javascript" type="text/javascript">
@@ -108,13 +120,38 @@ class CLMViewMTurniere
 					potenzk5 = potenzg5 +1;
 					potenzg5 = potenzg5 * 2; }
 			if (pressbutton == 'cancel') {
-				submitform( pressbutton );
+				Joomla.submitform( pressbutton );
 				return;
 			}
 			// do field validation
+			// check season
+			var vals = 0;
+			// get references to select list and display text box
+			var sel = document.getElementById('sid');			
+			var opt;
+			for ( var i = 0, len = sel.options.length; i < len; i++ ) {
+				opt = sel.options[i];
+				if ( opt.selected === true ) {
+					vals = opt.value;
+					break;
+				}
+			}
+			// check lap - durchgang
+			var vald = 0;
+			// get references to select list 
+			var sel = document.getElementById('durchgang');			
+			var opt;
+			for ( var i = 0, len = sel.options.length; i < len; i++ ) {
+				opt = sel.options[i];
+				if ( opt.selected === true ) {
+					vald = opt.value;
+					break;
+				}
+			}
+			
 			if (form.name.value == "") {
 				alert( "<?php echo JText::_( 'MTURN_HINT_1', true ); ?>" );
-			} else if ( getSelectedValue('adminForm','sid') == 0 ) {
+			} else if ( vals == 0 ) { 	//display text box checking season
 				alert( "<?php echo JText::_( 'LEAGUE_HINT_2', true ); ?>" );
 			} else if (form.stamm.value == "") {
 				alert( "<?php echo JText::_( 'LEAGUE_HINT_3', true ); ?>" );
@@ -124,7 +161,7 @@ class CLMViewMTurniere
 				alert( "<?php echo JText::_( 'LEAGUE_HINT_5', true ); ?>" );
 			} else if (form.runden.value == "") {
 				alert( "<?php echo JText::_( 'LEAGUE_HINT_6', true ); ?>" );
-			} else if ( getSelectedValue('adminForm','durchgang') == "" ) {
+			} else if ( vald == 0 ) {  //display text box checking lap
 				alert( "<?php echo JText::_( 'LEAGUE_HINT_7', true ); ?>" );
 			} else if ( form.runden_modus.value == 4 && form.teil.value > potenzg ) {
 				alert( "<?php echo JText::_( 'MTURN_HINT_8', true ); ?>" ); 
@@ -143,7 +180,7 @@ class CLMViewMTurniere
 			} else if ( form.runden_modus.value < 3 && form.runden.value <  (rteil - 1)) {
 				alert( "<?php echo JText::_( 'LEAGUE_HINT_9', true ); ?>" );
 			} else {
-				submitform( pressbutton );
+				Joomla.submitform( pressbutton );
 			}
 		}
 		 
@@ -247,9 +284,17 @@ class CLMViewMTurniere
 	<tr>
 	<td nowrap="nowrap">
 	<label for="teil"><?php echo JText::_( 'LEAGUE_TEAMS' ); ?></label>
-	</td><td colspan="5">
+	</td><td colspan="2">
 	<input class="inputbox" type="text" name="teil" id="teil" size="4" maxlength="4" value="<?php echo $row->teil; ?>" />
 	</td>
+        <td width="20" class="key" title="<?php echo JText::_( 'LEAGUE_DEADLINE_ROSTER_HINT' ); ?>">
+           	<label for="params[deadline_roster]">
+               	<?php echo JText::_( 'LEAGUE_DEADLINE_ROSTER' ); ?> 
+           	</label>
+        </td>
+        <td>
+			<?php echo CLMForm::calendar($row->params['deadline_roster'], "params[deadline_roster]", "params[deadline_roster]", '%Y-%m-%d', array('class'=>'text_area', 'size'=>'12',  'maxlength'=>'19')); ?>
+        </td>
 	</tr>
 	
 	<tr>
@@ -338,9 +383,14 @@ class CLMViewMTurniere
 		<option value="11" <?php if ($row->tiebr1 == 11) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_11' );?></option>
 		<option value="2" <?php if ($row->tiebr1 == 2) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_2' );?></option>
 		<option value="12" <?php if ($row->tiebr1 == 12) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_12' );?></option>
+		<option value="7" <?php if ($row->tiebr1 == 7) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_7' );?></option>
+		<option value="17" <?php if ($row->tiebr1 == 17) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_17' );?></option>
+		<option value="8" <?php if ($row->tiebr1 == 8) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_8' );?></option>
+		<option value="18" <?php if ($row->tiebr1 == 18) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_18' );?></option>
 		<option value="23" <?php if ($row->tiebr1 == 23) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_23' );?></option>
 		<option value="4" <?php if ($row->tiebr1 == 4) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_4' );?></option>
 		<option value="5" <?php if ($row->tiebr1 == 5) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_5' );?></option>
+		<option value="9" <?php if ($row->tiebr1 == 9) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_9' );?></option>
 		<option value="10" <?php if ($row->tiebr1 == 10) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_10' );?></option>
 		<option value="3" <?php if ($row->tiebr1 == 3) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_3' );?></option>
 		<option value="25" <?php if ($row->tiebr1 == 25) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_25' );?></option>
@@ -351,16 +401,21 @@ class CLMViewMTurniere
 	<label for="tiebr2"><?php echo '2.'.JText::_( 'MTURN_TIEBREAKER' ); ?></label>
 	</td>
 	<td colspan="2">
-		<select name="tiebr2" id="tiebr1" value="<?php echo $row->tiebr2; ?>" size="1">
+		<select name="tiebr2" id="tiebr2" value="<?php echo $row->tiebr2; ?>" size="1">
 		<!--<option>- wählen -</option>-->
 		<option value="0" <?php if ($row->tiebr2 == 0) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_SELECT_TIEBR_0' );?></option>
 		<option value="1" <?php if ($row->tiebr2 == 1) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_1' );?></option>
 		<option value="11" <?php if ($row->tiebr2 == 11) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_11' );?></option>
 		<option value="2" <?php if ($row->tiebr2 == 2) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_2' );?></option>
 		<option value="12" <?php if ($row->tiebr2 == 12) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_12' );?></option>
+		<option value="7" <?php if ($row->tiebr2 == 7) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_7' );?></option>
+		<option value="17" <?php if ($row->tiebr2 == 17) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_17' );?></option>
+		<option value="8" <?php if ($row->tiebr2 == 8) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_8' );?></option>
+		<option value="18" <?php if ($row->tiebr2 == 18) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_18' );?></option>
 		<option value="23" <?php if ($row->tiebr2 == 23) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_23' );?></option>
 		<option value="4" <?php if ($row->tiebr2 == 4) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_4' );?></option>
 		<option value="5" <?php if ($row->tiebr2 == 5) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_5' );?></option>
+		<option value="9" <?php if ($row->tiebr2 == 9) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_9' );?></option>
 		<option value="10" <?php if ($row->tiebr2 == 10) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_10' );?></option>
 		<option value="3" <?php if ($row->tiebr2 == 3) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_3' );?></option>
 		<option value="25" <?php if ($row->tiebr2 == 25) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_25' );?></option>
@@ -372,16 +427,21 @@ class CLMViewMTurniere
 	<td nowrap="nowrap">
 	<label for="tiebr3"><?php echo '3.'.JText::_( 'MTURN_TIEBREAKER' ); ?></label>
 	</td><td colspan="2">
-		<select name="tiebr3" id="tiebr1" value="<?php echo $row->tiebr3; ?>" size="1">
+		<select name="tiebr3" id="tiebr3" value="<?php echo $row->tiebr3; ?>" size="1">
 		<!--<option>- wählen -</option>-->
 		<option value="0" <?php if ($row->tiebr3 == 0) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_SELECT_TIEBR_0' );?></option>
 		<option value="1" <?php if ($row->tiebr3 == 1) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_1' );?></option>
 		<option value="11" <?php if ($row->tiebr3 == 11) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_11' );?></option>
 		<option value="2" <?php if ($row->tiebr3 == 2) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_2' );?></option>
 		<option value="12" <?php if ($row->tiebr3 == 12) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_12' );?></option>
+		<option value="7" <?php if ($row->tiebr3 == 7) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_7' );?></option>
+		<option value="17" <?php if ($row->tiebr3 == 17) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_17' );?></option>
+		<option value="8" <?php if ($row->tiebr3 == 8) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_8' );?></option>
+		<option value="18" <?php if ($row->tiebr3 == 18) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_18' );?></option>
 		<option value="23" <?php if ($row->tiebr3 == 23) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_23' );?></option>
 		<option value="4" <?php if ($row->tiebr3 == 4) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_4' );?></option>
 		<option value="5" <?php if ($row->tiebr3 == 5) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_5' );?></option>
+		<option value="9" <?php if ($row->tiebr3 == 9) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_9' );?></option>
 		<option value="10" <?php if ($row->tiebr3 == 10) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_10' );?></option>
 		<option value="3" <?php if ($row->tiebr3 == 3) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_3' );?></option>
 		<option value="25" <?php if ($row->tiebr3 == 25) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_25' );?></option>
@@ -444,6 +504,39 @@ class CLMViewMTurniere
 				$optionlist[]	= JHtml::_('select.option', $key, $val, 'id', 'name' );
 			}
 			echo JHtml::_('select.genericlist', $optionlist, 'params[autoRANKING]', 'class="inputbox"', 'id', 'name', (isset($row->params['autoRANKING']) ? $row->params['autoRANKING'] : "0")); ?>
+		</td>
+	</tr>
+	<tr>
+		<td nowrap="nowrap">
+		<label for="params[pseudo_dwz]"><?php echo JText::_( 'LEAGUE_PSEUDO_DWZ' ); ?></label>
+		</td><td colspan="2">
+		<input class="inputbox" type="text" name="params[pseudo_dwz]" id="params[pseudo_dwz]" size="4" maxlength="4" value="<?php echo $row->params['pseudo_dwz']; ?>" />
+		</td>
+		<td class="paramlist_key">
+			<?php echo JText::_('ANNUL_PROC'); ?>:
+		</td>
+		<td colspan="2" class="paramlist_value">
+			<?php 
+			$options = array();
+			$options[0] = JText::_('ANNUL_PROC_0');
+			$options[1] = JText::_('ANNUL_PROC_1');
+			$optionlist = array();
+			foreach ($options as $key => $val) {
+				$optionlist[]	= JHtml::_('select.option', $key, $val, 'id', 'name' );
+			}
+			echo JHtml::_('select.genericlist', $optionlist, 'params[annul_proc]', 'class="inputbox"', 'id', 'name', (isset($row->params['annul_proc']) ? $row->params['annul_proc'] : "0")); ?>
+		</td>
+	</tr>
+	<tr>
+		<td width="20%" nowrap="nowrap">
+			<label for="params[time_control]"><?php echo JText::_( 'LEAGUE_TIME_CONTROL' ); ?></label>
+		</td><td colspan="2">
+		<input class="inputbox" type="text" name="params[time_control]" id="params[time_control]" size="36" maxlength="120" value="<?php echo $row->params['time_control']; ?>" />
+		</td>
+		<td nowrap="nowrap">
+			<label for="params[waiting_period]"><?php echo JText::_( 'LEAGUE_WAITING_PERIOD' ); ?></label>
+		</td><td colspan="2">
+		<input class="inputbox" type="text" name="params[waiting_period]" id="params[waiting_period]" size="15" maxlength="50" value="<?php echo $row->params['waiting_period']; ?>" />
 		</td>
 	</tr>
 		</table>
@@ -679,20 +772,29 @@ class CLMViewMTurniere
 	<?php if ($import_pgn == 1) { ?>
 	<tr>
 		<td nowrap="nowrap">
-			<label for="pgninput"><?php echo JText::_( 'OPTION_PGNINPUT' ); ?></label>
+<!--			<label for="pgninput"><?php echo JText::_( 'OPTION_PGNINPUT' ); ?></label> -->
+			<label for="pgninput">
+				<span class="editlinktip hasTip" title="<?php echo JText::_( 'OPTION_PGNINPUT_HINT' );?>">
+				<?php echo JText::_( 'OPTION_PGNINPUT' )." : "; ?></span></label>
 		</td><td colspan="1"><fieldset class="radio">
 			<?php echo JHtml::_('select.booleanlist', 'params[pgnInput]', 'class="inputbox"', $row->params['pgnInput']); ?>
 		</fieldset></td>
 		<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
 		<td nowrap="nowrap">
-			<label for="pgnpublic"><?php echo JText::_( 'OPTION_PGNPUBLIC' ); ?></label>
+<!--			<label for="pgnpublic"><?php echo JText::_( 'OPTION_PGNPUBLIC' ); ?></label> -->
+			<label for="pgnpublic">
+				<span class="editlinktip hasTip" title="<?php echo JText::_( 'OPTION_PGNPUBLIC_HINT' );?>">
+				<?php echo JText::_( 'OPTION_PGNPUBLIC' )." : "; ?></span></label>
 		</td><td colspan="1"><fieldset class="radio">
 			<?php echo JHtml::_('select.booleanlist', 'params[pgnPublic]', 'class="inputbox"', $row->params['pgnPublic']); ?>
 		</fieldset></td>
 	</tr>
 	<tr>
 		<td nowrap="nowrap">
-			<label for="pgndownload"><?php echo JText::_( 'OPTION_PGNDOWNLOAD' ); ?></label>
+<!--			<label for="pgndownload"><?php echo JText::_( 'OPTION_PGNDOWNLOAD' ); ?></label> -->
+			<label for="pgndownload">
+				<span class="editlinktip hasTip" title="<?php echo JText::_( 'OPTION_PGNDOWNLOAD_HINT' );?>">
+				<?php echo JText::_( 'OPTION_PGNDOWNLOAD' )." : "; ?></span></label>
 		</td><td colspan="1"><fieldset class="radio">
 			<?php echo JHtml::_('select.booleanlist', 'params[pgnDownload]', 'class="inputbox"', $row->params['pgnDownload']); ?>
 		</fieldset></td>
@@ -737,14 +839,19 @@ class CLMViewMTurniere
   </fieldset>
   </div>
 
-  <div class="width-40 fltrt">
+  <div class="width-30 fltrt">
   <fieldset class="adminform">
    <legend><?php echo JText::_( 'REMARKS' ); ?></legend>
 	<table class="adminlist">
+	<?php if ($new) { ?>
+		<tr><font color=red><b>Hinweis:</b></font> Manchmal ist es sinnvoll bzw. nötig, eine Punktspielliga als Mannschaftsturnier anzulegen. Siehe auch<b><a href="https://chessleaguemanager.de/faq/item/190-punktspielligen-als-liga-oder-als-mannschaftsturnier"><?php echo JText::_(' hier'); ?></a></b></tr>
+		<p>&nbsp;&nbsp;</p>
+	<?php } ?>
 	<legend><?php echo JText::_( 'REMARKS_PUBLIC' ); ?></legend>
 	<tr>
 	<td width="100%" valign="top">
-	<textarea class="inputbox" name="bemerkungen" id="bemerkungen" cols="40" rows="4" style="width:90%"><?php echo str_replace('&','&amp;',$row->bemerkungen);?></textarea>
+	<?php if (is_null($row->bemerkungen)) $row->bemerkungen = ''; ?>
+	<textarea class="inputbox" name="bemerkungen" id="bemerkungen" cols="30" rows="4" style="width:90%"><?php echo str_replace('&','&amp;',$row->bemerkungen);?></textarea>
 	</td>
 	</tr>
 	</table>
@@ -753,7 +860,8 @@ class CLMViewMTurniere
 	<legend><?php echo JText::_( 'REMARKS_INTERNAL' ); ?></legend>
 	<tr>
 	<td width="100%" valign="top">
-	<textarea class="inputbox" name="bem_int" id="bem_int" cols="40" rows="4" style="width:90%"><?php echo str_replace('&','&amp;',$row->bem_int);?></textarea>
+	<?php if (is_null($row->bem_int)) $row->bem_int = ''; ?>
+	<textarea class="inputbox" name="bem_int" id="bem_int" cols="30" rows="4" style="width:90%"><?php echo str_replace('&','&amp;',$row->bem_int);?></textarea>
 	</td>
 	</tr>
 	</table>
@@ -784,6 +892,13 @@ class CLMViewMTurniere
   	<?php echo JText::_( 'LEAGUE_HINTS_10' ); ?>
   	<?php echo JText::_( 'LEAGUE_HINTS_11' ); ?>
   	<?php echo JText::_( 'LEAGUE_HINTS_12' ); ?>
+	<?php echo JText::_( 'LEAGUE_HINTS_13' ); ?>
+  	<?php echo JText::_( 'LEAGUE_HINTS_14' ); ?>
+  	<?php echo JText::_( 'LEAGUE_HINTS_15' ); ?>
+	<?php echo JText::_( 'LEAGUE_HINTS_16' ); ?>
+  	<?php echo JText::_( 'LEAGUE_HINTS_17' ); ?>
+  	<?php echo JText::_( 'LEAGUE_HINTS_18' ); ?>
+  	<?php echo JText::_( 'LEAGUE_HINTS_19' ); ?>
 	<?php echo JText::_( 'LEAGUE_HINTS_20' ); ?>
   	<?php echo JText::_( 'LEAGUE_HINTS_21' ); ?>
   	<?php echo JText::_( 'LEAGUE_HINTS_22' ); ?>
@@ -793,7 +908,13 @@ class CLMViewMTurniere
 	<?php echo JText::_( 'LEAGUE_HINTS_26' ); ?>
   	<?php echo JText::_( 'LEAGUE_HINTS_27' ); ?>
   	<?php echo JText::_( 'LEAGUE_HINTS_28' ); ?>
-
+	<?php echo JText::_( 'LEAGUE_HINTS_30' ); ?>
+  	<?php echo JText::_( 'LEAGUE_HINTS_31' ); ?>
+  	<?php echo JText::_( 'LEAGUE_HINTS_32' ); ?>
+	<?php echo JText::_( 'LEAGUE_HINTS_33' ); ?>
+  	<?php echo JText::_( 'LEAGUE_HINTS_34' ); ?>
+  	<?php echo JText::_( 'LEAGUE_HINTS_35' ); ?>
+	<?php echo JText::_( 'LEAGUE_HINTS_36' ); ?>
   	</fieldset>
 
   </div>
@@ -810,6 +931,9 @@ class CLMViewMTurniere
 	<input type="hidden" name="task" value="" />
 	<input type="hidden" name="params[noOrgReference]" value="<?php echo $row->params['noOrgReference']; ?>" />
 	<input type="hidden" name="params[noBoardResults]" value="<?php echo $row->params['noBoardResults']; ?>" />
+	<input type="hidden" name="params[inofDWZ]" value="<?php echo $row->params['inofDWZ']; ?>" />
+	<input type="hidden" name="params[dwz_date]" value="<?php echo $row->params['dwz_date']; ?>" />
+	<input type="hidden" name="params[import_date]" value="<?php echo $row->params['import_date']; ?>" />
 	<input type="hidden" name="ordering" value="<?php echo $row->ordering; ?>" />
 	<?php $row->liga_mt = 1; //mtmt ?>
 	<?php echo JHtml::_( 'form.token' ); ?>

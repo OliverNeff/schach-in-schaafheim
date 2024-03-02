@@ -1,9 +1,9 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008 Thomas Schwietert & Andreas Dorn. All rights reserved
+ * @Copyright (C) 2008-2022 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
- * @link http://www.fishpoke.de
+ * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
  * @email fishpoke@fishpoke.de
  * @author Andreas Dorn
@@ -32,7 +32,7 @@ class CLMModelCatForm extends JModelLegacy {
 		
 		// Instanz der Tabelle
 		$this->category = JTable::getInstance( 'categories', 'TableCLM');
-		if ($id = JRequest::getInt('id')) {
+		if ($id = clm_core::$load->request_int('id')) {
 			$this->category->load($id);
 		}
 		
@@ -55,6 +55,7 @@ class CLMModelCatForm extends JModelLegacy {
 				}
 			}
 		}
+		if (!isset($this->form) OR is_null($this->form)) $this->form = array();
 		$this->form['parent'] = JHTML::_('select.genericlist', $parentlist, 'parentid', 'class="inputbox" size="1"', 'id', 'name', intval($this->category->parentid));
 		
 	

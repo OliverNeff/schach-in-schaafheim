@@ -1,0 +1,20 @@
+   {
+  "$schema": "https://developer.joomla.org/schemas/json-schema/web_assets.json",
+  "name": "joomla",
+  "version": "4.0.0",
+  "description": "Joomla CMS",
+  "license": "GPL-2.0-or-later",
+  "assets": [
+  	{
+      "name": "webcomponent.field-sonderranglisten",
+      "type": "script",
+      "uri": "media/com_clm_turnier/js/field/clm-field-sonderranglisten.js",
+      "attributes": {
+        "type": "module"
+      },
+      "dependencies": [
+        "choicesjs"
+      ]
+    }
+  ]  
+}

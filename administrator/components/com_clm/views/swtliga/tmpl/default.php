@@ -1,9 +1,9 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2016 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2021 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
- * @link http://www.fishpoke.de
+ * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
  * @email fishpoke@fishpoke.de
  * @author Andreas Dorn
@@ -11,8 +11,9 @@
 */
 defined('_JEXEC') or die('Restricted access');
 
-$swt = JRequest::getVar ('swt_file', '', 'default', 'string');
-$sid = JRequest::getVar ('filter_saison', 0, 'default', 'int');
+//$swt = clm_core::$load->request_string ('swt_file', '');
+$swt_file = clm_core::$load->request_string ('swt_file', '');
+//$sid = clm_core::$load->request_int ('filter_saison', 0);
 
 jimport( 'joomla.filesystem.file' );
 $path = JPATH_COMPONENT . DIRECTORY_SEPARATOR . 'swt' . DIRECTORY_SEPARATOR;
@@ -25,7 +26,7 @@ if (empty ($liga_mannschaften) || $modus != 1) { // keine Liga oder nicht vollru
 } */
 $noOrgReference = '0';
 $noBoardResults = '0';
-$liga = JRequest::getVar('liga', 0, 'default', 'int');
+$liga = clm_core::$load->request_int('liga', 0);
 ?>
 
 <script language="javascript" type="text/javascript">
@@ -33,19 +34,25 @@ $liga = JRequest::getVar('liga', 0, 'default', 'int');
 	Joomla.submitbutton = function (pressbutton) { 
         var form = document.adminForm;
         if (pressbutton == 'cancel') {
-            submitform( pressbutton );
+            Joomla.submitform( pressbutton );
             return;
         }
         // do field validation
-		if ( getSelectedValue('adminForm','task') == 'update' ) {
-			if ( getSelectedValue('adminForm','liga') == 0 ) {
-				alert( "<?php echo JText::_( 'LEAGUE_HINT_00', true ); ?>" );
-			} else {
-				submitform( pressbutton );
+		if ( pressbutton == 'update' ) {
+			// get references to select list and display text box
+			var sel = document.getElementById('liga');			
+			var opt;
+			for ( var i = 0, len = sel.options.length; i < len; i++ ) {
+				opt = sel.options[i];
+				if ( opt.selected === true ) {
+					val = opt.value;
+					break;
+				}
 			}
-        } else {
-            submitform( pressbutton );
-        }
+			if ( val == '' ) {
+				alert( "<?php echo JText::_( 'LEAGUE_HINT_00', true ); ?>" ); }
+		}
+        Joomla.submitform( pressbutton );
     }
 	
 </script>
@@ -125,8 +132,8 @@ $liga = JRequest::getVar('liga', 0, 'default', 'int');
 	<input type="hidden" name="view" value="swtliga" />
 	<input type="hidden" name="controller" value="swtliga" />
 	<input type="hidden" name="task" value="" />
-	<input type="hidden" name="swt" value="<?php echo $swt; ?>" />
+<!--	<input type="hidden" name="swt" value="<?php echo $swt; ?>" /> -->
 	<input type="hidden" name="swt_file" value="<?php echo $swt_file; ?>" />
-	<input type="hidden" name="sid" value="<?php echo $sid; ?>" />
+<!--	<input type="hidden" name="sid" value="<?php echo $sid; ?>" />  -->
 	<?php echo JHtml::_( 'form.token' ); ?>
 </form>

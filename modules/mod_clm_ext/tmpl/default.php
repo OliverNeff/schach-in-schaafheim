@@ -1,13 +1,12 @@
 <?php 
 /**
-  * @ CLM Extern Component
- * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
+ * @ CLM Extern Component
+ * @Copyright (C) 2008-2021 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
  * @email fishpoke@fishpoke.de
 */
-
 defined('_JEXEC') or die('Restricted access');
 	jimport( 'joomla.filesystem.folder' );
 	// Prüfen ob die Extern Komponente existiert
@@ -15,7 +14,9 @@ defined('_JEXEC') or die('Restricted access');
 	$backup	= $path.'com_clm_ext';
 	jimport('joomla.filesystem.file');
  	if (!JFolder::exists($backup)){
- 		JError::raiseNotice( 6000,  JText::_( 'CLM Extern Modul : Die CLM Extern Komponente ist nicht installiert ! Keine Anzeige möglich !' ));
+// 		JError::raiseNotice( 6000,  JText::_( 'CLM Extern Modul : Die CLM Extern Komponente ist nicht installiert ! Keine Anzeige möglich !' ));
+		$app =JFactory::getApplication();
+		$app->enqueueMessage( JText::_('CLM Extern Modul : Die CLM Extern Komponente ist nicht installiert ! Keine Anzeige möglich !') );
  	} else {
 
 	// Basis-Konfigurationsparameter auslesen
@@ -25,7 +26,7 @@ defined('_JEXEC') or die('Restricted access');
 
 	if($auto =="0") {
 		$lid	= $params->get('lid',22);
-
+		$lid	= str_replace ( ',',';',$lid);
 		$lids = explode(";", $lid);
 		for ($x=0;$x < count($lids); $x++) {
 			$liga[]		= $lids[$x];
@@ -34,27 +35,36 @@ defined('_JEXEC') or die('Restricted access');
 			$lid_dg[]	= $params->get('lid_d'.(1+$x),'1');
 		}
 	}
-$url		= preg_replace ( '/\'/', '', JRequest::getVar('url'));
+$url		= preg_replace ( '/\'/', '', clm_ext_request_string('url'));
 
-$ext_view	= JRequest::getVar( 'ext_view' );
-$view		= JRequest::getVar( 'view' );
-$lid		= JRequest::getVar( 'liga');
-$runde		= JRequest::getVar( 'runde');
-$dg			= JRequest::getVar( 'dg' );
-$itemid		= JRequest::getVar( 'Itemid' );
-$sid		= JRequest::getVar( 'saison');
+$ext_view	= clm_ext_request_string( 'ext_view' );
+$view		= clm_ext_request_string( 'view' );
+$lid		= clm_ext_request_string( 'liga');
+$runde		= clm_ext_request_string( 'runde');
+$dg			= clm_ext_request_string( 'dg' );
+$itemid		= clm_ext_request_string( 'Itemid' );
+$sid		= clm_ext_request_string( 'saison');
  
 ?>
 <ul class="menu">
 <?php
 for( $x=0; $x < count($lids); $x++) {
 // Haupttlinks des Menüs
+	if ($liga[$x] == 87) {
+?>
+	<li id="current" class="first_link">
+	<a href="index.php?option=com_clm_ext&amp;view=clm_ext&amp;ext_view=paarungsliste&amp;source=<?php echo $source_id; ?>&amp;saison=<?php echo $saison;?>&amp;liga=<?php echo $liga[$x]; ?>&amp;Itemid=<?php echo $itemid;?>"	<?php if ($liga[$x] == $lid AND $ext_view == 'rangliste') {echo ' class="active_link"';} ?>>
+	<span><?php echo $lid_name[$x]; ?></span>
+	</a>
+<?php 
+	} else {
 ?>
 	<li id="current" class="first_link">
 	<a href="index.php?option=com_clm_ext&amp;view=clm_ext&amp;ext_view=rangliste&amp;source=<?php echo $source_id; ?>&amp;saison=<?php echo $saison;?>&amp;liga=<?php echo $liga[$x]; ?>&amp;Itemid=<?php echo $itemid;?>"	<?php if ($liga[$x] == $lid AND $ext_view == 'rangliste') {echo ' class="active_link"';} ?>>
 	<span><?php echo $lid_name[$x]; ?></span>
 	</a>
 <?php 
+	}
 // Unterlinks falls Link angeklickt
 if ($lid == $liga[$x] AND $saison == $sid AND $ext_view == 'rangliste' AND $view=='clm_ext' AND $source_id == $module->id) { ?>
 	<ul>
@@ -64,14 +74,14 @@ if ($lid == $liga[$x] AND $saison == $sid AND $ext_view == 'rangliste' AND $view
 		</li>
 	<?php for ($y=0; $y < $lid_runde[$x]; $y++) { ?>
 		<li>
-		<a href="index.php?option=com_clm_ext&amp;view=clm_ext&amp;ext_view=runde&amp;source=<?php echo $source_id; ?>&amp;saison=<?php echo $saison; ?>&amp;liga=<?php echo $liga[$x]; ?>&amp;runde=<?php echo $y+1; ?>&amp;Itemid=<?php echo $itemid;?>">
+		<a href="index.php?option=com_clm_ext&amp;view=clm_ext&amp;ext_view=runde&amp;source=<?php echo $source_id; ?>&amp;saison=<?php echo $saison; ?>&amp;liga=<?php echo $liga[$x]; ?>&amp;dg=1&amp;runde=<?php echo $y+1; ?>&amp;Itemid=<?php echo $itemid;?>">
 		<span>Runde <?php echo $y+1; if ($lid_dg[$x] >1) {echo " (Hinrunde)";}?></span></a>
 		</li>
 	<?php } $cnt = $y;
 	if ($lid_dg[$x] > 1) {
 	for ($y=0; $y < $lid_runde[$x]; $y++) { ?>
 		<li <?php if ($view == 'runde') { ?> id="current" class="active" <?php } ?>>
-		<a href="index.php?option=com_clm_ext&amp;view=clm_ext&amp;ext_view=runde&amp;source=<?php echo $source_id; ?>&amp;saison=<?php echo $saison; ?>&amp;liga=<?php echo $liga[$x]; ?>&amp;runde=<?php echo $y+1; ?>&amp;Itemid=<?php echo $itemid;?>" 
+		<a href="index.php?option=com_clm_ext&amp;view=clm_ext&amp;ext_view=runde&amp;source=<?php echo $source_id; ?>&amp;saison=<?php echo $saison; ?>&amp;liga=<?php echo $liga[$x]; ?>&amp;dg=2&amp;runde=<?php echo $y+1; ?>&amp;Itemid=<?php echo $itemid;?>" 
 		<?php if ($view == 'runde' AND $runde == ($y+1)) { ?> class="active_link" <?php } ?>>
 		<span>Runde <?php echo $y+1; ?> (Rückrunde)</span></a>
 		</li>
@@ -98,7 +108,7 @@ if ($lid == $liga[$x] AND $saison == $sid AND $ext_view == 'rangliste' AND $view
 		</li>
 	<?php for ($y=0; $y < $lid_runde[$x]; $y++) { ?>
 		<li <?php if ($ext_view == 'runde' AND $dg == 1) { ?> id="current" class="active" <?php } ?>>
-		<a href="index.php?option=com_clm_ext&amp;view=clm_ext&amp;ext_view=runde&amp;source=<?php echo $source_id; ?>&amp;saison=<?php echo $saison; ?>&amp;liga=<?php echo $liga[$x]; ?>&amp;runde=<?php echo $y+1; ?>&amp;dg=1&amp;Itemid=<?php echo $itemid;?>" 
+		<a href="index.php?option=com_clm_ext&amp;view=clm_ext&amp;ext_view=runde&amp;source=<?php echo $source_id; ?>&amp;saison=<?php echo $saison; ?>&amp;liga=<?php echo $liga[$x]; ?>&amp;dg=1&amp;runde=<?php echo $y+1; ?>&amp;dg=1&amp;Itemid=<?php echo $itemid;?>" 
 		<?php if ($ext_view == 'runde' AND $runde == ($y+1)) { ?> class="active_link" <?php } ?>>
 		<span>Runde <?php echo $y+1; if ($lid_dg[$x] >1) {echo " (Hinrunde)";}?></span></a>
 		</li>
@@ -106,7 +116,7 @@ if ($lid == $liga[$x] AND $saison == $sid AND $ext_view == 'rangliste' AND $view
 	if ($lid_dg[$x] > 1) {
 	for ($y=0; $y < $lid_runde[$x]; $y++) { ?>
 		<li <?php if ($ext_view == 'runde' AND $dg == 2) { ?> id="current" class="active" <?php } ?>>
-		<a href="index.php?option=com_clm_ext&amp;view=clm_ext&amp;ext_view=runde&amp;source=<?php echo $source_id; ?>&amp;saison=<?php echo $saison; ?>&amp;liga=<?php echo $liga[$x]; ?>&amp;runde=<?php echo $y+1; ?>&amp;dg=2&amp;Itemid=<?php echo $itemid;?>" 
+		<a href="index.php?option=com_clm_ext&amp;view=clm_ext&amp;ext_view=runde&amp;source=<?php echo $source_id; ?>&amp;saison=<?php echo $saison; ?>&amp;liga=<?php echo $liga[$x]; ?>&amp;dg=2&amp;runde=<?php echo $y+1; ?>&amp;dg=2&amp;Itemid=<?php echo $itemid;?>" 
 		<?php if ($ext_view == 'runde' AND $runde == ($y+1)) { ?> class="active_link" <?php } ?>>
 		<span>Runde <?php echo $y+1; ?> (Rückrunde)</span></a>
 		</li>

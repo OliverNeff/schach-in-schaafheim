@@ -1,5 +1,10 @@
 <?php
-
+/**
+ * @ Chess League Manager (CLM) Login Modul 
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
 // no direct access
 defined('_JEXEC') or die('Restricted access');
 
@@ -39,8 +44,9 @@ class modCLM_LogHelper
 	$meldung_heim	= $config->meldung_heim;
 
 
-	$db->setQuery("SET SQL_BIG_SELECTS=1");
-	$db->query();
+//	$db->setQuery("SET SQL_BIG_SELECTS=1");
+//	$db->query();
+	clm_core::$db->query("SET SQL_BIG_SELECTS=1");	
 
 	$query = "SELECT l.rang,t.meldung,l.name as lname,i.gid,p.sid,p.lid,p.runde,p.paar,p.dg,p.tln_nr,p.gegner,a.zps,  "
 		." l.durchgang as durchgang, " 
@@ -58,7 +64,9 @@ class modCLM_LogHelper
 		//." LEFT JOIN jos_clm_runden_termine as t ON t.nr = p.runde AND t.liga = m.liga AND t.sid = a.sid "
 		." LEFT JOIN #__clm_runden_termine as t ON t.nr = (p.runde + (l.runden * (p.dg - 1))) AND t.liga = m.liga AND t.sid = a.sid " //klkl
 		." WHERE jid = ".$jid
-		." AND mg.man_nr > 0 "		
+		." AND mg.man_nr > 0 "
+		." AND l.anzeige_ma = 0 "
+		." AND t.meldung = 1 AND t.published = 1 "
 		;
 	if ($meldung_verein == 0) { $query = $query." AND m.mf = ".$jid;}
 	if ($meldung_heim == 0) { $query = $query." AND p.heim = 1";}

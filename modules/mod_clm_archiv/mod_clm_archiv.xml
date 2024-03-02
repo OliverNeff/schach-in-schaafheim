@@ -2,12 +2,12 @@
 <extension type="module" version="1.7.0" client="site" method="upgrade">
 	<name>CLM Archiv Modul</name>
 	<author>CLM Projekt</author>
-	<creationDate>12.03.2018</creationDate>
-	<copyright>(C) Copyright 2008 - 2018 by CLM Project</copyright>
+	<creationDate>29.11.2023</creationDate>
+	<copyright>(C) Copyright 2008 - 2023 by CLM Project</copyright>
 	<license>GNU/GPL</license>
 	<authorEmail>fishpoke@fishpoke.de</authorEmail>
 	<authorUrl>www.chessleaguemanager.de</authorUrl>
-	<version>3.3.2</version>
+	<version>4.0.0</version>
 	<description>MOD_CLM_ARCHIV_XML_DESCRIPTION</description>
 
 	<files>

@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2018 CLM Team  All rights reserved
+ * @Copyright (C) 2008-2022 CLM Team  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -9,16 +9,16 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 defined('_JEXEC') or die('Restricted access');
-JHtml::_('behavior.tooltip', '.CLMTooltip');
+//JHtml::_('behavior.tooltip', '.CLMTooltip');
+require_once (JPATH_COMPONENT . DS . 'includes' . DS . 'clm_tooltip.php');
 
 
 // Konfigurationsparameter auslesen
-$itemid = JRequest::getVar( 'Itemid' );
+$itemid = clm_core::$load->request_int( 'Itemid' );
 $config = clm_core::$db->config();
 $commentParse = $config->tourn_comment_parse;
-$pgn		= JRequest::getInt('pgn','0'); 
+$pgn		= clm_core::$load->request_int('pgn'); 
 
 // Userkennung holen
 $user	=JFactory::getUser();
@@ -26,7 +26,7 @@ $jid	= $user->get('id');
 
   if ($pgn == 1) { 
 	$result = clm_core::$api->db_pgn_template($this->turnier->id,$this->round->dg,$this->round->nr,$pgn,false);
-	JRequest::setVar('pgn',0);
+	$_GET['pgn'] = 0;
 	if (!$result[1]) $msg = JText::_(strtoupper($result[1])).'<br><br>'; else $msg = '';
 	$link = 'index.php?option='.$option.'&view=turnier_runde&liga='.$this->turnier->id.'&dg='.$$this->round->dg.'&runde='.$this->round->nr.'&pgn=0';
 	if ($itemid != 0) $link .= '&Itemid='.$itemid;
@@ -120,7 +120,7 @@ if (!$archive_check) {
 			$zeilenr = "zeile2"; 
 		}
 
-		if ( ($value->spieler != 0 AND $value->gegner != 0) OR $value->ergebnis != NULL) {
+		if (($value->spieler != 0 AND $value->gegner != 0) OR !is_null($value->ergebnis)) {
 			$ic = 0;
 			echo '<tr class="'.$zeilenr.'">';
 				echo '<td align="center">'.$value->brett.'</td>';
@@ -155,7 +155,7 @@ if (!$archive_check) {
 				}
 				echo '</td>';
 				echo '<td align="center">'.CLMText::formatRating($value->stwz).'</td>';
-				if ($value->ergebnis != NULL) {
+				if (!is_null($value->ergebnis)) {
 					echo '<td align="center">';
 					if ($value->pgn == '' OR !$this->pgnShow) {
 						echo CLMText::getResultString($value->ergebnis);

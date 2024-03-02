@@ -1,36 +1,67 @@
 <?php 
 /**
-  * @ CLM Extern Component
- * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
+ * @ Chess League Manager (CLM) Modul
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
  * @email fishpoke@fishpoke.de
 */
-
 defined('_JEXEC') or die('Restricted access'); 
 
-$liga	= JRequest::getVar( 'liga');
-$runde	= JRequest::getVar( 'runde');
-$view	= JRequest::getVar( 'view' );
-$dg		= JRequest::getVar( 'dg' );
+// Copy der clm-core-Funktion clm_function_request_string
+if (!function_exists('clm_request_string')) {
+	function clm_request_string($input, $standard = '') {
+		if (isset($_GET[$input])) $value = $_GET[$input];
+		elseif (isset($_POST[$input])) $value = $_POST[$input];
+		else return $standard;
+		if (is_string($value)) $result = $value; else $result = $standard;
+		return $result;
+	}
+}
+// Copy der clm-core-Funktion clm_function_request_int
+if (!function_exists('clm_request_int')) {
+	function clm_request_int($input, $standard = 0) {
+		if (isset($_GET[$input])) $value = $_GET[$input];
+		elseif (isset($_POST[$input])) $value = $_POST[$input];
+		elseif (!class_exists('JFactory')) return $standard; // kein Joomla
+		else {
+			$app =JFactory::getApplication(); // nur nötig wegen Menüeintragstypen
+			$xy = $app->input->getInt($input);
+			if (!is_null($xy)) $value = $xy;
+			else return $standard; 
+		}
+		//	$result = clm_core::$load->make_valid($value, 0, $standard);	
+		if (!is_numeric($value) OR (intval($value) != floatval($value))) {
+			$result = $standard;
+		} else {
+			$result = intval($value);
+		}
+		return $result;	
+	}
+}
+
+$liga	= clm_request_string( 'liga');
+$runde	= clm_request_string( 'runde');
+$view	= clm_request_string( 'view' );
+$dg		= clm_request_string( 'dg' );
 
 // itemid
 if($par_itemid == '' || !is_numeric($par_itemid)) {
-	$itemid	= JRequest::getVar( 'Itemid' );
+	$itemid	= clm_request_int( 'Itemid', 1 );
 } else {
 	$itemid = $par_itemid;
 }
 
-$sid	= JRequest::getInt('saison','1');
-$typeid	= JRequest::getVar( 'typeid' );
+$sid	= clm_request_string('saison','1');
+$typeid	= clm_request_string( 'typeid' );
 if (!isset($typeid)) $typeid = 21; 
  
 foreach ($link as $link1) {
   if ($link1->id == $liga) {
 	$runde_t = $link1->runden + 1;  
 // Test alte/neue Standardrundenname bei 2 Durchgängen, nur bei Ligen/Turniere vor 2013 (Archiv!)
-	if ($runden[0]->datum < '2013-01-01') {
+	if ( isset($runden[0]) AND $runden[0]->datum < '2013-01-01') {
 	if ($link1->durchgang == 2) {
 		if ($runden[$runde_t-1]->name == JText::_('ROUND').' '.$runde_t) {  //alt
 			for ($xr=0; $xr< ($link1->runden); $xr++) { 
@@ -40,10 +71,9 @@ foreach ($link as $link1) {
 		}
 	}
 } } }
-$config	= JComponentHelper::getParams( 'com_clm' );
-$pdf_melde = $config->get('pdf_meldelisten',1);
 	// Konfigurationsparameter auslesen
-	//$config = clm_core::$db->config();
+	$config	= JComponentHelper::getParams( 'com_clm' );
+	$pdf_melde = $config->get('pdf_meldelisten',1);
 	$countryversion = $config->get('countryversion',"de");
 	
 if (isset($link[0])) $saison = $link[0]->sid;
@@ -55,8 +85,8 @@ else {
 }
 //URL-Test: falls nicht belegt --> mod_clm oder mod_clm_archiv
 //			falls belegt --> mod_clm_ext (parameter url version < 3.4; parameter source ab 3.4 
-$url	= JRequest::getVar('url');
-if (!isset($url)) $url	= JRequest::getVar('source');
+$url	= clm_request_string('url');
+if (!isset($url) OR $url == '') $url	= clm_request_string('source');
 ?>
 <ul class="menu">
 
@@ -69,7 +99,7 @@ if (!isset($url)) $url	= JRequest::getVar('source');
             
     <?php if ( $par_termine == 1 ) { ?>
     <li <?php if ($view == 'termine') { ?> id="current" class="active" <?php } ?>>
-        <a href="index.php?option=com_clm&amp;view=termine&amp;saison=<?php echo $saison; ?><?php if ($itemid <>'') { echo "&Itemid=".$itemid; } ?>" <?php if ($view == 'termine') { ?> class="active_link" <?php } ?>>
+        <a href="index.php?option=com_clm&amp;view=termine&amp;categoryid=0&amp;saison=<?php echo $saison; ?><?php if ($itemid <>'') { echo "&Itemid=".$itemid; } ?>" <?php if ($view == 'termine') { ?> class="active_link" <?php } ?>>
         <span><?php echo JText::_('MOD_CLM_DATES_LABEL'); ?></span></a>
     </li>
     <?php } ?>
@@ -106,7 +136,7 @@ foreach ($link as $link) {
         
 <?php 
 // Unterlinks falls Link angeklickt
-if ($par_links AND $liga == $link->id AND $view == $view21 AND !isset($url) ) { ?>
+if ($par_links AND $liga == $link->id AND $view == $view21 AND (!isset($url) OR $url == '')) { ?>
 	<ul>
 		<?php if ( $link->liga_mt == 0 ) { ?>
 		<li class="first_link liga<?php echo $liga; ?>" <?php if ($view == 'aktuell_runde') { ?> id="current" class="active" <?php } ?>>
@@ -162,10 +192,17 @@ if ($par_links AND $liga == $link->id AND $view == $view21 AND !isset($url) ) { 
 		<span><?php echo JText::_('MOD_CLM_PARAM_STATS_LABEL'); ?></span></a>
 		</li>
 		<?php } ?>
+
+        <?php if ( $par_ligainfo == 1 ) { ?>
+		<li <?php if ($view == 'liga_info') { ?> class="active" <?php } ?>>
+		<a href="index.php?option=com_clm&amp;view=liga_info&amp;saison=<?php echo $link->sid; ?>&amp;liga=<?php echo $liga; ?><?php if ($itemid <>'') { echo "&Itemid=".$itemid; } ?><?php if ($typeid <>'') { echo "&typeid=".$typeid; } ?>" <?php if ($view == 'liga_info') { ?> class="active_link" <?php } ?>>
+		<span><?php echo JText::_('MOD_CLM_PARAM_LIGAINFO_LABEL'); ?></span></a>
+		</li>
+		<?php } ?>
 		
 		<?php 
-		// Konfigurationsparameter auslesen
-		if ($pdf_melde == 1) {
+		// Abfrage Konfigurationsparameter
+		if ($pdf_melde == 1 AND $par_booklet == 1) {
 		?>
 		<li <?php if ($view == 'rangliste') { ?> class="active" <?php } ?>>
 		<a href="index.php?option=com_clm&amp;view=rangliste&amp;format=pdf&amp;layout=heft&amp;saison=<?php echo $link->sid; ?>&amp;liga=<?php echo $liga; ?><?php if ($itemid <>'') { echo "&Itemid=".$itemid; } ?><?php if ($typeid <>'') { echo "&typeid=".$typeid; } ?>" <?php if ($view == 'rangliste') { ?> class="active_link" <?php } ?>>
@@ -177,7 +214,7 @@ if ($par_links AND $liga == $link->id AND $view == $view21 AND !isset($url) ) { 
 	<?php } ?>
 	</li>
 <!-- Unterlink angeklickt -->
-<?php if ($par_links AND $liga == $link->id AND $view != $view21 AND !isset($url) ){ ?>
+<?php if ($par_links AND $liga == $link->id AND $view != $view21 AND (!isset($url) OR $url == '')){ ?>
 	<li class="parent active">
 	<ul>
 		<?php if ( $link->liga_mt == 0 ) { ?>
@@ -233,10 +270,17 @@ if ($par_links AND $liga == $link->id AND $view == $view21 AND !isset($url) ) { 
 		</li>
         <?php } ?>
 		
+        <?php if ( $par_ligainfo == 1 ) { ?>
+		<li <?php if ($view == 'liga_info') { ?> id="current" class="active" <?php } ?>>
+		<a href="index.php?option=com_clm&amp;view=liga_info&amp;saison=<?php echo $link->sid; ?>&amp;liga=<?php echo $liga; ?><?php if ($itemid <>'') { echo "&Itemid=".$itemid; } ?><?php if ($typeid <>'') { echo "&typeid=".$typeid; } ?>" <?php if ($view == 'liga_info') { ?> class="active_link" <?php } ?>>
+		<span><?php echo JText::_('MOD_CLM_PARAM_LIGAINFO_LABEL'); ?></span></a>
+		</li>
+        <?php } ?>
+		
         
 		<?php 
-		// Konfigurationsparameter auslesen
-		if ($pdf_melde == 1) {
+		// Abfrage Konfigurationsparameter
+		if ($pdf_melde == 1 AND $par_booklet == 1) {
 		?>
 		<li <?php if ($view == 'rangliste') { ?> class="active" <?php } ?>>
 		<a href="index.php?option=com_clm&amp;view=rangliste&amp;format=pdf&amp;layout=heft&amp;saison=<?php echo $link->sid; ?>&amp;liga=<?php echo $liga; ?><?php if ($itemid <>'') { echo "&Itemid=".$itemid; } ?><?php if ($typeid <>'') { echo "&typeid=".$typeid; } ?>" <?php if ($view == 'rangliste') { ?> class="active_link" <?php } ?>>

@@ -1,9 +1,9 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008 Thomas Schwietert & Andreas Dorn. All rights reserved
+ * @Copyright (C) 2008-2022 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
- * @link http://www.fishpoke.de
+ * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
  * @email fishpoke@fishpoke.de
  * @author Andreas Dorn
@@ -31,6 +31,7 @@ class CLMModelTermineForm extends JModelLegacy {
 	// alle vorhandenen Filter
 	function _getForms() {
 	
+		if (!isset($this->form) OR is_null($this->form)) $this->form = array();	// seit J 4.2 nötig um notice zu vermeiden
 		// published
 		$this->form['published']	= CLMForm::radioPublished('published', $this->termine->published);
 		
@@ -45,7 +46,7 @@ class CLMModelTermineForm extends JModelLegacy {
 		
 		// Instanz der Tabelle
 		$this->termine = JTable::getInstance( 'termine', 'TableCLM');
-		if ($id = JRequest::getInt('id')) {
+		if ($id = clm_core::$load->request_int('id', 0)) {
 			$this->termine->load($id);
 		}
 		

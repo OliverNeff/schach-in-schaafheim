@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2016 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2021 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -9,53 +9,38 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 defined('_JEXEC') or die('Restricted access');
 
-$swt    = JRequest::getVar('swt', '', 'default', 'string');
-$update = JRequest::getVar('update', 0);
-$lid = JRequest::getVar('lid', 0);
-$swt_id = JRequest::getVar('swt_id', 0, 'default', 'int');
-$sid = JRequest::getVar('sid', 0, 'default', 'int');
-$par	= JRequest::getVar('par', 0, 'default', 'int');
-$runde	= JRequest::getVar('runde', 0, 'default', 'int');
-$dgang	= JRequest::getVar('dgang', 0, 'default', 'int');
-$mturnier = JRequest::getVar('mturnier', 0, 'default', 'int');
-$ungerade = JRequest::getVar('ungerade', false, 'default', 'bool');
-$noOrgReference = JRequest::getVar('noOrgReference', '0', 'default', 'string');
-$noBoardResults = JRequest::getVar('noBoardResults', '0', 'default', 'string');
-
+$swt_file    = clm_core::$load->request_string('swt_file', '');
+$update = clm_core::$load->request_int('update', 0);
+$lid 	= clm_core::$load->request_int('lid', 0);
+$swt_id = clm_core::$load->request_int('swt_id', 0);
+$sid 	= clm_core::$load->request_int('sid', 0);
+$par	= clm_core::$load->request_int('par', 0);
+$runde	= clm_core::$load->request_int('runde', 0);
+$dgang	= clm_core::$load->request_int('dgang', 0);
+$mturnier = clm_core::$load->request_int('mturnier', 0);
+$ungerade = clm_core::$load->request_int('ungerade', 0);
+$noOrgReference = clm_core::$load->request_string('noOrgReference', '0');
+$noBoardResults = clm_core::$load->request_string('noBoardResults', '0');
+$dwz_handling   = clm_core::$load->request_string( 'dwz_handling', '0');
 
 ?>
 
 <script language="javascript" type="text/javascript">
-    <!--
-    function submitbutton(pressbutton) {
+    
+	Joomla.submitbutton = function (pressbutton) { 		
         var form = document.adminForm;
         if (pressbutton == 'cancel') {
-            submitform( pressbutton );
+            Joomla.submitform( pressbutton );
             return;
         }
-        // do field validation
-        /*if (form.name.value == "") {
-            alert( "<?php echo JText::_( 'LEAGUE_HINT_1', true ); ?>" );
-        } else if ( getSelectedValue('adminForm','sid') == 0 ) {
-            alert( "<?php echo JText::_( 'LEAGUE_HINT_2', true ); ?>" );
-        } else if (form.stamm.value == "") {
-            alert( "<?php echo JText::_( 'LEAGUE_HINT_3', true ); ?>" );
-        } else if (form.ersatz.value == "") {
-            alert( "<?php echo JText::_( 'LEAGUE_HINT_4', true ); ?>" );
-        } else if (form.teil.value == "") {
-            alert( "<?php echo JText::_( 'LEAGUE_HINT_5', true ); ?>" );
-        } else if (form.runden.value == "") {
-            alert( "<?php echo JText::_( 'LEAGUE_HINT_6', true ); ?>" );
-        } else if ( getSelectedValue('adminForm','durchgang') == "" ) {
-            alert( "<?php echo JText::_( 'LEAGUE_HINT_7', true ); ?>" );
-        } else {*/
-            submitform( pressbutton );
-        //}
+        // do field validation ( z.Z. nichts)
+		
+        Joomla.submitform( pressbutton );
+        
     }
-	//-->
+	
 </script>
 
 <form action="index.php" method="post" name="adminForm" id="adminForm">
@@ -149,7 +134,7 @@ $noBoardResults = JRequest::getVar('noBoardResults', '0', 'default', 'string');
 	<input type="hidden" name="view" value="swtligaerg" />
 	<input type="hidden" name="controller" value="swtligaerg" />
 	<input type="hidden" name="task" value="" />
-	<input type="hidden" name="swt" value="<?php echo $swt; ?>" />
+	<input type="hidden" name="swt_file" value="<?php echo $swt_file; ?>" />
 	<input type="hidden" name="update" value="<?php echo $update; ?>" />
 	<input type="hidden" name="lid" value="<?php echo $lid; ?>" />
     <input type="hidden" name="swt_id" value="<?php echo $swt_id; ?>" />
@@ -160,6 +145,7 @@ $noBoardResults = JRequest::getVar('noBoardResults', '0', 'default', 'string');
 	<input type="hidden" name="noOrgReference" value="<?php echo $noOrgReference; ?>" />
 	<input type="hidden" name="noBoardResults" value="<?php echo $noBoardResults; ?>" />
 	<input type="hidden" name="ungerade" value="<?php echo $ungerade; ?>" />
+	<input type="hidden" name="dwz_handling" value="<?php echo $dwz_handling; ?>" />
     <?php echo $this->hidden['farbe']; ?>
 	<?php echo JHtml::_( 'form.token' ); ?>
 

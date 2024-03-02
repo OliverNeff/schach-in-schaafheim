@@ -107,6 +107,9 @@ class CLM_TurnierViewGrand_prix extends JViewLegacy {
 	 * @return array Array containing the field name to sort by as the key and display text as value
 	 */
 	protected function getSortFields() {
-		return array('a.name' => JText::_('COM_CLM_TURNIER_FIELD_NAME_LABEL'),'a.typ' => JText::_('COM_CLM_TURNIER_FIELD_TYP_LABEL'),'a.published' => JText::_('JSTATUS'),'a.id' => JText::_('JGRID_HEADING_ID'));
+		return array ('a.name' => JText::_('COM_CLM_TURNIER_FIELD_NAME_LABEL'),
+				'a.typ' => JText::_('COM_CLM_TURNIER_FIELD_TYP_LABEL'),
+				'a.published' => JText::_('JSTATUS'),
+				'a.id' => JText::_('JGRID_HEADING_ID') );
 	}
 }

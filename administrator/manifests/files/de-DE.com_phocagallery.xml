@@ -1,0 +1,31 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<extension type="file" method="upgrade" version="3.0">
+	<name>Komponente Phoca Gallery - Deutsche Sprachdateien</name>
+	<version>4.1.0</version>
+	<creationDate>10.01.2014</creationDate>
+	<author>Benno Mathias</author>		
+	<authorUrl>http://www.reisefotografien.eu</authorUrl>
+	<license>GNU/GPL version 3</license>
+	<description>
+		<![CDATA[
+			<p><strong>Sprachdatei für die Komponente/Version:</strong> Phoca Gallery 4.1.0 (de-DE.com_phocagallery)<br /><br />
+	    	<strong>Sprache:</strong> Deutsch (formell)<br />
+	    	<strong>Bereich:</strong> Administrator - Administrationsbereich (Backend) und Site - Benutzerbereich (Frontend)<br />
+	    	<strong>Autor:</strong> Benno Mathias, basierend auf den Übersetzungen von <a href="http://www.joomweb.de" target="_blank">Olaf Dryja <br /><br />
+			<a target="_blank" href="http://www.reisefotografien.eu">reisefotografien.eu</a> für <a target="_blank" href="http://phoca.cz">Phoca.CZ</a>.<br />
+	    	<strong>Übersetzungsversion:</strong> 4.1.0 <br /><br />
+	    	</p>
+        ]]>
+        </description>
+	<fileset>
+		<files target="language/de-DE">
+			<filename>de-DE.com_phocagallery.ini</filename>
+			<filename>de-DE.com_phocagallery.sys.ini</filename>
+		</files>
+		<files target="administrator/language/de-DE">
+			<filename>de-DE.com_phocagallery.ini</filename>
+			<filename>de-DE.com_phocagallery.sys.ini</filename>
+		</files>
+	</fileset>
+</extension>
+

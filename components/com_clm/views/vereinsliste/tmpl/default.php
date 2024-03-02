@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2021 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -9,17 +9,14 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 defined('_JEXEC') or die('Restricted access');
 
 $vereine 		= $this->vereine; // muss erster Model-Aufruf sein, da ggf. sid gestellt wird
-$sid			= JRequest::getInt('saison','1');
-$zps			= JRequest::getVar('zps');
-$itemid			= JRequest::getInt('Itemid','1');
+$sid			= clm_core::$load->request_int('saison', 1);
+$zps			= clm_core::$load->request_string('zps');
+$itemid			= clm_core::$load->request_int('Itemid', 1);
 $vereinsliste 	= $this->vereinsliste;
-//$vereine 		= $this->vereine;
 $verband 		= $this->verband;
-//$saisonid 	= $this->saisonid;
 $saisons	 	= $this->saisons;
 
 $config					= clm_core::$db->config();
@@ -34,8 +31,6 @@ $doc->setTitle(JText::_('CLUBS_LIST'));
 
 // Stylesheet laden
 require_once(JPATH_COMPONENT.DS.'includes'.DS.'css_path.php');
-
-require_once(JPATH_COMPONENT.DS.'includes'.DS.'googlemaps.php');
 
 // Sortierung
 if ($itemid <>'') { $plink = '&saison=' . $sid . '&Itemid='.$itemid; }
@@ -114,9 +109,10 @@ function tableOrdering( order, dir, task )
          for ($z = 0; $z < count ( $vereine ); $z++) { 
 		 
 			// Verband
-			if (isset($verband[$z-1]) AND ((!isset($verband[$z-1]->LV)) OR (isset($verband[$z]) && $verband[$z]->LV != $verband[$z-1]->LV) )) { 
+//			if (isset($verband[$z-1]) AND ((!isset($verband[$z-1]->LV)) OR (isset($verband[$z]) && $verband[$z]->LV != $verband[$z-1]->LV) )) { 
+			if (isset($vereine[$z-1]->Verband) AND ((!isset($vereine[$z-1]->LV)) OR (isset($vereine[$z]->Verband) && $vereine[$z]->LV != $vereine[$z-1]->LV) )) { 
 			echo '<tr><td colspan="9" class="noborder">&nbsp;</td></tr>';
-			echo '<tr class="anfang"><td colspan="9">'. $verband[$z]->Verbandname .'</td></tr>';
+//			echo '<tr class="anfang"><td colspan="9">'. $verband[$z]->Verbandname .'</td></tr>';
 			}
 			
 			// Verbände / Bezirke

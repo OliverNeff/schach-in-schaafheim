@@ -1,27 +1,28 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
- * @link http://www.fishpoke.de
+ * @link https://www.chessleaguemanager.de
  * @author Thomas Schwietert
  * @email fishpoke@fishpoke.de
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 defined('_JEXEC') or die('Restricted access');
-JHtml::_('behavior.tooltip', '.CLMTooltip');
+//JHtml::_('behavior.tooltip', '.CLMTooltip');
+require_once (JPATH_COMPONENT . DS . 'includes' . DS . 'clm_tooltip.php');
 
 // Variblen aus URL holen
-$sid 			= JRequest::getInt('saison','1');
-$lid			= JRequest::getInt('liga','1'); 
-$liga 			= JRequest::getInt( 'liga', '1' );
-$tln 			= JRequest::getInt('tlnr');
-$itemid 		= JRequest::getInt('Itemid','1');
-$zps			= JRequest::getVar('zps');
-$mgl			= JRequest::getInt('mglnr');
-$PKZ			= JRequest::getInt('PKZ');
+$sid 			= clm_core::$load->request_int('saison','1');
+$rating_type = clm_core::$db->saison->get($sid)->rating_type;
+$lid			= clm_core::$load->request_int('liga','1'); 
+$liga 			= clm_core::$load->request_int( 'liga', '1' );
+$tln 			= clm_core::$load->request_int('tlnr');
+$itemid 		= clm_core::$load->request_int('Itemid','1');
+$zps			= clm_core::$load->request_string('zps');
+$mgl			= clm_core::$load->request_int('mglnr');
+$PKZ			= clm_core::$load->request_string('PKZ');
 
 $erg 			= CLMModelSpieler::getCLMLink();
 
@@ -33,8 +34,8 @@ $spielerliste 	= $this->spielerliste;
 $ex = 0;
 
 if (isset($spieler[0]->Spielername)){ 
-if ($spieler[0]->dsb_datum  > 0) $hint_dwzdsb = JText::_('DWZ_DSB_COMMENT_RUN').' '.utf8_decode(JText::_('ON_DAY')).' '.JHTML::_('date',  $spieler[0]->dsb_datum, JText::_('DATE_FORMAT_CLM_F')); 
-if (($spieler[0]->dsb_datum == 0) || (!isset($spieler))) $hint_dwzdsb = JText::_('DWZ_DSB_COMMENT_UNCLEAR');  
+	if (($spieler[0]->dsb_datum == '0000-00-00') || ($spieler[0]->dsb_datum == '1970-01-01') || (!isset($spieler))) $hint_dwzdsb = '';  
+	else $hint_dwzdsb = JText::_('DWZ_DSB_COMMENT_RUN').' '.clm_core::$load->utf8decode(JText::_('ON_DAY')).' '.JHTML::_('date',  $spieler[0]->dsb_datum, JText::_('DATE_FORMAT_CLM_F')); 
 }
 // Stylesheet laden
 require_once(JPATH_COMPONENT.DS.'includes'.DS.'css_path.php');
@@ -148,8 +149,10 @@ else {  ?>
         	<?php if ($countryversion =="out") { ?>
 				<?php  $mgl4 = ''.$mgl; while (strlen($mgl4) < 4) { $mgl4 = '0'.$mgl4; } ?>
 				<td class="det_col2"><a href="http://schachbund.de/spieler.html?zps=<?php echo $zps; ?>-<?php echo $mgl4; ?>" target="_blank"><?php echo $spieler[0]->dsbDWZ; ?></a> - <?php echo $spieler[0]->DWZ_Index; ?></td>
-        	<?php } elseif ($countryversion =="en") { ?> 
+        	<?php } elseif ($countryversion =="en" AND $rating_type == 0) { ?> 
 				<td class="det_col2"><a href="http://www.ecfgrading.org.uk/new/player.php?PlayerCode=<?php echo $spieler[0]->PKZ.'#top'; ?>" target="_self"><?php echo $spieler[0]->dsbDWZ; ?></a></td>
+        	<?php } elseif ($countryversion =="en" AND $rating_type == 1) { ?> 
+				<td class="det_col2"><a href="https://www.ecfrating.org.uk/v2/new/player.php?ECF_code=<?php echo $spieler[0]->PKZ; ?>" target="_self"><?php echo $spieler[0]->dsbDWZ; ?></a></td>
             <?php } else { ?>
 				<td class="det_col2"><?php echo $spieler[0]->dsbDWZ; ?></td>
             <?php } ?>			
@@ -171,8 +174,14 @@ else {  ?>
 				<td class="det_col4"><a href="index.php?option=com_clm&view=verein&saison=<?php echo $sid; ?>&zps=<?php echo $zps; ?><?php if ($itemid <>'') { echo "&Itemid=".$itemid; } ?>"><?php echo $spieler[0]->Vereinname; ?></a></td>
             <?php } ?>
             </tr>
+            <?php if (isset($spieler[0]->Status) AND $spieler[0]->Status != 'A' ) { ?>
             <tr>
-            <td class="det_col3" valign="top"><?php echo JText::_('PLAYER_TEAMS') ?></td>
+				<td class="det_col3"><?php echo 'Spielberechtigung:'; ?></td>
+				<td class="det_col4"><?php echo $spieler[0]->Status; ?></td>
+            </tr>
+            <?php } ?>
+			<tr>
+			<td class="det_col3" valign="top"><?php echo JText::_('PLAYER_TEAMS') ?></td>
             <td class="det_col4" valign="top">
                 <?php if (count($erg) > 0) {
                 $c = 0;
@@ -207,7 +216,12 @@ else { $sum_ea = 0; $sum_punkte = 0; $sum_partien = 0; $ex = 0; ?>
         <th class="gsp"><?php echo JText::_('PLAYER_LOCATION') ?></th>
         <th class="gsp"><?php echo JText::_('PLAYER_BOARD') ?></th>
         <th><?php echo JText::_('PLAYER_OPONENT') ?></th>
-        <th class="gsp"><a title="<?php echo $hint_dwzdsb; ?>" class="Tooltip"><?php echo JText::_('PLAYER_RATING') ?></a></th>
+        <th class="gsp">
+		<?php if ($hint_dwzdsb != '') { ?>
+			<a title="<?php echo $hint_dwzdsb; ?>" class="CLMTooltip"><?php echo JText::_('PLAYER_RATING') ?></a>
+		<?php } else { ?>
+			<?php echo JText::_('PLAYER_RATING') ?>
+		<?php } ?>
         <th><?php echo JText::_('PLAYER_TEAM') ?></th>
         <th class="gsp2"><?php echo JText::_('DWZ_WE').' &sup1;'; ?></th>
         <th class="gsp2"><?php echo JText::_('PLAYER_RESULT') ?></th>
@@ -315,7 +329,7 @@ else { $sum_ea = 0; $sum_punkte = 0; $sum_partien = 0; $ex = 0; ?>
         <th class="anfang" colspan="9"><?php echo $spielerl->liga_name; ?></th>
     </tr>
     <tr>
-        <td><a title="<?php echo $hint_dwzdsb; ?>" class="Tooltip"><?php echo JText::_('PLAYER_RATING_OLD') ?></a></td>
+        <td><a title="<?php echo $hint_dwzdsb; ?>" class="CLMTooltip"><?php echo JText::_('PLAYER_RATING_OLD') ?></a></td>
 		<td><?php echo JText::_('PLAYER_W') ?></td>
         <td><?php echo JText::_('PLAYER_WE') ?></td>
         <td><?php echo JText::_('PLAYER_EF') ?></td>
@@ -331,7 +345,8 @@ else { $sum_ea = 0; $sum_punkte = 0; $sum_partien = 0; $ex = 0; ?>
 			$spielerl->start_dwz = $spielerl->dsbDWZ;
 			$spielerl->start_I0  = $spielerl->DWZ_Index;
         } ?>
-		<td><?php echo $spielerl->start_dwz.'-'.$spielerl->start_I0;?></td>
+		<td><?php if ($countryversion == "de") echo $spielerl->start_dwz.'-'.$spielerl->start_I0;
+					else echo $spielerl->start_dwz; ?></td>
         <td><?php echo $spielerl->Punkte;?></td>
         <td><?php echo number_format($spielerl->We,2);?></td>
         <td><?php echo $spielerl->EFaktor;?></td>
@@ -349,10 +364,12 @@ else { $sum_ea = 0; $sum_punkte = 0; $sum_partien = 0; $ex = 0; ?>
         <td><?php echo $Pkt[0].'  /  '.$spielerl->Partien;?></td>
          <?php } ?>
         <?php if ($spielerl->DWZ > 0) { ?>
-        <td><?php echo $spielerl->DWZ.'-'.$spielerl->I0;?></td>
+        <td><?php if ($countryversion == "de") echo $spielerl->DWZ.'-'.$spielerl->I0; 
+					else echo $spielerl->DWZ; ?></td>
         <?php }
            if ($spielerl->start_dwz >0 AND $spielerl->DWZ == 0) { ?>
-                <td><?php echo $spieler->start_dwz.'-'.$spieler->start_I0;?></td>
+                <td><?php if ($countryversion == "de") echo $spieler->start_dwz.'-'.$spieler->start_I0; 
+							else echo $spieler->start_dwz; ?></td>
                 <?php }
             if ($spielerl->start_dwz  == 0 AND $spielerl->DWZ == 0) { ?>
                 <td><?php echo JText::_('PLAYER_REST') ?></td>

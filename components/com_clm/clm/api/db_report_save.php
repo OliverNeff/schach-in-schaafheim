@@ -1,13 +1,20 @@
 <?php
-// ToDO Funktion fest integrieren
-function mb_str_pad( $input, $pad_length, $pad_string = ' ', $pad_type = STR_PAD_RIGHT)
-{
-    $diff = strlen( $input ) - mb_strlen( $input );
-    return str_pad( $input, $pad_length + $diff, $pad_string, $pad_type );
+/**
+ * @ Chess League Manager (CLM) Component 
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
+if (!function_exists('mb_str_pad')) {
+	function mb_str_pad( $input, $pad_length, $pad_string = ' ', $pad_type = STR_PAD_RIGHT)
+	{
+		$diff = strlen( $input ) - mb_strlen( $input );
+		return str_pad( $input, $pad_length + $diff, $pad_string, $pad_type );
+	}
 }
 // Eingang: Verband
 // Ausgang: Alle Vereine in diesem
-function clm_api_db_report_save($liga, $runde, $dg, $paar, $comment, $ko_decision, $homes, $guests, $results) {
+function clm_api_db_report_save($liga, $runde, $dg, $paar, $comment, $ko_decision, $homes, $guests, $results, $icomment) {
 	//CLM parameter auslesen
 	$config = clm_core::$db->config();
 	$countryversion = $config->countryversion;
@@ -22,6 +29,7 @@ function clm_api_db_report_save($liga, $runde, $dg, $paar, $comment, $ko_decisio
 		return array(false, "e_reportSaveInconsistent");
 	}
 	/* Start: Kontrolle der Daten */
+	$rang = $out["liga"][0]->rang;
 	$gast = array();
 	for ($i = 0;$i < count($out["gast"]);$i++) {
 	 if ($countryversion =="de") {
@@ -58,7 +66,8 @@ function clm_api_db_report_save($liga, $runde, $dg, $paar, $comment, $ko_decisio
 		}
 	}
 	/* Ende: Kontrolle der Daten*/
-	$comment = clm_core::$load->make_valid($comment, 8, "");
+	$comment = clm_core::$load->make_valid($comment, 18, "");
+	$icomment = clm_core::$load->make_valid($icomment, 18, "");
 	$ko_decision = intval(clm_core::$load->make_valid($ko_decision, 9, 1, array(1, 2, 3, 4, 5)));
 	$id = $out["access"];
 	$lid = $out["input"]["liga"];
@@ -194,9 +203,12 @@ function clm_api_db_report_save($liga, $runde, $dg, $paar, $comment, $ko_decisio
 		if ($y1 >= strlen($colorstr)) $y1 = 0;
 		// $sid macht hier keinen Sinn, die ID der Liga ist bereits eindeutig!
 		$sid = $out["liga"][0]->sid;
+		if (is_null($hmgl) OR $hmgl == '') $hmgl = '0'; 
+		if (is_null($gmgl) OR $gmgl == '') $gmgl = '0'; 
 		$query = "INSERT INTO #__clm_rnd_spl " . " ( `sid`, `lid`, `runde`, `paar`, `dg`, `tln_nr`, `brett`, `heim`, `weiss`, `spieler`, `PKZ` " . " , `zps`, `gegner`, `gPKZ`, `gzps`, `ergebnis` , `kampflos`, `punkte`, `gemeldet`) " 
 				." VALUES ('$sid','$lid','$rnd','$paarung','$dg','" . $out["paar"][0]->htln . "','" . ($y + 1) . "',1,'$weiss','$hmgl','$hPKZ','$hzps'," . " '$gmgl','$gPKZ','$gzps','$ergebnis', '$kampflos','$erg_h','$jid') "
 				.	  " , ('$sid','$lid','$rnd','$paarung','$dg','" . $out["paar"][0]->gtln . "','" . ($y + 1) . "','0','$schwarz','$gmgl','$gPKZ','$gzps'," . " '$hmgl','$hPKZ','$hzps','$ergebnis', '$kampflos','$erg_g','$jid') ";
+//clm_core::$api->test_print('clm_rnd_spl',$query);
 		clm_core::$db->query($query);
 		$hmpunkte+= $erg_h;
 		$gmpunkte+= $erg_g;
@@ -290,13 +302,15 @@ function clm_api_db_report_save($liga, $runde, $dg, $paar, $comment, $ko_decisio
 	$now = clm_core::$cms->getNowDate();
 	// Für Heimmannschaft updaten
 	$query = "UPDATE #__clm_rnd_man" . " SET gemeldet = " . $jid . " , zeit = '$now'" . " , ergebnis = " . $hergebnis . " , kampflos = " . $hkampflos
-		. " , brettpunkte = " . $hmpunkte . " , manpunkte = " . $hman_punkte . " , wertpunkte = " . $hwpunkte . " , comment = '" . $comment . "'" 
+		. " , brettpunkte = " . $hmpunkte . " , manpunkte = " . $hman_punkte . " , wertpunkte = " . $hwpunkte . " , comment = '" . $comment . "', icomment = '" . $icomment . "'" 
 		. " WHERE lid = " . $lid . " AND runde = " . $rnd . " AND paar = " . $paarung . " AND dg = " . $dg . " AND heim = 1 ";
+//clm_core::$api->test_print('clm_rnd_man',$query);
 	clm_core::$db->query($query);
 	// Für Gastmannschaft updaten
 	$query = "UPDATE #__clm_rnd_man" . " SET gemeldet = " . $jid . " , zeit = '$now'" . " , ergebnis = " . $gergebnis . " , kampflos = " . $gkampflos
-		. " , brettpunkte = " . $gmpunkte . " , manpunkte = " . $gman_punkte . " , wertpunkte = " . $gwpunkte . " , comment = '" . $comment . "'" 
+		. " , brettpunkte = " . $gmpunkte . " , manpunkte = " . $gman_punkte . " , wertpunkte = " . $gwpunkte . " , comment = '" . $comment . "', icomment = '" . $icomment . "'" 
 		. " WHERE lid = " . $lid . " AND runde = " . $rnd . " AND paar = " . $paarung . " AND dg = " . $dg . " AND heim = 0 ";
+//clm_core::$api->test_print('clm_rnd_man',$query);
 	clm_core::$db->query($query);
 	//mtmt start
 	if ($out["liga"][0]->runden_modus == 4 OR $out["liga"][0]->runden_modus == 5) { // KO Turnier
@@ -327,10 +341,10 @@ function clm_api_db_report_save($liga, $runde, $dg, $paar, $comment, $ko_decisio
 			clm_core::$db->query($query);
 		}
 		// Für Heimmannschaft updaten
-		$query = "UPDATE #__clm_rnd_man" . " SET ko_decision = " . $ko_decision . " , comment = '" . $comment . "'" . " WHERE lid = " . $lid . " AND runde = " . $rnd . " AND paar = " . $paarung . " AND dg = " . $dg . " AND heim = 1 ";
+		$query = "UPDATE #__clm_rnd_man" . " SET ko_decision = " . $ko_decision . " , comment = '" . $comment . "', icomment = '" . $icomment . "'" . " WHERE lid = " . $lid . " AND runde = " . $rnd . " AND paar = " . $paarung . " AND dg = " . $dg . " AND heim = 1 ";
 		clm_core::$db->query($query);;
 		// Für Gastmannschaft updaten
-		$query = "UPDATE #__clm_rnd_man" . " SET ko_decision = " . $ko_decision . " , comment = '" . $comment . "'" . " WHERE lid = " . $lid . " AND runde = " . $rnd . " AND paar = " . $paarung . " AND dg = " . $dg . " AND heim = 0 ";
+		$query = "UPDATE #__clm_rnd_man" . " SET ko_decision = " . $ko_decision . " , comment = '" . $comment . "', icomment = '" . $icomment . "'" . " WHERE lid = " . $lid . " AND runde = " . $rnd . " AND paar = " . $paarung . " AND dg = " . $dg . " AND heim = 0 ";
 		clm_core::$db->query($query);
 	}
 	/*********************************************************/
@@ -380,7 +394,12 @@ function clm_api_db_report_save($liga, $runde, $dg, $paar, $comment, $ko_decisio
 		$player[$i][1] = '';
 		$player[$i][2] = '';
 	  } else {
-		$player[$i][0] = $out["heim"][$p]->snr;
+//		$player[$i][0] = $out["heim"][$p]->snr;
+		if ($rang === '0') {
+			$player[$i][0] = $out["heim"][$p]->snr;
+		} else {
+			$player[$i][0] = $out["heim"][$p]->rmnr . "-" . $out["heim"][$p]->rang;
+		}
 		if ($countryversion == "de")
 			$player[$i][1] = $out["heim"][$p]->mgl_nr;
 		else
@@ -394,7 +413,12 @@ function clm_api_db_report_save($liga, $runde, $dg, $paar, $comment, $ko_decisio
 		$player[$i][5] = '';
 		$player[$i][6] = '';
 	  } else {
-		$player[$i][4] = $out["gast"][$q]->snr;
+//		$player[$i][4] = $out["gast"][$q]->snr;
+		if ($rang === '0') {
+			$player[$i][4] = $out["gast"][$q]->snr;
+		} else {
+			$player[$i][4] = $out["gast"][$q]->rmnr . "-" . $out["gast"][$q]->rang;
+		}
 		if ($countryversion == "de")
 			$player[$i][5] = $out["gast"][$q]->mgl_nr;
 		else
@@ -444,7 +468,7 @@ function clm_api_db_report_save($liga, $runde, $dg, $paar, $comment, $ko_decisio
 	$subject = $lang->service." ".$out["liga"][0]->name.': '.$out["paar"][0]->hname." - ".$out["paar"][0]->gname."  ".$hmpunkte.' : '.$gmpunkte;
 	
 	if ($htmlMail == 0) {  // im txt-Format bekommen alle die gleiche Mail
-		$body_txt = clm_core::$load->load_view("liga_mail_body_text", array($player, $hmpunkte . " - " . $gmpunkte, date('Y-m-d H:i:s'), $date, $out["paar"][0]->hname, $out["paar"][0]->gname, $hmf, $gmf, $comment, $ko, clm_core::$access->getName(), $out["liga"][0]->name, $gemeldet),false);
+		$body_txt = clm_core::$load->load_view("liga_mail_body_text", array($player, $hmpunkte . " - " . $gmpunkte, date('Y-m-d H:i:s'), $date, $out["paar"][0]->hname, $out["paar"][0]->gname, $hmf, $gmf, $comment, $icomment, $ko, clm_core::$access->getName(), $out["liga"][0]->name, $gemeldet),false);
 	}
 	
 	// Mail an Admin	
@@ -452,7 +476,7 @@ function clm_api_db_report_save($liga, $runde, $dg, $paar, $comment, $ko_decisio
 		if ($htmlMail == 0) {
 			$body = $body_txt[1];
 		} else {
-			$body = clm_core::$load->load_view("liga_mail_body_html", array($player, $hmpunkte . " - " . $gmpunkte, date('Y-m-d H:i:s'), $date, $out["paar"][0]->hname, $out["paar"][0]->gname, $hmf, $gmf, $comment, $ko, clm_core::$access->getName(), $out["liga"][0]->name, $gemeldet, $out, 'Admin'),false);
+			$body = clm_core::$load->load_view("liga_mail_body_html", array($player, $hmpunkte . " - " . $gmpunkte, date('Y-m-d H:i:s'), $date, $out["paar"][0]->hname, $out["paar"][0]->gname, $hmf, $gmf, $comment, $icomment, $ko, clm_core::$access->getName(), $out["liga"][0]->name, $gemeldet, $out, 'Admin'),false);
 			$body = $body[1];
 		}
 		clm_core::$cms->sendMail($from, $fromname, $config->email_bcc, $subject, $body, $htmlMail);
@@ -462,7 +486,7 @@ function clm_api_db_report_save($liga, $runde, $dg, $paar, $comment, $ko_decisio
 		if ($htmlMail == 0) {
 			$body = $body_txt[1];
 		} else {
-			$body = clm_core::$load->load_view("liga_mail_body_html", array($player, $hmpunkte . " - " . $gmpunkte, date('Y-m-d H:i:s'), $date, $out["paar"][0]->hname, $out["paar"][0]->gname, $hmf, $gmf, $comment, $ko, clm_core::$access->getName(), $out["liga"][0]->name, $gemeldet, $out, 'SL'),false);
+			$body = clm_core::$load->load_view("liga_mail_body_html", array($player, $hmpunkte . " - " . $gmpunkte, date('Y-m-d H:i:s'), $date, $out["paar"][0]->hname, $out["paar"][0]->gname, $hmf, $gmf, $comment, $icomment, $ko, clm_core::$access->getName(), $out["liga"][0]->name, $gemeldet, $out, 'SL'),false);
 			$body = $body[1];
 		}
 		clm_core::$cms->sendMail($from, $fromname, $out["sl"][0]->email, $subject, $body, $htmlMail);
@@ -473,7 +497,7 @@ function clm_api_db_report_save($liga, $runde, $dg, $paar, $comment, $ko_decisio
 		if ($htmlMail == 0) {
 			$body = $body_txt[1];
 		} else {
-			$body = clm_core::$load->load_view("liga_mail_body_html", array($player, $hmpunkte . " - " . $gmpunkte, date('Y-m-d H:i:s'), $date, $out["paar"][0]->hname, $out["paar"][0]->gname, $hmf, $gmf, $comment, $ko, clm_core::$access->getName(), $out["liga"][0]->name, $gemeldet, $out, 'Home'),false);
+			$body = clm_core::$load->load_view("liga_mail_body_html", array($player, $hmpunkte . " - " . $gmpunkte, date('Y-m-d H:i:s'), $date, $out["paar"][0]->hname, $out["paar"][0]->gname, $hmf, $gmf, $comment, $icomment, $ko, clm_core::$access->getName(), $out["liga"][0]->name, $gemeldet, $out, 'Home'),false);
 			$body = $body[1];
 		}
 		clm_core::$cms->sendMail($from, $fromname, $out["hmf"][0]->email, $subject, $body, $htmlMail);
@@ -484,7 +508,7 @@ function clm_api_db_report_save($liga, $runde, $dg, $paar, $comment, $ko_decisio
 		if ($htmlMail == 0) {
 			$body = $body_txt[1];
 		} else {
-			$body = clm_core::$load->load_view("liga_mail_body_html", array($player, $hmpunkte . " - " . $gmpunkte, date('Y-m-d H:i:s'), $date, $out["paar"][0]->hname, $out["paar"][0]->gname, $hmf, $gmf, $comment, $ko, clm_core::$access->getName(), $out["liga"][0]->name, $gemeldet, $out, 'Guest'),false);
+			$body = clm_core::$load->load_view("liga_mail_body_html", array($player, $hmpunkte . " - " . $gmpunkte, date('Y-m-d H:i:s'), $date, $out["paar"][0]->hname, $out["paar"][0]->gname, $hmf, $gmf, $comment, $icomment, $ko, clm_core::$access->getName(), $out["liga"][0]->name, $gemeldet, $out, 'Guest'),false);
 			$body = $body[1];
 		}
 		clm_core::$cms->sendMail($from, $fromname, $out["gmf"][0]->email, $subject, $body, $htmlMail);

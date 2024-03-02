@@ -1,9 +1,9 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2019 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
- * @link http://www.fishpoke.de
+ * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
  * @email fishpoke@fishpoke.de
  * @author Andreas Dorn
@@ -11,6 +11,11 @@
 */
 defined('_JEXEC') or die('Restricted access');
 
+		$turParams = new clm_class_params($this->turnier->params);
+		$param_typeaccount = $turParams->get('typeAccount', 0);
+		$param_teamranking = $turParams->get('teamranking', 0);
+		$param_import_source = $turParams->get('import_source', 0);
+		$param_eloanalysis = $turParams->get('optionEloAnalysis', 0);
 ?>
 
 <form action="index.php" method="post" name="adminForm" id="adminForm">
@@ -42,6 +47,31 @@ defined('_JEXEC') or die('Restricted access');
 				<td class="key" nowrap="nowrap"><?php echo JText::_('CLUB'); ?>:</td>
 				<td><input class="inputbox" type="text" name="verein" id="verein" size="20" maxlength="60" value="<?php echo $this->player->verein; ?>" /></td>
 			</tr>
+			<?php if ($param_teamranking > 0 ) { ?>
+			<tr>
+				<td class="key" nowrap="nowrap"><?php echo JText::_('TEAM'); ?>:</td>
+				<td class="paramlist_value">
+					<?php
+					$options = array();
+					$options[0] = JText::_('KEIN TEAM');
+					foreach ($this->teams as $team) {
+						$options[$team->tln_nr] = $team->name;
+					}
+					$optionlist = array();
+					foreach ($options as $key => $val) {
+						$optionlist[]	= JHtml::_('select.option', $key, $val, 'id', 'name' );
+					}
+					echo JHtml::_('select.genericlist', $optionlist, 'mtln_nr', 'class="inputbox"', 'id', 'name', $this->player->mtln_nr);
+					?>
+				</td>
+			</tr>
+			<?php } ?>
+			<?php if ($param_import_source != '' AND $param_import_source != 0) { ?>
+			<tr>
+				<td class="key" nowrap="nowrap"><?php echo JText::_('DECODE_NICKNAME'); ?> (<?php echo $param_import_source; ?>):</td>
+				<td><input class="inputbox" type="text" name="oname" id="oname" size="20" maxlength="60" value="<?php echo $this->player->oname; ?>" /></td>
+			</tr>
+			<?php } ?>
 			<tr>
 				<td class="key" nowrap="nowrap"><?php echo JText::_('TWZ'); ?>:</td>
 				<td><input class="inputbox" type="text" name="twz" id="twz" size="4" maxlength="4" value="<?php echo $this->player->twz; ?>" /></td>
@@ -49,8 +79,6 @@ defined('_JEXEC') or die('Restricted access');
 			<tr>
 				<td class="key" nowrap="nowrap"><?php echo JText::_('RATING'); ?>:</td>
 				<td><input class="inputbox" type="text" name="start_dwz" id="start_dwz" size="4" maxlength="4" value="<?php echo $this->player->start_dwz; ?>" /></td>
-			</tr>
-			<tr>
 				<td class="key" nowrap="nowrap"><?php echo JText::_('RATING_INDEX'); ?>:</td>
 				<td><input class="inputbox" type="text" name="start_I0" id="start_I0" size="4" maxlength="4" value="<?php echo $this->player->start_I0; ?>" /></td>
 			</tr>
@@ -58,6 +86,14 @@ defined('_JEXEC') or die('Restricted access');
 				<td class="key" nowrap="nowrap"><?php echo JText::_('FIDE_ELO'); ?>:</td>
 				<td><input class="inputbox" type="text" name="FIDEelo" id="FIDEelo" size="4" maxlength="4" value="<?php echo $this->player->FIDEelo; ?>" /></td>
 			</tr>
+			<?php if ($param_eloanalysis == 1) { ?>
+				<tr>
+					<td class="key" nowrap="nowrap"><?php echo JText::_('FIDE_ID'); ?>:</td>
+					<td><input class="inputbox" type="text" name="FIDEid" id="FIDEid" size="8" maxlength="8" value="<?php echo $this->player->FIDEid; ?>" /></td>
+					<td class="key" nowrap="nowrap"><?php echo JText::_('FIDE_CCO'); ?>:</td>
+					<td><input class="inputbox" type="text" name="FIDEcco" id="FIDEcco" size="3" maxlength="3" value="<?php echo $this->player->FIDEcco; ?>" /></td>
+				</tr>
+			<?php } ?>
 			<tr>
 				<td class="key" nowrap="nowrap"><?php echo JText::_('PLAYER_TITLE'); ?>:</td>
 				<td><input class="inputbox" type="text" name="titel" id="titel" size="3" maxlength="3" value="<?php echo $this->player->titel; ?>" /></td>
@@ -86,6 +122,20 @@ defined('_JEXEC') or die('Restricted access');
 				<td class="key" nowrap="nowrap"><?php echo JText::_('TOURNAMENT_SPECIAL_POINTS'); ?>:</td>
 				<td><input class="inputbox" type="text" name="s_punkte" id="s_punkte" size="4" maxlength="4" value="<?php echo $this->player->s_punkte; ?>"/></td>
 			</tr>
+			<tr>
+				<td class="key" nowrap="nowrap"><?php echo JText::_('PLAYER_EMAIL'); ?>:</td>
+				<td><input class="inputbox" type="text" name="email" id="email" size="50" maxlength="60" value="<?php echo $this->player->email; ?>" /></td>
+			</tr>
+			<tr>
+				<td class="key" nowrap="nowrap"><?php echo JText::_('PLAYER_TEL_NO'); ?>:</td>
+				<td><input class="inputbox" type="text" name="tel_no" id="tel_no" size="30" maxlength="30" value="<?php echo $this->player->tel_no; ?>" /></td>
+			</tr>
+			<?php if ($param_typeaccount > '0') { ?>
+			<tr>
+				<td class="key" nowrap="nowrap"><?php echo JText::_('PLAYER_ACCOUNT_'.$param_typeaccount); ?>:</td>
+				<td><input class="inputbox" type="text" name="account" id="account" size="50" maxlength="50" value="<?php echo $this->player->account; ?>" /></td>
+			</tr>
+			<?php } ?>
 		</table>
 		
 		</fieldset>

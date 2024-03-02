@@ -1,6 +1,8 @@
 /**
   * CSS Style for Chess League Manager
-  * www.chessleaguemanager.de
+  * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
+  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+  * @link https://www.chessleaguemanager.de
   * Author: Fjodor Schaefer
   * www.vonfio.de
   
@@ -231,17 +233,25 @@
 #spieler .spielerdwzneu th { font-weight: normal !important; }
 
 
-/***********************************/
-/** Darstellung der Ligastatistik **/
-/***********************************/
+/***************************************************/
+/** Darstellung der Ligastatistik/Saisonstatistik **/
+/***************************************************/
 
 #statistik table .anfang { border-bottom: 2px solid #666666; }
-#statistik .border, #info .border { border-left: 2px solid #666666;}
 #statistik table .punkte { text-align:center;}
 #statistik table .white { text-align:center; }
 #statistik table .black {text-align:center; }
 #statistik table .remis { text-align:center;}
 #statistik table .kampflos { text-align:center;}
+#statistik table .clmborder { border-left: 2px solid #666666 !important;}
+
+#info table .anfang { border-bottom: 2px solid #666666; }
+#info table .punkte { text-align:center;}
+#info table .white { text-align:center; }
+#info table .black {text-align:center; }
+#info table .remis { text-align:center;}
+#info table .kampflos { text-align:center;}
+#info table .clmborder { border-left: 2px solid #666666 !important;}
 
 
 /******************************************/
@@ -336,7 +346,7 @@
 /** Darstellung der Turniertabelle **/
 /************************************/
 
-#turnier_tabelle .rang { width: 30px; text-align:center; } 
+#turnier_tabelle .rang, #turnier_tabelle .rang_auf, #turnier_tabelle .rang_auf_evtl, #turnier_tabelle .rang_ab, #turnier_tabelle .rang_ab_evtl {width: 30px; text-align: center !important;} 
 #turnier_tabelle .titel { width: 40px; text-align:center; } 
 #turnier_tabelle .name_float {} 
 #turnier_tabelle .verein {} 

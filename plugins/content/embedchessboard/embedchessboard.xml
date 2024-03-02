@@ -2,14 +2,14 @@
 
 <extension version="1.6.0" type="plugin" group="content" method="upgrade">
 	<name>plg_content_embedchessboard</name>
-	<creationDate>May 2017</creationDate>
-	<copyright>Copyright (C) 2009-2017 Paolo Casaschi. All rights reserved.</copyright>
+	<creationDate>December 2023</creationDate>
+	<copyright>Copyright (C) 2009-2023 Paolo Casaschi. All rights reserved.</copyright>
 	<license>GNU General Public License</license>
 	<author>Paolo Casaschi</author>
 	<authorEmail>pgn4web@casaschi.net</authorEmail>
 	<authorUrl>http://pgn4web.casaschi.net</authorUrl>
 	<description>PLG_CONTENT_EMBEDCHESSBOARD_XML_DESCRIPTION</description>
-	<version>3.04.00</version>
+	<version>3.06.01</version>
 	<scriptfile>scripts/postinstall-script.php</scriptfile>
 	<files>
 		<filename plugin="embedchessboard">embedchessboard.php</filename>
@@ -59,6 +59,6 @@
 		</fields>
 	</config>
 	<updateservers>
-		<server type="extension" priority="1" name="EmbedChessboard update site">http://svn.code.sf.net/p/pgn4web/joec/trunk/joomla-update/extension.xml</server>
+		<server type="extension" priority="1" name="EmbedChessboard update site">https://svn.code.sf.net/p/pgn4web/joec/trunk/joomla-update/extension.xml</server>
 	</updateservers>
 </extension>

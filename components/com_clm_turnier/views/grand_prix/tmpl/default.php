@@ -12,9 +12,6 @@ defined('JPATH_CLM_TURNIER_COMPONENT') or die('Restricted access');
 
 echo "<div class='clm'>";
 
-// Stylesheet laden
-jimport('includes.css_path', JPATH_CLM_TURNIER_COMPONENT);
-
 // CLM Config
 $config = clm_core::$db->config();
 
@@ -37,8 +34,12 @@ if (is_object($this->grand_prix) && $this->grand_prix->introduction != null) {
     echo '</p>';
 }
 
+// Submenü
+echo JLayoutHelper::render('submenu', array('state' => $this->state, 'ranglisten' => $this->get('ranglisten'), 'print' => $this->print), JPATH_CLM_TURNIER_COMPONENT);
+
 if (count($this->gesamtwertung) == 0) {
-    echo CLMContent::clmWarning(JText::_('COM_CLM_TURNIER_KATEGORIE_GESAMTWERTUNG_NO'));
+	$string = ($this->state->get('grand_prix.rids')) ? 'TOURNAMENT_SPECIALRANKING_NOPLAYERS' : 'COM_CLM_TURNIER_KATEGORIE_GESAMTWERTUNG_NO';
+    echo CLMContent::clmWarning(JText::_($string));
 } else {
     $min_tournaments = $this->get('minTournaments');
     $filter = $this->state->get('grand_prix.filter');
@@ -57,13 +58,13 @@ if (count($this->gesamtwertung) == 0) {
 			<th class="verein"><?php echo JText::_('COM_CLM_TURNIER_COL_VEREIN') ?></th>
 		<?php } ?>
 		<?php if ($this->params->get('show_dwz') && $this->params->get('show_elo')) { ?>
-			<th class="dwz"><?php echo JText::_('COM_CLM_TURNIER_COL_TWZ') ?></th>
+			<th class="twz"><?php echo JText::_('COM_CLM_TURNIER_COL_TWZ') ?></th>
 		<?php } ?>
 		<?php if ($this->params->get('show_dwz')) { ?>
-			<th class="dwz"><?php echo JText::_('COM_CLM_TURNIER_COL_DWZ') ?></th>
+			<th class="twz"><?php echo JText::_('COM_CLM_TURNIER_COL_DWZ') ?></th>
 		<?php } ?>
 		<?php if ($this->params->get('show_elo')) { ?>
-			<th class="dwz"><?php echo JText::_('COM_CLM_TURNIER_COL_ELO') ?></th>
+			<th class="twz"><?php echo JText::_('COM_CLM_TURNIER_COL_ELO') ?></th>
 		<?php } ?>
 		
 		<?php
@@ -72,16 +73,17 @@ if (count($this->gesamtwertung) == 0) {
         ?>
 		<th class="erg">
 		<?php
+			$ik = $this->getTurnierIndex($ii);
     		if (is_object($this->grand_prix) && $this->grand_prix->col_header) {
-		        $colTitle = strftime("%b", mktime(0, 0, 0, $ii));
+		        $colTitle = strftime("%b", mktime(0, 0, 0, $ik, 1));
             } else {
-		        $colTitle = $ii;
+		        $colTitle = $ik;
 		    }
 		    // Turnier gewertet
-		    if ($linkTurnier && isset($this->turniere[$ii])) {
-		    	$link = Grand_PrixHelperRoute::getTurnierRanglisteRoute($this->turniere[$ii]->id);
-		        $attribs = 'class="active_link"' .
-		  		        ' title="' . $this->turniere[$ii]->name . '"';
+		    if ($linkTurnier && isset($this->turniere[$ik])) {
+		    	$link = CLMTurnierRoute::getTurnierRanglisteRoute($this->turniere[$ik]->id, $this->params->get('link_turnier'));
+				$attribs = 'class="active_link"' .
+		  		        ' title="' . $this->turniere[$ik]->name . '"';
 		  		        
 		        $colTitle = JHtml::_('link', JRoute::_($link), $colTitle, $attribs);
             }
@@ -99,7 +101,7 @@ if (count($this->gesamtwertung) == 0) {
 <?php
     // alle Spieler durchgehen
     $p = 0;
-    $gb = 0;
+    $gb = -1;
     foreach ($this->gesamtwertung as $row) {
         $style = '';
         if (count($row->ergebnis) < $min_tournaments) {
@@ -124,23 +126,24 @@ if (count($this->gesamtwertung) == 0) {
 			<td class="verein"><?php echo $row->verein; ?></td>
 		<?php } ?>
 		<?php if ($this->params->get('show_dwz') && $this->params->get('show_elo')) { ?>
-			<td class="dwz"><?php echo $row->twz; ?></td>
+			<td class="twz"><?php echo ($row->twz == 0 ? '-' : $row->twz); ?></td>
 		<?php } ?>
 		<?php if ($this->params->get('show_dwz')) { ?>
-			<td class="dwz"><?php echo $row->dwz; ?></td>
+			<td class="twz"><?php echo ($row->dwz == 0 ? '-' : $row->dwz); ?></td>
 		<?php } ?>
 		<?php if ($this->params->get('show_elo')) { ?>
-			<td class="dwz"><?php echo $row->elo; ?></td>
+			<td class="twz"><?php echo ($row->elo == 0 ? '-': $row->elo); ?></td>
 		<?php } ?>
 		<?php
         for ($ii = 1; $ii <= $this->anzahlTurniere; $ii ++) {
             $style = '';
             $ergebnis = '';
-            if (isset($row->ergebnis[$ii])) {
-                $ergebnis = $row->ergebnis[$ii];
+            $ik = $this->getTurnierIndex($ii);
+            if (isset($row->ergebnis[$ik])) {
+                $ergebnis = $row->ergebnis[$ik];
                 if ($ergebnis < 0 || strcmp(strval($ergebnis), '-0') == 0) {
                     $ergebnis *= - 1;
-                    $style = ' style="background-color: yellow;"';
+                    $style = ' style="background-color: yellow !important;"';
                 }
             }
             ?>

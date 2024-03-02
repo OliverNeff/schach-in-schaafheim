@@ -2,12 +2,12 @@
 <extension type="module" version="1.7.0" client="site" method="upgrade">
 	<name>CLM Extern Modul</name>
 	<author>CLM Projekt</author>
-	<creationDate>26.11.2018</creationDate>
-	<copyright>(C) Copyright 2009-2018 by CLM Project</copyright>
+	<creationDate>12.10.2021</creationDate>
+	<copyright>(C) Copyright 2009-2021 by CLM Project</copyright>
 	<license>GNU/GPL</license>
 	<authorEmail>fishpoke@fishpoke.de</authorEmail>
 	<authorUrl>www.chessleaguemanager.de</authorUrl>
-	<version>3.4.0</version>
+	<version>3.5.0</version>
 	<description>
 		<![CDATA[
 			 <h3>Chess League Manager : Externes Darstellungsmodul</h3>

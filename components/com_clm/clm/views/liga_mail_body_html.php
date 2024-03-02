@@ -1,5 +1,11 @@
 <?php
-function clm_view_liga_mail_body_html($player, $result, $dateNow, $dateGame, $hname, $gname, $hmf, $gmf, $comment, $ko, $sender, $liga, $gemeldet, $out, $recipient) {
+/**
+ * @ Chess League Manager (CLM) Component 
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
+function clm_view_liga_mail_body_html($player, $result, $dateNow, $dateGame, $hname, $gname, $hmf, $gmf, $comment, $icomment, $ko, $sender, $liga, $gemeldet, $out, $recipient) {
 	$lang = clm_core::$lang->liga_mail_body;
 	$dateNow = clm_core::$load->date_to_string($dateNow,true);
 	if ($dateGame != - 1) {
@@ -12,6 +18,12 @@ function clm_view_liga_mail_body_html($player, $result, $dateNow, $dateGame, $hn
 	$lid	= $out["paar"][0]->lid;
 	$rnd	= $out["paar"][0]->runde;
 	$dg		= $out["paar"][0]->dg; 
+	$rang = $out["liga"][0]->rang;
+	if ($rang === '0') {
+		$rmnr = "melde_nr";
+	} else {
+		$rmnr = "rang_nr";
+	}
 	if (isset($out["hmf"][0])) {
 		$hmf_name	= $out["hmf"][0]->name;
 		$hmf_email	= $out["hmf"][0]->email;
@@ -123,11 +135,13 @@ function clm_view_liga_mail_body_html($player, $result, $dateNow, $dateGame, $hn
 		<table width="700" border="0" cellspacing="0" cellpadding="3" style="font-family: Verdana, Arial, Helvetica, sans-serif; font-size: 11px;">
 		<tr>
 			<td width="50" bgcolor="#F2F2F2" style="border-bottom: solid 1px #000000; border-top: solid 1px #000000; padding: 3px;"><div align="center" style="font-size: 12px;"><strong>'.$lang->raw("board").'</strong></div></td>
-			<td width="75" bgcolor="#F2F2F2" style="border-bottom: solid 1px #000000; border-top: solid 1px #000000; padding: 3px;"><div align="center" style="font-size: 12px;"><strong>'.$lang->raw("melde_nr").'</strong></div></td>
+<!--		<td width="75" bgcolor="#F2F2F2" style="border-bottom: solid 1px #000000; border-top: solid 1px #000000; padding: 3px;"><div align="center" style="font-size: 12px;"><strong>'.$lang->raw("melde_nr").'</strong></div></td> -->
+			<td width="75" bgcolor="#F2F2F2" style="border-bottom: solid 1px #000000; border-top: solid 1px #000000; padding: 3px;"><div align="center" style="font-size: 12px;"><strong>'.$lang->raw($rmnr).'</strong></div></td>
 			<td width="60" bgcolor="#F2F2F2" style="border-bottom: solid 1px #000000; border-top: solid 1px #000000; padding: 3px;"><div align="center" style="font-size: 12px;"><strong>'.$lang->raw("mgl_nr").'</strong></div></td>
 			<td width="210" bgcolor="#F2F2F2" style="border-bottom: solid 1px #000000; border-top: solid 1px #000000; padding: 3px;"><div align="center" style="font-size: 12px;"><strong>'.$lang->raw("player").'</strong>'.$lang->raw("home").'</div></td>
 			<td width="75" bgcolor="#F2F2F2" style="border-bottom: solid 1px #000000; border-top: solid 1px #000000; padding: 3px;"><div align="center" style="font-size: 12px;"><strong>'.$lang->raw("result").'</strong></div></td>
-			<td width="75" bgcolor="#F2F2F2" style="border-bottom: solid 1px #000000; border-top: solid 1px #000000; padding: 3px;"><div align="center" style="font-size: 12px;"><strong>'.$lang->raw("melde_nr").'</strong></div></td>
+<!--		<td width="75" bgcolor="#F2F2F2" style="border-bottom: solid 1px #000000; border-top: solid 1px #000000; padding: 3px;"><div align="center" style="font-size: 12px;"><strong>'.$lang->raw("melde_nr").'</strong></div></td> -->
+			<td width="75" bgcolor="#F2F2F2" style="border-bottom: solid 1px #000000; border-top: solid 1px #000000; padding: 3px;"><div align="center" style="font-size: 12px;"><strong>'.$lang->raw($rmnr).'</strong></div></td>
 			<td width="60" bgcolor="#F2F2F2" style="border-bottom: solid 1px #000000; border-top: solid 1px #000000; padding: 3px;"><div align="center" style="font-size: 12px;"><strong>'.$lang->raw("mgl_nr").'</strong></div></td>
 			<td width="215" bgcolor="#F2F2F2" style="border-bottom: solid 1px #000000; border-top: solid 1px #000000; padding: 3px;"><div align="center" style="font-size: 12px;"><strong>'.$lang->raw("player").'</strong> '.$lang->raw("guest").'</div></td>
 		</tr>
@@ -175,6 +189,26 @@ function clm_view_liga_mail_body_html($player, $result, $dateNow, $dateGame, $hn
 			<td width="80" valign="top"><strong>'.$lang->raw("comment").'</strong></td>
 			<td  width="420" nowrap="nowrap" valign="top" size="1">
 				<textarea cols="30" rows="2" style="width:90%">'.str_replace('&','&amp;',$comment).'</textarea>
+			</td>
+  		</tr>
+	  ';
+/*      $body_html .= 	'
+		<tr>
+			<td width="80" valign="top"><strong>'.$lang->raw("comment").'</strong></td>
+			<td  width="420" nowrap="nowrap" valign="top" size="1">
+				<textarea cols="30" rows="2" style="width:90%">'.clm_core::$load->utf8decode($comment).'</textarea>
+			</td>
+  		</tr>
+	  ';
+*/	}
+	if ($icomment != "") { 
+		$icomment = preg_replace('/\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s\s/','<br>',$icomment);
+
+      $body_html .= 	'
+		<tr>
+			<td width="80" valign="top"><strong>'.$lang->raw("icomment").'</strong></td>
+			<td  width="420" nowrap="nowrap" valign="top" size="1">
+				<textarea cols="30" rows="2" style="width:90%">'.str_replace('&','&amp;',$icomment).'</textarea>
 			</td>
   		</tr>
 	  ';

@@ -11,6 +11,29 @@ $ -> Language fix or change
 - -> Removed
 ! -> Note
 
+- - - - - 4.1.0 - [29-11-2023] - - - - - - - - - - - - - - - - - - - -
+^ Code-Anpassung Joomla 4.4.1: Aufbau der Sprachdateien
+
+- - - - - 4.0.1 - [08-08-2023] - - - - - - - - - - - - - - - - - - - -
+# Umbenennen class body
+# Parametersicherung erweitert
+
+- - - - - 4.0.0 - [06-12-2022] - - - - - - - - - - - - - - - - - - - -
+^ Code-Anpassung php 8
+
+- - - - - 3.5.2 - [20-02-2022] - - - - - - - - - - - - - - - - - - - -
+^ Code-Anpassung J!4 Design Kalenderansicht
+
+- - - - - 3.5.1 - [06-02-2022] - - - - - - - - - - - - - - - - - - - -
++ Liste auch scrollbar möglich
+
+- - - - - 3.5.0 - [07-12-2021] - - - - - - - - - - - - - - - - - - - -
+# Ligen mit 3-4 Durchgängen
+^ Code-Anpassung wegen php 8
+
+- - - - - 3.4.0 - [12-10-2021] - - - - - - - - - - - - - - - - - - - -
+^ Code-Anpassung wegen Joomla 4
+
 - - - - - 3.3.3 - [02-09-2018] - - - - - - - - - - - - - - - - - - - -
 # Zeitsprünge (Links erweitert)
 

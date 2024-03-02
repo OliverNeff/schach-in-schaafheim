@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2016 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2021 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -27,7 +27,8 @@ defined('_JEXEC') or die('Restricted access');
 			</td>
 			<td nowrap="nowrap">
 				<?php
-					echo "&nbsp;&nbsp;&nbsp;".JHtml::_('grid.state',  $this->param['state'] );
+//					echo "&nbsp;&nbsp;&nbsp;".JHtml::_('grid.state',  $this->param['state'] );
+					echo "&nbsp;&nbsp;&nbsp;".CLMForm::selectState($this->param['state'] );
 				?>
 			</td>
 		</tr>
@@ -90,7 +91,8 @@ defined('_JEXEC') or die('Restricted access');
 			// load the row from the db table 
 			$row->load( $value->id );
 			$checked 	= JHtml::_('grid.checkedout',   $row, $i );
-			$published 	= JHtml::_('grid.published', $row, $i );
+//			$published 	= JHtml::_('grid.published', $row, $i );
+			$published 	= JHtml::_('jgrid.published', $row->published, $i );
 
 			?>
 			<tr class="<?php echo 'row'. $k; ?>">
@@ -106,7 +108,8 @@ defined('_JEXEC') or die('Restricted access');
                 
 				<td align="left">
 					<?php echo JHtml::_( 'date', $row->startdate, JText::_('DATE_FORMAT_CLM'));?>
-					<?php if ($row->enddate != 0) { echo "&nbsp;-&nbsp;". JHtml::_( 'date', $row->enddate, JText::_('DATE_FORMAT_CLM')); }?>
+					<?php if ($row->enddate != 0 AND $row->enddate != '0000-00-00' AND $row->enddate != '1970-01-01' AND $row->enddate != $row->startdate) { 
+								echo "&nbsp;-&nbsp;". JHtml::_( 'date', $row->enddate, JText::_('DATE_FORMAT_CLM')); }?>
 				</td>
 				<td align="center">
 					<?php if ($row->starttime != '00:00:00') echo substr($row->starttime,0,5);?>

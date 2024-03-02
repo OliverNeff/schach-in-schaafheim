@@ -1,4 +1,10 @@
 <?php
+/**
+ * @ Chess League Manager (CLM) Termine Modul 
+ * @Copyright (C) 2008-2021 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
 // no direct access
 defined('_JEXEC') or die('Restricted access');
 class modCLMTermineHelper {
@@ -7,7 +13,8 @@ class modCLMTermineHelper {
 	$db = JFactory::getDBO();
 	$par_liste = $params->def('liste', 0);
 	$param['categoryid'] = $params->def('categoryid', 0);
-	JRequest::setVar( 'categoryid',$param['categoryid']);
+//	JRequest::setVar( 'categoryid',$param['categoryid']);
+	$_GET['categoryid'] = $param['categoryid'];
 	if ($par_liste == 0) {
 		$now = date("Y-m-d");
 	} else {
@@ -66,7 +73,7 @@ class modCLMTermineHelper {
 	public static function yearForward($timestamp) {
 		return mktime(0, 0, 0, date("m", $timestamp), date("d", $timestamp), date("Y", $timestamp) + 1);
 	}
-	public static function getCalender($date, $headline = array('Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So'), $event, $datum_stamp) {
+	public static function getCalender($date, $event, $datum_stamp, $headline = array('Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa', 'So')) {
 		$sum_days = date('t', $date);
 		$month = date('m',$date);
 		if ($month == "01") {

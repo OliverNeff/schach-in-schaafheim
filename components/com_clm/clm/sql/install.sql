@@ -1,6 +1,6 @@
 --
 -- @ Chess League Manager (CLM) Component 
--- @Copyright (C) 2008-2019 CLM Team.  All rights reserved
+-- @Copyright (C) 2008-2023 CLM Team.  All rights reserved
 -- @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
 -- @link http://www.chessleaguemanager.de
 --
@@ -23,7 +23,7 @@ SET time_zone = "+00:00";
 /*!40101 SET NAMES utf8 */;
 
 --
--- Datenbank: `clm`
+-- Datenbank: `clm`  Change status: 10.02.2021
 --
 
 -- --------------------------------------------------------
@@ -49,7 +49,7 @@ CREATE TABLE IF NOT EXISTS `#__clm_categories` (
   `invitationText` text,
   `bemerkungen` text,
   `bem_int` text,
-  `checked_out` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   `params` text NOT NULL,
@@ -87,6 +87,7 @@ CREATE TABLE IF NOT EXISTS `#__clm_dwz_spieler` (
   `Geschlecht` char(1) DEFAULT NULL,
   `Spielberechtigung` char(1) NOT NULL DEFAULT '',
   `Geburtsjahr` year(4) NOT NULL DEFAULT '0000',
+  `Junior` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `Letzte_Auswertung` mediumint(6) unsigned DEFAULT NULL,
   `DWZ` smallint(4) unsigned DEFAULT NULL,
   `DWZ_Index` smallint(3) unsigned DEFAULT NULL,
@@ -168,7 +169,7 @@ CREATE TABLE IF NOT EXISTS `#__clm_liga` (
   `stamm` mediumint(5) unsigned DEFAULT NULL,
   `ersatz` mediumint(5) unsigned DEFAULT NULL,
   `rang` tinyint(1) unsigned DEFAULT '0',
-  `sl` mediumint(5) unsigned DEFAULT NULL,
+  `sl` int(11) unsigned DEFAULT NULL,
   `runden` mediumint(5) unsigned DEFAULT NULL,
   `durchgang` mediumint(5) unsigned DEFAULT NULL,
   `mail` tinyint(1) unsigned DEFAULT NULL,
@@ -176,8 +177,8 @@ CREATE TABLE IF NOT EXISTS `#__clm_liga` (
   `heim` tinyint(1) unsigned DEFAULT NULL,
   `sieg_bed` tinyint(2) unsigned DEFAULT NULL,
   `runden_modus` tinyint(2) unsigned DEFAULT NULL,
-  `man_sieg` decimal(4,2) unsigned DEFAULT '1.00',
-  `man_remis` decimal(4,2) unsigned DEFAULT '0.50',
+  `man_sieg` decimal(4,2) unsigned DEFAULT '2.00',
+  `man_remis` decimal(4,2) unsigned DEFAULT '1.00',
   `man_nieder` decimal(4,2) unsigned DEFAULT '0.00',
   `man_antritt` decimal(4,2) unsigned DEFAULT '0.00',
   `sieg` decimal(2,1) unsigned DEFAULT '1.0',
@@ -186,14 +187,14 @@ CREATE TABLE IF NOT EXISTS `#__clm_liga` (
   `antritt` decimal(2,1) unsigned DEFAULT '0.0',
   `order` tinyint(1) unsigned DEFAULT NULL,
   `rnd` tinyint(1) unsigned DEFAULT NULL,
-  `auf` tinyint(1) NOT NULL,
-  `auf_evtl` tinyint(1) NOT NULL,
-  `ab` tinyint(1) NOT NULL,
-  `ab_evtl` tinyint(1) NOT NULL,
+  `auf` tinyint(1) unsigned DEFAULT '0',
+  `auf_evtl` tinyint(1) unsigned DEFAULT '0',
+  `ab` tinyint(1) unsigned DEFAULT '0',
+  `ab_evtl` tinyint(1) unsigned DEFAULT '0',
   `published` mediumint(3) unsigned DEFAULT NULL,
   `bemerkungen` text,
   `bem_int` text,
-  `checked_out` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   `b_wertung` tinyint(1) unsigned DEFAULT '0',
@@ -220,22 +221,22 @@ CREATE TABLE IF NOT EXISTS `#__clm_mannschaften` (
   `name` varchar(100) NOT NULL DEFAULT '',
   `liga` mediumint(5) unsigned DEFAULT NULL,
   `zps` varchar(5) DEFAULT NULL,
-  `liste` mediumint(3) NOT NULL DEFAULT '0',
-  `edit_liste` mediumint(3) NOT NULL DEFAULT '0',
+  `liste` int(11) NOT NULL DEFAULT '0',
+  `edit_liste` int(11) NOT NULL DEFAULT '0',
   `man_nr` mediumint(5) unsigned DEFAULT NULL,
   `tln_nr` mediumint(5) unsigned DEFAULT NULL,
-  `mf` mediumint(5) unsigned DEFAULT NULL,
-  `sg_zps` varchar(120) NOT NULL,
+  `mf` int(11) unsigned DEFAULT NULL,
+  `sg_zps` varchar(120) DEFAULT NULL,
   `datum` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `edit_datum` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
-  `lokal` text NOT NULL,
+  `lokal` text DEFAULT NULL,
   `termine` text,
   `adresse` text,
   `homepage` text,
-  `bemerkungen` text NOT NULL,
-  `bem_int` text NOT NULL,
+  `bemerkungen` text DEFAULT NULL,
+  `bem_int` text DEFAULT NULL,
   `published` tinyint(1) NOT NULL DEFAULT '0',
-  `checked_out` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   `summanpunkte` decimal(4,1) DEFAULT NULL,
@@ -248,6 +249,13 @@ CREATE TABLE IF NOT EXISTS `#__clm_mannschaften` (
   `sname` varchar(20) DEFAULT '',
   `abzug` tinyint(2) NOT NULL default '0',
   `bpabzug` decimal(3,1) DEFAULT '0.0',
+  `z_summanpunkte` decimal(4,1) DEFAULT NULL,
+  `z_sumbrettpunkte` decimal(4,1) DEFAULT NULL,
+  `z_sumwins` tinyint(2) DEFAULT NULL,
+  `z_sumtiebr1` decimal(7,3) DEFAULT '0.000',
+  `z_sumtiebr2` decimal(7,3) DEFAULT '0.000',
+  `z_sumtiebr3` decimal(7,3) DEFAULT '0.000',
+  `z_rankingpos` tinyint(3) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `published` (`published`),
   KEY `sid` (`sid`),
@@ -286,8 +294,44 @@ CREATE TABLE IF NOT EXISTS `#__clm_meldeliste_spieler` (
   `gesperrt` tinyint(1) unsigned DEFAULT NULL,
   `attr` varchar(4) DEFAULT NULL,
   PRIMARY KEY (`id`),
-  KEY `lid_zps_mglnr` (`lid`,`zps`,`mgl_nr`)
+  KEY `lid_zps_mglnr` (`lid`,`zps`,`mgl_nr`),
+  KEY `lid` (`lid`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+
+--
+-- Tabellenstruktur für Tabelle `#__clm_online_registration`
+--
+
+CREATE TABLE IF NOT EXISTS `#__clm_online_registration` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `tid` mediumint(5) unsigned DEFAULT NULL,
+  `name` varchar(50) DEFAULT NULL,
+  `vorname` varchar(50) DEFAULT NULL,
+  `birthYear` year(4) NOT NULL DEFAULT '0000',
+  `geschlecht` char(1) DEFAULT NULL,
+  `club` varchar(60) DEFAULT NULL,
+  `email` varchar(100) NOT NULL DEFAULT '',
+  `elo` smallint(4) unsigned DEFAULT NULL,
+  `FIDEid` int(8) DEFAULT NULL,
+  `FIDEcco` char(3) DEFAULT NULL,
+  `dwz` smallint(4) unsigned DEFAULT NULL,
+  `dwz_I0` smallint(6) NOT NULL DEFAULT '0',
+  `titel` char(3) DEFAULT NULL,
+  `mgl_nr` mediumint(5) NOT NULL DEFAULT '0',
+  `PKZ` varchar(9) DEFAULT NULL,
+  `zps` varchar(5) NOT NULL DEFAULT '',
+  `tel_no` varchar(30) NOT NULL DEFAULT '',
+  `account` varchar(50) NOT NULL DEFAULT '',
+  `status` mediumint(5) NOT NULL DEFAULT '0',
+  `timestamp` int(11) NOT NULL,
+  `comment` text NOT NULL,
+  `ordering` int(11) NOT NULL DEFAULT '0',
+  `pid` varchar(32) NOT NULL DEFAULT '',
+  `approved` tinyint(1) NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -301,12 +345,29 @@ CREATE TABLE IF NOT EXISTS `#__clm_pgn` (
   `dg` tinyint(2) unsigned DEFAULT NULL,
   `runde` tinyint(2) unsigned DEFAULT NULL,
   `paar` tinyint(1) unsigned DEFAULT NULL,
-  `brett` tinyint(5) unsigned DEFAULT NULL,
+  `brett` smallint(8) unsigned DEFAULT NULL,
   `text` text DEFAULT NULL,
   `error` text DEFAULT NULL,
   PRIMARY KEY `id` (`id`),
   UNIQUE KEY `all` (`tkz`,`tid`,`dg`,`runde`,`paar`,`brett`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+--
+-- Tabellenstruktur für Tabelle `#__clm_player_decode`
+--
+
+CREATE TABLE IF NOT EXISTS `#__clm_player_decode` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `sid` mediumint(6) unsigned DEFAULT NULL,
+  `source` varchar(20) DEFAULT NULL,
+  `oname` varchar(50) DEFAULT NULL,
+  `nname` varchar(150) DEFAULT NULL,
+  `verein` varchar(150) DEFAULT NULL,
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `sid_source_oname` (`sid`,`source`,`oname`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
 
 -- --------------------------------------------------------
 
@@ -319,14 +380,16 @@ CREATE TABLE IF NOT EXISTS `#__clm_rangliste_id` (
   `gid` int(10) unsigned NOT NULL DEFAULT '0',
   `sid` mediumint(5) NOT NULL,
   `zps` varchar(5) NOT NULL DEFAULT '00000',
+  `sg_zps` varchar(120) NOT NULL DEFAULT '00000',
   `rang` tinyint(1) NOT NULL,
   `published` mediumint(3) unsigned DEFAULT NULL,
   `bemerkungen` text NOT NULL,
   `bem_int` text NOT NULL,
-  `checked_out` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
-  PRIMARY KEY (`id`)
+  PRIMARY KEY (`id`),
+  KEY `gid_sid_zps` (`gid`,`sid`,`zps`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
@@ -342,11 +405,12 @@ CREATE TABLE IF NOT EXISTS `#__clm_rangliste_name` (
   `geschlecht` varchar(1) DEFAULT NULL,
   `alter_grenze` varchar(1) DEFAULT NULL,
   `alter` smallint(3) DEFAULT NULL,
+  `status` varchar(3) NOT NULL DEFAULT '',
   `sid` mediumint(3) unsigned DEFAULT '0',
-  `user` mediumint(3) unsigned DEFAULT '0',
+  `user` int(11) unsigned NOT NULL DEFAULT '0',
   `bemerkungen` text,
   `bem_int` text,
-  `checked_out` tinyint(3) unsigned DEFAULT '0',
+  `checked_out` int(11) unsigned DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   `published` tinyint(1) NOT NULL DEFAULT '0',
@@ -362,12 +426,15 @@ CREATE TABLE IF NOT EXISTS `#__clm_rangliste_name` (
 CREATE TABLE IF NOT EXISTS `#__clm_rangliste_spieler` (
   `Gruppe` tinyint(3) unsigned NOT NULL,
   `ZPS` varchar(5) NOT NULL DEFAULT '00000',
+  `ZPSmgl` varchar(5) NOT NULL DEFAULT '00000',
   `Mgl_Nr` smallint(5) unsigned NOT NULL DEFAULT '0',
   `PKZ` int(10) unsigned NOT NULL DEFAULT '0',
   `Rang` int(10) unsigned NOT NULL DEFAULT '0',
   `man_nr` tinyint(3) unsigned NOT NULL DEFAULT '1',
   `sid` mediumint(3) unsigned DEFAULT '0',
-  PRIMARY KEY (`Gruppe`,`ZPS`,`man_nr`,`Rang`)
+  `gesperrt` tinyint(1) unsigned DEFAULT NULL,
+  PRIMARY KEY (`Gruppe`,`ZPS`,`man_nr`,`Rang`),
+  KEY `sid_ZPS_mannr_mglnr` (`sid`,`ZPS`,`man_nr`,`Mgl_Nr`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8;
 
 -- --------------------------------------------------------
@@ -392,19 +459,20 @@ CREATE TABLE IF NOT EXISTS `#__clm_rnd_man` (
   `manpunkte` mediumint(5) unsigned DEFAULT NULL,
   `bp_sum` decimal(5,1) unsigned DEFAULT NULL,
   `mp_sum` mediumint(5) unsigned DEFAULT NULL,
-  `gemeldet` mediumint(5) unsigned DEFAULT NULL,
-  `editor` mediumint(5) unsigned DEFAULT NULL,
-  `dwz_editor` mediumint(5) unsigned DEFAULT NULL,
+  `gemeldet` int(11) unsigned DEFAULT NULL,
+  `editor` int(11) unsigned DEFAULT NULL,
+  `dwz_editor` int(11) unsigned DEFAULT NULL,
   `zeit` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `edit_zeit` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `dwz_zeit` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `published` tinyint(1) unsigned NOT NULL DEFAULT '0',
-  `checked_out` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   `wertpunkte` decimal(5,1) DEFAULT NULL,
   `ko_decision` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `comment` text NOT NULL,
+  `icomment` text NOT NULL,
   `pdate` date NOT NULL DEFAULT '1970-01-01',
   `ptime` time NOT NULL DEFAULT '00:00:00',
   PRIMARY KEY (`id`),
@@ -439,9 +507,9 @@ CREATE TABLE IF NOT EXISTS `#__clm_rnd_spl` (
   `ergebnis` mediumint(5) unsigned DEFAULT NULL,
   `kampflos` tinyint(1) unsigned DEFAULT NULL,
   `punkte` decimal(5,1) unsigned DEFAULT NULL,
-  `gemeldet` mediumint(5) unsigned DEFAULT NULL,
+  `gemeldet` int(11) unsigned DEFAULT NULL,
   `dwz_edit` mediumint(5) unsigned DEFAULT NULL,
-  `dwz_editor` mediumint(5) unsigned DEFAULT NULL,
+  `dwz_editor` int(11) unsigned DEFAULT NULL,
   `pgnnr` int(11) unsigned DEFAULT '0',
   PRIMARY KEY (`id`),
   KEY `lid_zps_spieler` (`lid`,`zps`,`spieler`),
@@ -463,22 +531,23 @@ CREATE TABLE IF NOT EXISTS `#__clm_runden_termine` (
   `datum` date NOT NULL DEFAULT '1970-01-01',
   `startzeit` time NOT NULL DEFAULT '00:00:00',
   `deadlineday` date NOT NULL DEFAULT '1970-01-01',
-  `deadlinetime` time NOT NULL DEFAULT '24:00:00',
+  `deadlinetime` time NOT NULL DEFAULT '00:00:00',
   `meldung` tinyint(1) NOT NULL DEFAULT '0',
   `sl_ok` tinyint(1) NOT NULL DEFAULT '0',
   `published` tinyint(1) NOT NULL DEFAULT '0',
   `bemerkungen` text,
   `bem_int` text,
-  `gemeldet` mediumint(3) unsigned DEFAULT NULL,
-  `editor` mediumint(3) unsigned DEFAULT NULL,
+  `gemeldet` int(11) unsigned DEFAULT NULL,
+  `editor` int(11) unsigned DEFAULT NULL,
   `zeit` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `edit_zeit` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
-  `checked_out` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   `enddatum` date NOT NULL DEFAULT '1970-01-01',
   PRIMARY KEY (`id`),
-  KEY `published` (`published`)
+  KEY `published` (`published`),
+  KEY `liga` (`liga`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
@@ -494,12 +563,54 @@ CREATE TABLE IF NOT EXISTS `#__clm_saison` (
   `archiv` tinyint(1) NOT NULL DEFAULT '0',
   `bemerkungen` text,
   `bem_int` text,
-  `checked_out` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   `datum` date NOT NULL DEFAULT '1970-01-01',
+  `rating_type` tinyint(1) unsigned NOT NULL DEFAULT '0',  
   PRIMARY KEY (`id`),
-  KEY `published` (`published`)
+  KEY `published` (`published`),
+  KEY `archiv` (`archiv`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+
+--
+-- Tabellenstruktur für Tabelle `#__clm_swt_dwz_spieler`
+--
+
+CREATE TABLE IF NOT EXISTS `#__clm_swt_dwz_spieler` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `sid` mediumint(6) unsigned DEFAULT NULL,
+  `PKZ` varchar(9) DEFAULT NULL,
+  `ZPS` varchar(5) NOT NULL DEFAULT '',
+  `Mgl_Nr` mediumint(5) unsigned DEFAULT NULL,
+  `Status` char(1) DEFAULT NULL,
+  `Spielername` varchar(50) NOT NULL DEFAULT '',
+  `Spielername_G` varchar(50) NOT NULL DEFAULT '',
+  `Geschlecht` char(1) DEFAULT NULL,
+  `Spielberechtigung` char(1) NOT NULL DEFAULT '',
+  `Geburtsjahr` year(4) NOT NULL DEFAULT '0000',
+  `Junior` tinyint(1) unsigned NOT NULL DEFAULT '0',
+  `Letzte_Auswertung` mediumint(6) unsigned DEFAULT NULL,
+  `DWZ` smallint(4) unsigned DEFAULT NULL,
+  `DWZ_Index` smallint(3) unsigned DEFAULT NULL,
+  `FIDE_Elo` smallint(4) unsigned DEFAULT NULL,
+  `FIDE_Titel` char(3) DEFAULT NULL,
+  `FIDE_ID` int(8) unsigned DEFAULT NULL,
+  `FIDE_Land` char(3) DEFAULT NULL,
+  `DWZ_neu` smallint(4) unsigned NOT NULL default '0',
+  `I0` smallint(4) unsigned NOT NULL default '0',
+  `Punkte` decimal(4,1) unsigned NOT NULL default '0.0',
+  `Partien` tinyint(3) NOT NULL default '0',
+  `We` decimal(6,3) NOT NULL default '0.000',
+  `Leistung` smallint(4) NOT NULL default '0',
+  `EFaktor` tinyint(2) NOT NULL default '0',
+  `Niveau` smallint(4) NOT NULL default '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `sid_zps_mglnr` (`sid`,`ZPS`,`Mgl_Nr`),
+  KEY `sid` (`sid`),
+  KEY `ZPS` (`ZPS`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
@@ -517,7 +628,7 @@ CREATE TABLE IF NOT EXISTS `#__clm_swt_liga` (
   `stamm` mediumint(5) unsigned DEFAULT NULL,
   `ersatz` mediumint(5) unsigned DEFAULT NULL,
   `rang` tinyint(1) unsigned DEFAULT '0',
-  `sl` mediumint(5) unsigned DEFAULT NULL,
+  `sl` int(11) unsigned DEFAULT NULL,
   `runden` mediumint(5) unsigned DEFAULT NULL,
   `durchgang` mediumint(5) unsigned DEFAULT NULL,
   `mail` tinyint(1) unsigned DEFAULT NULL,
@@ -525,10 +636,10 @@ CREATE TABLE IF NOT EXISTS `#__clm_swt_liga` (
   `heim` tinyint(1) unsigned DEFAULT NULL,
   `order` tinyint(1) unsigned DEFAULT NULL,
   `rnd` tinyint(1) unsigned DEFAULT NULL,
-  `auf` tinyint(1) NOT NULL,
-  `auf_evtl` tinyint(1) NOT NULL,
-  `ab` tinyint(1) NOT NULL,
-  `ab_evtl` tinyint(1) NOT NULL,
+  `auf` tinyint(1) unsigned DEFAULT '0',
+  `auf_evtl` tinyint(1) unsigned DEFAULT '0',
+  `ab` tinyint(1) unsigned DEFAULT '0',
+  `ab_evtl` tinyint(1) unsigned DEFAULT '0',
   `sieg_bed` tinyint(2) unsigned DEFAULT NULL,
   `runden_modus` tinyint(2) unsigned DEFAULT NULL,
   `man_sieg` decimal(4,2) unsigned DEFAULT '1.00',
@@ -542,7 +653,7 @@ CREATE TABLE IF NOT EXISTS `#__clm_swt_liga` (
   `published` mediumint(3) unsigned DEFAULT NULL,
   `bemerkungen` text,
   `bem_int` text,
-  `checked_out` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   `b_wertung` tinyint(1) unsigned DEFAULT '0',
@@ -550,6 +661,8 @@ CREATE TABLE IF NOT EXISTS `#__clm_swt_liga` (
   `tiebr1` tinyint(2) unsigned NOT NULL DEFAULT '0',
   `tiebr2` tinyint(2) unsigned NOT NULL DEFAULT '0',
   `tiebr3` tinyint(2) unsigned NOT NULL DEFAULT '0',
+  `ersatz_regel` tinyint(1) unsigned DEFAULT '0',
+  `anzeige_ma` tinyint(1) unsigned DEFAULT '0',
   `params` text NOT NULL,
   PRIMARY KEY (`id`),
   KEY `published` (`published`)
@@ -568,22 +681,22 @@ CREATE TABLE IF NOT EXISTS `#__clm_swt_mannschaften` (
   `swt_id` mediumint(5) unsigned DEFAULT NULL,
   `liga` mediumint(5) unsigned DEFAULT NULL,
   `zps` varchar(5) DEFAULT NULL,
-  `liste` mediumint(3) NOT NULL DEFAULT '0',
-  `edit_liste` mediumint(3) NOT NULL DEFAULT '0',
+  `liste` int(11) NOT NULL DEFAULT '0',
+  `edit_liste` int(11) NOT NULL DEFAULT '0',
   `man_nr` mediumint(5) unsigned DEFAULT NULL,
   `tln_nr` mediumint(5) unsigned DEFAULT NULL,
-  `mf` mediumint(5) unsigned DEFAULT NULL,
-  `sg_zps` varchar(120) NOT NULL,
+  `mf` int(11) unsigned DEFAULT NULL,
+  `sg_zps` varchar(120) DEFAULT NULL,
   `datum` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `edit_datum` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
-  `lokal` text NOT NULL,
+  `lokal` text DEFAULT NULL,
   `termine` text,
   `adresse` text,
   `homepage` text,
-  `bemerkungen` text NOT NULL,
-  `bem_int` text NOT NULL,
+  `bemerkungen` text DEFAULT NULL,
+  `bem_int` text DEFAULT NULL,
   `published` tinyint(1) NOT NULL DEFAULT '0',
-  `checked_out` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   `summanpunkte` decimal(4,1) DEFAULT NULL,
@@ -594,7 +707,7 @@ CREATE TABLE IF NOT EXISTS `#__clm_swt_mannschaften` (
   `sumtiebr3` decimal(6,3) DEFAULT '0.000',
   `rankingpos` tinyint(3) unsigned NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
-  UNIQUE KEY `sid_name_swtid` (`sid`,`name`,`swt_id`),
+  UNIQUE KEY `sid_tlnnr_swtid` (`sid`,`tln_nr`,`swt_id`),
   KEY `published` (`published`),
   KEY `sid` (`sid`),
   KEY `swt_id` (`swt_id`)
@@ -615,9 +728,13 @@ CREATE TABLE IF NOT EXISTS `#__clm_swt_meldeliste_spieler` (
   `man_id` mediumint(5) unsigned NOT NULL DEFAULT '0',
   `snr` mediumint(5) unsigned DEFAULT NULL,
   `mgl_nr` mediumint(5) unsigned NOT NULL DEFAULT '0',
+  `PKZ` varchar(9) DEFAULT NULL,
   `zps` varchar(5) NOT NULL DEFAULT '0',
   `status` mediumint(5) NOT NULL DEFAULT '0',
   `ordering` int(11) NOT NULL DEFAULT '0',
+  `start_dwz` smallint(4) unsigned DEFAULT NULL,
+  `start_I0` smallint(4) unsigned DEFAULT NULL,
+  `FIDEelo` smallint(4) unsigned DEFAULT NULL,
   `DWZ` smallint(4) unsigned NOT NULL DEFAULT '0',
   `I0` smallint(4) unsigned NOT NULL DEFAULT '0',
   `Punkte` decimal(4,1) unsigned NOT NULL DEFAULT '0.0',
@@ -656,19 +773,20 @@ CREATE TABLE IF NOT EXISTS `#__clm_swt_rnd_man` (
   `manpunkte` mediumint(5) unsigned DEFAULT NULL,
   `bp_sum` decimal(5,1) unsigned DEFAULT NULL,
   `mp_sum` mediumint(5) unsigned DEFAULT NULL,
-  `gemeldet` mediumint(5) unsigned DEFAULT NULL,
-  `editor` mediumint(5) unsigned DEFAULT NULL,
-  `dwz_editor` mediumint(5) unsigned DEFAULT NULL,
+  `gemeldet` int(11) unsigned DEFAULT NULL,
+  `editor` int(11) unsigned DEFAULT NULL,
+  `dwz_editor` int(11) unsigned DEFAULT NULL,
   `zeit` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `edit_zeit` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `dwz_zeit` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `published` tinyint(1) unsigned NOT NULL DEFAULT '0',
-  `checked_out` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   `wertpunkte` decimal(5,1) unsigned DEFAULT NULL,
   `ko_decision` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `comment` text NOT NULL,
+  `icomment` text NOT NULL,
   PRIMARY KEY (`id`),
   KEY `published` (`published`),
   KEY `swt_id` (`swt_id`)
@@ -699,10 +817,44 @@ CREATE TABLE IF NOT EXISTS `#__clm_swt_rnd_spl` (
   `ergebnis` mediumint(5) unsigned DEFAULT NULL,
   `kampflos` tinyint(1) unsigned DEFAULT NULL,
   `punkte` decimal(5,1) unsigned DEFAULT NULL,
-  `gemeldet` mediumint(5) unsigned DEFAULT NULL,
+  `gemeldet` int(11) unsigned DEFAULT NULL,
   `dwz_edit` mediumint(5) unsigned DEFAULT NULL,
-  `dwz_editor` mediumint(5) unsigned DEFAULT NULL,
+  `dwz_editor` int(11) unsigned DEFAULT NULL,
   PRIMARY KEY (`id`)
+) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+
+--
+-- Tabellenstruktur für Tabelle `#__clm_swt_runden_termine`
+--
+
+CREATE TABLE IF NOT EXISTS `#__clm_swt_runden_termine` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `sid` mediumint(5) unsigned DEFAULT NULL,
+  `name` varchar(100) NOT NULL DEFAULT '',
+  `liga` mediumint(5) unsigned DEFAULT NULL,
+  `swt_liga` mediumint(5) unsigned DEFAULT NULL,
+  `nr` mediumint(5) unsigned DEFAULT NULL,
+  `datum` date NOT NULL DEFAULT '1970-01-01',
+  `startzeit` time NOT NULL DEFAULT '00:00:00',
+  `deadlineday` date NOT NULL DEFAULT '1970-01-01',
+  `deadlinetime` time NOT NULL DEFAULT '00:00:00',
+  `meldung` tinyint(1) NOT NULL DEFAULT '0',
+  `sl_ok` tinyint(1) NOT NULL DEFAULT '0',
+  `published` tinyint(1) NOT NULL DEFAULT '0',
+  `bemerkungen` text,
+  `bem_int` text,
+  `gemeldet` int(11) unsigned DEFAULT NULL,
+  `editor` int(11) unsigned DEFAULT NULL,
+  `zeit` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
+  `edit_zeit` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
+  `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
+  `ordering` int(11) NOT NULL DEFAULT '0',
+  `enddatum` date NOT NULL DEFAULT '1970-01-01',
+  PRIMARY KEY (`id`),
+  KEY `published` (`published`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
@@ -716,8 +868,8 @@ CREATE TABLE IF NOT EXISTS `#__clm_swt_turniere` (
   `tid` int(11) NOT NULL DEFAULT '0',
   `name` varchar(100) NOT NULL DEFAULT '',
   `sid` mediumint(3) unsigned DEFAULT NULL,
-  `dateStart` date NOT NULL,
-  `dateEnd` date NOT NULL,
+  `dateStart` date NOT NULL DEFAULT '1970-01-01',
+  `dateEnd` date NOT NULL DEFAULT '1970-01-01',
   `catidAlltime` smallint(6) unsigned NOT NULL DEFAULT '0',
   `catidEdition` smallint(6) unsigned NOT NULL DEFAULT '0',
   `typ` tinyint(1) unsigned DEFAULT NULL,
@@ -728,7 +880,8 @@ CREATE TABLE IF NOT EXISTS `#__clm_swt_turniere` (
   `teil` mediumint(5) unsigned DEFAULT NULL,
   `runden` mediumint(5) unsigned DEFAULT NULL,
   `dg` mediumint(5) unsigned DEFAULT NULL,
-  `tl` mediumint(5) unsigned DEFAULT NULL,
+  `tl` int(11) unsigned DEFAULT NULL,
+  `torg` int(11) unsigned DEFAULT NULL,
   `bezirk` varchar(8) DEFAULT NULL,
   `bezirkTur` enum('0','1') NOT NULL DEFAULT '1',
   `vereinZPS` varchar(5) DEFAULT NULL,
@@ -738,7 +891,7 @@ CREATE TABLE IF NOT EXISTS `#__clm_swt_turniere` (
   `invitationText` text,
   `bemerkungen` text,
   `bem_int` text,
-  `checked_out` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   `params` text NOT NULL,
@@ -802,17 +955,37 @@ CREATE TABLE IF NOT EXISTS `#__clm_swt_turniere_rnd_termine` (
   `published` tinyint(1) NOT NULL DEFAULT '0',
   `bemerkungen` text,
   `bem_int` text,
-  `gemeldet` mediumint(3) unsigned DEFAULT NULL,
-  `editor` mediumint(3) unsigned DEFAULT NULL,
+  `gemeldet` int(11) unsigned DEFAULT NULL,
+  `editor` int(11) unsigned DEFAULT NULL,
   `zeit` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `edit_zeit` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
-  `checked_out` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
   UNIQUE KEY `turnier_dg_runde` (`swt_tid`,`dg`,`nr`),
   KEY `published` (`published`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+
+--
+-- Tabellenstruktur für Tabelle `#__clm_swt_turniere_teams`
+--
+
+CREATE TABLE IF NOT EXISTS `#__clm_swt_turniere_teams` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `swt_tid` int(11) unsigned DEFAULT NULL,
+  `tid` int(11) NOT NULL DEFAULT '0',
+  `name` varchar(100) NOT NULL DEFAULT '',
+  `sid` mediumint(5) unsigned DEFAULT NULL,
+  `tln_nr` mediumint(5) unsigned DEFAULT NULL,
+  `zps` varchar(5) DEFAULT NULL,
+  `man_nr` mediumint(5) unsigned DEFAULT NULL,
+  `published` mediumint(3) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `tid_tlnnr` (`swt_tid`,`tln_nr`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
 
@@ -830,8 +1003,10 @@ CREATE TABLE IF NOT EXISTS `#__clm_swt_turniere_tlnr` (
   `birthYear` year(4) NOT NULL DEFAULT '0000',
   `geschlecht` char(1) DEFAULT NULL,
   `verein` varchar(150) DEFAULT NULL,
+  `email` varchar(100) NOT NULL DEFAULT '',
   `twz` smallint(4) unsigned DEFAULT NULL,
   `start_dwz` smallint(4) unsigned DEFAULT NULL,
+  `start_I0` smallint(6) unsigned NOT NULL DEFAULT '0',
   `FIDEelo` smallint(4) unsigned DEFAULT NULL,
   `FIDEid` int(8) unsigned DEFAULT NULL,
   `FIDEcco` char(3) DEFAULT NULL,
@@ -839,18 +1014,21 @@ CREATE TABLE IF NOT EXISTS `#__clm_swt_turniere_tlnr` (
   `mgl_nr` mediumint(5) unsigned NOT NULL DEFAULT '0',
   `PKZ` varchar(9) DEFAULT NULL,
   `zps` varchar(5) NOT NULL DEFAULT '0',
+  `tel_no` varchar(30) NOT NULL DEFAULT '',
   `status` mediumint(5) NOT NULL DEFAULT '0',
   `rankingPos` smallint(5) unsigned NOT NULL DEFAULT '0',
-  `tlnrStatus` tinyint(1) unsigned NOT NULL,
+  `tlnrStatus` tinyint(11) unsigned NOT NULL DEFAULT '1',
+  `oname` varchar(50) DEFAULT NULL,
+  `mtln_nr` mediumint(5) unsigned DEFAULT NULL,
   `s_punkte` decimal(3,1) DEFAULT '0.0',
   `sum_punkte` decimal(4,1) DEFAULT NULL,
   `sum_bhlz` decimal(5,2) DEFAULT NULL,
   `sum_busum` decimal(6,2) DEFAULT NULL,
   `sum_sobe` decimal(5,2) DEFAULT NULL,
   `sum_wins` tinyint(1) unsigned NOT NULL DEFAULT '0',
-  `sumTiebr1` decimal(6,3) NOT NULL DEFAULT '0.000',
-  `sumTiebr2` decimal(6,3) NOT NULL DEFAULT '0.000',
-  `sumTiebr3` decimal(6,3) NOT NULL DEFAULT '0.000',
+  `sumTiebr1` decimal(8,3) NOT NULL DEFAULT '0.000',
+  `sumTiebr2` decimal(8,3) NOT NULL DEFAULT '0.000',
+  `sumTiebr3` decimal(8,3) NOT NULL DEFAULT '0.000',
   `koStatus` enum('0','1') NOT NULL DEFAULT '1',
   `koRound` tinyint(1) unsigned NOT NULL DEFAULT '0',
   `DWZ` smallint(4) unsigned NOT NULL DEFAULT '0',
@@ -862,7 +1040,7 @@ CREATE TABLE IF NOT EXISTS `#__clm_swt_turniere_tlnr` (
   `EFaktor` tinyint(2) NOT NULL DEFAULT '0',
   `Niveau` smallint(4) NOT NULL DEFAULT '0',
   `published` tinyint(1) NOT NULL DEFAULT '0',
-  `checked_out` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`,`zps`,`mgl_nr`,`status`),
@@ -893,7 +1071,7 @@ CREATE TABLE IF NOT EXISTS `#__clm_termine` (
   `attached_file` varchar(256) DEFAULT '',
   `attached_file_description` varchar(128) DEFAULT '',
   `published` mediumint(3) unsigned DEFAULT NULL,
-  `checked_out` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   `event_link` varchar(500) NOT NULL,
@@ -911,8 +1089,8 @@ CREATE TABLE IF NOT EXISTS `#__clm_turniere` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `name` varchar(100) NOT NULL DEFAULT '',
   `sid` mediumint(3) unsigned DEFAULT NULL,
-  `dateStart` date NOT NULL,
-  `dateEnd` date NOT NULL,
+  `dateStart` date NOT NULL DEFAULT '1970-01-01',
+  `dateEnd` date NOT NULL DEFAULT '1970-01-01',
   `catidAlltime` smallint(6) unsigned NOT NULL DEFAULT '0',
   `catidEdition` smallint(6) unsigned NOT NULL DEFAULT '0',
   `typ` tinyint(1) unsigned DEFAULT NULL,
@@ -923,7 +1101,8 @@ CREATE TABLE IF NOT EXISTS `#__clm_turniere` (
   `teil` mediumint(5) unsigned DEFAULT NULL,
   `runden` mediumint(5) unsigned DEFAULT NULL,
   `dg` mediumint(5) unsigned DEFAULT NULL,
-  `tl` mediumint(5) unsigned DEFAULT NULL,
+  `tl` int(11) unsigned DEFAULT NULL,
+  `torg` int(11) unsigned DEFAULT NULL,
   `bezirk` varchar(8) DEFAULT NULL,
   `bezirkTur` enum('0','1') NOT NULL DEFAULT '1',
   `vereinZPS` varchar(5) DEFAULT NULL,
@@ -933,7 +1112,7 @@ CREATE TABLE IF NOT EXISTS `#__clm_turniere` (
   `invitationText` text,
   `bemerkungen` text,
   `bem_int` text,
-  `checked_out` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   `params` text NOT NULL,
@@ -943,6 +1122,7 @@ CREATE TABLE IF NOT EXISTS `#__clm_turniere` (
   `remiss` decimal(2,1) unsigned DEFAULT '0.5',
   `nieder` decimal(2,1) unsigned DEFAULT '0.0',
   `niederk` decimal(2,1) unsigned DEFAULT '0.0',
+  `dateRegistration` date NOT NULL DEFAULT '1970-01-01',
   PRIMARY KEY (`id`),
   KEY `published` (`published`)
 ) ENGINE=MyISAM  DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
@@ -995,11 +1175,11 @@ CREATE TABLE IF NOT EXISTS `#__clm_turniere_rnd_termine` (
   `published` tinyint(1) NOT NULL DEFAULT '0',
   `bemerkungen` text,
   `bem_int` text,
-  `gemeldet` mediumint(3) unsigned DEFAULT NULL,
-  `editor` mediumint(3) unsigned DEFAULT NULL,
+  `gemeldet` int(11) unsigned DEFAULT NULL,
+  `editor` int(11) unsigned DEFAULT NULL,
   `zeit` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `edit_zeit` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
-  `checked_out` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),
@@ -1016,6 +1196,7 @@ CREATE TABLE IF NOT EXISTS `#__clm_turniere_sonderranglisten` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `turnier` int(11) NOT NULL,
   `name` varchar(100) NOT NULL,
+  `shortname` varchar(10) NOT NULL DEFAULT '',
   `use_rating_filter` enum('0','1') DEFAULT '0',
   `rating_type` tinyint(1) DEFAULT '0',
   `rating_higher_than` smallint(4) DEFAULT '0',
@@ -1026,7 +1207,7 @@ CREATE TABLE IF NOT EXISTS `#__clm_turniere_sonderranglisten` (
   `use_sex_filter` enum('0','1') DEFAULT '0',
   `sex` enum('','M','W') DEFAULT NULL,
   `published` tinyint(1) NOT NULL DEFAULT '0',
-  `checked_out` tinyint(3) unsigned NOT NULL,
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   `use_zps_filter` enum('0','1') DEFAULT '0',
@@ -1038,6 +1219,25 @@ CREATE TABLE IF NOT EXISTS `#__clm_turniere_sonderranglisten` (
   `femaleYear_younger_than` year(4) default NULL,
   `femaleYear_older_than` year(4) default NULL,
   PRIMARY KEY (`id`)
+) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
+
+-- --------------------------------------------------------
+
+--
+-- Tabellenstruktur für Tabelle `#__clm_turniere_teams`
+--
+
+CREATE TABLE IF NOT EXISTS `#__clm_turniere_teams` (
+  `id` int(11) NOT NULL AUTO_INCREMENT,
+  `tid` int(11) NOT NULL DEFAULT '0',
+  `name` varchar(100) NOT NULL DEFAULT '',
+  `sid` mediumint(5) unsigned DEFAULT NULL,
+  `tln_nr` mediumint(5) unsigned DEFAULT NULL,
+  `zps` varchar(5) DEFAULT NULL,
+  `man_nr` mediumint(5) unsigned DEFAULT NULL,
+  `published` mediumint(3) unsigned NOT NULL DEFAULT '0',
+  PRIMARY KEY (`id`),
+  UNIQUE KEY `tid_tlnnr` (`tid`,`tln_nr`)
 ) ENGINE=MyISAM DEFAULT CHARSET=utf8 AUTO_INCREMENT=1 ;
 
 -- --------------------------------------------------------
@@ -1055,9 +1255,10 @@ CREATE TABLE IF NOT EXISTS `#__clm_turniere_tlnr` (
   `birthYear` year(4) NOT NULL DEFAULT '0000',
   `geschlecht` char(1) DEFAULT NULL,
   `verein` varchar(150) DEFAULT NULL,
+  `email` varchar(100) NOT NULL DEFAULT '',
   `twz` smallint(4) unsigned DEFAULT NULL,
   `start_dwz` smallint(4) unsigned DEFAULT NULL,
-  `start_I0` smallint(4) unsigned default NULL,
+  `start_I0` smallint(6) unsigned NOT NULL DEFAULT '0',
   `FIDEelo` smallint(4) unsigned DEFAULT NULL,
   `FIDEid` int(8) unsigned DEFAULT NULL,
   `FIDEcco` char(3) DEFAULT NULL,
@@ -1065,9 +1266,13 @@ CREATE TABLE IF NOT EXISTS `#__clm_turniere_tlnr` (
   `mgl_nr` mediumint(5) unsigned NOT NULL DEFAULT '0',
   `PKZ` varchar(9) DEFAULT NULL,
   `zps` varchar(5) NOT NULL DEFAULT '0',
+  `tel_no` varchar(30) NOT NULL DEFAULT '',
+  `account` varchar(50) NOT NULL DEFAULT '',
   `status` mediumint(5) NOT NULL DEFAULT '0',
   `rankingPos` smallint(5) unsigned NOT NULL DEFAULT '0',
   `tlnrStatus` tinyint(1) unsigned NOT NULL DEFAULT '1',
+  `oname` varchar(50) DEFAULT NULL,
+  `mtln_nr` mediumint(5) unsigned DEFAULT NULL,
   `s_punkte` decimal(3,1) DEFAULT '0.0',
   `anz_spiele` tinyint(2) unsigned NOT NULL DEFAULT '0',
   `sum_punkte` decimal(4,1) DEFAULT NULL,
@@ -1089,7 +1294,7 @@ CREATE TABLE IF NOT EXISTS `#__clm_turniere_tlnr` (
   `EFaktor` tinyint(2) NOT NULL DEFAULT '0',
   `Niveau` smallint(4) NOT NULL DEFAULT '0',
   `published` tinyint(1) NOT NULL DEFAULT '0',
-  `checked_out` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`,`zps`,`mgl_nr`,`status`),
@@ -1105,7 +1310,7 @@ CREATE TABLE IF NOT EXISTS `#__clm_turniere_tlnr` (
 CREATE TABLE IF NOT EXISTS `#__clm_user` (
   `id` int(11) NOT NULL AUTO_INCREMENT,
   `sid` smallint(3) unsigned DEFAULT NULL,
-  `jid` mediumint(5) unsigned DEFAULT NULL,
+  `jid` int(11) unsigned DEFAULT NULL,
   `name` text NOT NULL,
   `username` varchar(150) NOT NULL DEFAULT '',
   `aktive` tinyint(3) NOT NULL DEFAULT '0',
@@ -1121,7 +1326,7 @@ CREATE TABLE IF NOT EXISTS `#__clm_user` (
   `published` smallint(3) unsigned DEFAULT NULL,
   `bemerkungen` text NOT NULL,
   `bem_int` text NOT NULL,
-  `checked_out` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   `block` tinyint(4) NOT NULL DEFAULT '0',
@@ -1160,7 +1365,7 @@ CREATE TABLE IF NOT EXISTS `#__clm_vereine` (
   `name` varchar(100) NOT NULL DEFAULT '',
   `sid` mediumint(5) unsigned DEFAULT NULL,
   `zps` varchar(5) DEFAULT NULL,
-  `vl` mediumint(5) unsigned DEFAULT NULL,
+  `vl` int(11) unsigned DEFAULT NULL,
   `lokal` varchar(200) NOT NULL DEFAULT '',
   `homepage` varchar(200) NOT NULL DEFAULT '',
   `adresse` varchar(200) NOT NULL DEFAULT '',
@@ -1186,7 +1391,7 @@ CREATE TABLE IF NOT EXISTS `#__clm_vereine` (
   `published` mediumint(3) unsigned DEFAULT NULL,
   `bemerkungen` text NOT NULL,
   `bem_int` text NOT NULL,
-  `checked_out` tinyint(3) unsigned NOT NULL DEFAULT '0',
+  `checked_out` int(11) unsigned NOT NULL DEFAULT '0',
   `checked_out_time` datetime NOT NULL DEFAULT '1970-01-01 00:00:00',
   `ordering` int(11) NOT NULL DEFAULT '0',
   PRIMARY KEY (`id`),

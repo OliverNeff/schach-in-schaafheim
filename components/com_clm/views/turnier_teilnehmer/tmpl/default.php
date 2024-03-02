@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2018 Thomas Schwietert & Andreas Dorn. All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -9,20 +9,17 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 defined('_JEXEC') or die('Restricted access');
-//JHtml::_('behavior.tooltip', '.CLMTooltip', $params);
-JHtml::_('behavior.tooltip', '.CLMTooltip');
+//JHtml::_('behavior.tooltip', '.CLMTooltip');
+require_once (JPATH_COMPONENT . DS . 'includes' . DS . 'clm_tooltip.php');
 
 // Stylesheet laden
 require_once(JPATH_COMPONENT.DS.'includes'.DS.'css_path.php');
 
 
 // Konfigurationsparameter auslesen
-$itemid 		= JRequest::getVar( 'Itemid' );
-// $turnierid		= JRequest::getInt('turnier','1');
+$itemid 		= clm_core::$load->request_int( 'Itemid' );
 $config			= clm_core::$db->config();
-// $pdf_melde 		= $config->pdf_meldelisten;
 $fixth_ttln		= $config->fixth_ttln;
 
 // CLM-Container
@@ -107,6 +104,14 @@ echo CLMContent::createPDFLink('turnier_teilnehmer', JText::_('TOURNAMENT_PARTIC
 		}
 		?>
 	
+		<?php
+		if ($this->s_gruppen == 1) {
+		?>
+			<th class="tt_col_4"><?php echo JText::_('TOURNAMENT_GRUPPEN'); ?></th>
+		<?php
+		}
+		?>
+	
 	
 	</tr>
 	
@@ -186,6 +191,10 @@ echo CLMContent::createPDFLink('turnier_teilnehmer', JText::_('TOURNAMENT_PARTIC
 				echo '</td>';
 			}
 			
+			// Gruppen
+			if ($this->s_gruppen == 1) {
+				echo '<td class="tt_col_3">'.$value->gruppen.'</td>';
+			}
 			?>
 		
 		</tr>

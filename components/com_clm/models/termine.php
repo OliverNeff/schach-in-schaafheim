@@ -1,13 +1,12 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2017 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2021 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Fjodor Schäfer
  * @email ich@vonfio.de
 */
-
 defined('_JEXEC') or die();
 jimport('joomla.application.component.model');
 
@@ -16,9 +15,9 @@ class CLMModelTermine extends JModelLegacy
 	
 	function _getTermine( &$options )
 	{
-		$sid	= JRequest::getInt('saison','1');
-		$liga	= JRequest::getInt('liga','1');
-		$categoryid	= JRequest::getInt('categoryid',0);
+		$sid	= clm_core::$load->request_int('saison', 1);	
+		$liga	= clm_core::$load->request_int('liga', 1);
+		$categoryid	= clm_core::$load->request_int('categoryid', 0);
 		// CategoryID vorgegeben?
 		$addWhere_t = '';
 		$addWhere_e = '';
@@ -44,7 +43,7 @@ class CLMModelTermine extends JModelLegacy
 					( b.catidEdition = '.implode( ' OR b.catidEdition = ', $arrayAllCatid ).' ) )'; 
 		}
 
-		$start	= clm_escape(JRequest::getVar('start','1'));
+		$start	= clm_escape(clm_core::$load->request_string('start', '1'));
 		$db	= JFactory::getDBO();
 		if ($start == '1') $date = date("Y-m-d");
 		else $date = $start;
@@ -89,15 +88,43 @@ class CLMModelTermine extends JModelLegacy
 	function getTermine( $options=array() )
 	{
 		$query	= $this->_getTermine( $options );
-		$result = $this->_getList( $query );
-		return @$result;
+		$result = clm_core::$db->loadObjectList($query);
+		$result2 = array();
+		if (count($result) < 1) return $result2;
+		$layout	= clm_core::$load->request_string('layout');	
+		if (is_null($result) OR $layout == 'termine_long') {
+			return $result; }
+		$zname = '';
+		$znr = 0;
+		for ($i = 0; $i < count($result); $i++) {
+			if ($i == 0) continue;
+			if ($result[$i]->source == 'turnier' AND 
+				$result[$i]->source == $result[$i-1]->source AND 
+				$result[$i]->datum == $result[$i-1]->datum AND 
+				$result[$i]->starttime == $result[$i-1]->starttime AND 
+				$result[$i]->typ_id == $result[$i-1]->typ_id AND
+				$result[$i]->dg == $result[$i-1]->dg) {
+				if ($zname == '') $zname = $result[$i-1]->name;	
+				if ($znr == 0) $znr = $result[$i-1]->nr;	
+			} else {
+				if ($zname != '') $result[$i-1]->zname = $zname;	
+				if ($znr != 0) $result[$i-1]->znr = $znr;	
+				$result2[] = $result[$i-1];
+				$zname = '';
+				$znr = 0;
+			}	
+		}
+		if ($zname != '') $result[$i-1]->zname = $zname;	
+		if ($znr != 0) $result[$i-1]->znr = $znr;	
+		$result2[] = $result[$i-1];	
+		return $result2;
 	}
 	
 	
 	function _getTermine_Detail( &$options )
 	{
 	
-		$nr		= JRequest::getInt('nr',-1);
+		$nr		= clm_core::$load->request_int('nr', -1);
 		$db		= JFactory::getDBO();
 		$date 	= date("Y-m-d");
 		if($nr!=-1){
@@ -133,16 +160,16 @@ class CLMModelTermine extends JModelLegacy
 	function getTermine_Detail( $options=array() )
 	{
 		$query	= $this->_getTermine_Detail( $options );
-		$result = $this->_getList( $query );
+		$result = clm_core::$db->loadObjectList($query);	
 		return @$result;
 	}
 	
 	
 	function _getSchnellmenu( &$options )
 	{
-		$sid	= JRequest::getInt('saison','1');
-		$liga	= JRequest::getInt('liga','1');
-		$start	= clm_escape(JRequest::getVar('start','1'));
+		$sid	= clm_core::$load->request_int('saison', 1);	
+		$liga	= clm_core::$load->request_int('liga', 1);
+		$start	= clm_core::$load->request_string('start', '1');
 		$db	= JFactory::getDBO();
 		if ($start == '1') $date = date("Y-m-d");
 		else $date = $start;
@@ -164,17 +191,17 @@ class CLMModelTermine extends JModelLegacy
 	function getSchnellmenu( $options=array() )
 	{
 		$query	= $this->_getSchnellmenu( $options );
-		$result = $this->_getList( $query );
+		$result = clm_core::$db->loadObjectList($query);	
 		return @$result;
 	}
 	
 	function _getCLMSumPlan ( &$options )
 	{
-	$sid = JRequest::getInt('saison','1');
+	$sid	= clm_core::$load->request_int('saison', 1);	
 	$db		= JFactory::getDBO();
 	$date 	= date("Y-m-d");
 		$query = " SELECT a.dg,a.lid,a.sid,a.runde,a.paar,a.tln_nr,a.gegner "
-			." ,t.name as dat_name, t.datum as datum "
+			." ,t.name as dat_name, t.datum as datum, t.startzeit AS starttime, l.ordering "
 			." ,m.name as hname, n.name as gname, m.published as hpublished, "
 			." n.published as gpublished "
 			." FROM #__clm_rnd_man as a "
@@ -184,7 +211,7 @@ class CLMModelTermine extends JModelLegacy
 			." LEFT JOIN #__clm_runden_termine as t ON t.nr = (a.runde + ((a.dg - 1)*l.runden)) AND t.liga = a.lid AND t.sid = a.sid " //klkl
 			." WHERE TO_DAYS(t.datum)+2 >= TO_DAYS(NOW())"
 			." AND a.heim = 1"
-			." ORDER BY datum ASC, a.lid ASC, a.paar ASC "
+			." ORDER BY datum ASC, starttime ASC, ABS(l.ordering) ASC, a.lid ASC, a.paar ASC "
 			;
 		return $query;
 	}
@@ -192,20 +219,15 @@ class CLMModelTermine extends JModelLegacy
 	function getCLMSumPlan ( $options=array() )
 	{
 		$query	= $this->_getCLMSumPlan( $options );
-		$result = $this->_getList( $query );
+		$result = clm_core::$db->loadObjectList($query);	
 		return @$result;
 	}
 
 	public static function getTree() {  //das ist eine Kopie von modCLM_TurnierHelper::getTree()
-	
-		// DB
-		$_db				=  JFactory::getDBO();
-	
+		
 		// alle Cats holen
 		$query = "SELECT id, name, parentid FROM #__clm_categories";
-		$_db->setQuery($query);
-		$parentList = $_db->loadObjectList('id');
-	
+		$parentList = clm_core::$db->loadObjectList($query);	
 		// Array speichert alle Kategorien in der Tiefe ihrer Verschachtelung
 		$parentArray = array();
 	
@@ -246,9 +268,9 @@ class CLMModelTermine extends JModelLegacy
 				
 				// checken, ob ParentID in Array der bereits ermittelten Parents vorhanden
 				if (in_array($value->parentid, $parentsExisting)) {
-					
+					error_reporting(E_ALL & ~E_NOTICE);
 					$parentArray[$key] = $parentArray[$value->parentid].' > '.$value->name;
-					
+					error_reporting(E_ALL);
 					// Parent
 					$parentID[$key] = $value->parentid;
 					

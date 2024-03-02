@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2016 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2022 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleagueamanager.de
  * @author Thomas Schwietert
@@ -19,14 +19,18 @@ class CLMViewSWTTurnier extends JViewLegacy {
 		$state 		= $this->get( 'State' );
 		$saisons 	= $this->get( 'saisons' );
 		$turniere 	= $this->get( 'turniere' );
+		$swt_file = clm_core::$load->request_string ('swt_file', '');
 		
 		
 		//Toolbar
 		clm_core::$load->load_css("icons_images");
-		JToolBarHelper::title( JText::_('TITLE_SWT_TOURNAMENT') ,'clm_headmenu_manager.png' );
+		JToolBarHelper::title( JText::_('TITLE_SWT_TOURNAMENT')." - ".$swt_file ,'clm_headmenu_manager.png' );
 		
 		JToolBarHelper::custom('update','refresh.png','refresh_f2.png', JText::_('SWT_TOURNAMENT_UPDATE'), false);
-		JToolBarHelper::custom('add','new.png','new_f2.png', JText::_('SWT_TOURNAMENT_NEW'), false);
+		$clmAccess = clm_core::$access;
+		if ($clmAccess->access('BE_tournament_create') === true) {
+			JToolBarHelper::custom('add','new.png','new_f2.png', JText::_('SWT_TOURNAMENT_NEW'), false);
+		}
 		
 		//Saison- und Turnier-Auswahl erstellen
 		$options_saisons[]		= JHtml::_('select.option', '', JText::_( 'SWT_SAISONS' ));
@@ -35,7 +39,7 @@ class CLMViewSWTTurnier extends JViewLegacy {
 		}
 		
 		$options_turniere[]		= JHtml::_('select.option', '', JText::_( 'SWT_TOURNAMENTS' ));
-		$swt_file	= JRequest::getVar('swt_file', '', 'post', 'string');
+		$swt_file	= clm_core::$load->request_string('swt_file', '');
 		$current_turnier = 0;	
 		
 		foreach($turniere as $turnier)	{
@@ -55,7 +59,7 @@ class CLMViewSWTTurnier extends JViewLegacy {
 		$lists['turniere']	= JHtml::_('select.genericlist', $options_turniere, 'turnier', 'class="inputbox"', 'value', 'text', $current_turnier );
 		
 		//Daten an Template
-		$this->assignRef( 'lists', $lists );
+		$this->lists = $lists;
 				
 		parent::display($tpl);
 	}

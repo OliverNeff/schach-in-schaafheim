@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2015 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -10,17 +10,18 @@
  * @email webmaster@sbbl.org
 */
 defined('_JEXEC') or die('Restricted access');
-$rfirst	= JRequest::getVar( 'rfirst',1);
-$rcount = count($this->runden);
-JRequest::setVar('rcount', $rcount);
+$rfirst	= clm_core::$load->request_int( 'rfirst',1);
+if (is_null($this->runden)) $rcount = 0;
+else $rcount = count($this->runden);
+$_GET['rcount'] = $rcount;
 $rlast = $rcount;
-JRequest::setVar('rfirst', $rfirst);
-$pcount = JRequest::getVar('pcount');
+$_GET['rfirst'] = $rfirst;
+$pcount = clm_core::$load->request_int('pcount');
 if ($pcount < 50) $rrange = 5;
 elseif ($pcount < 100) $rrange = 3;
 elseif ($pcount < 150) $rrange = 2;
 else $rrange = 1;
-JRequest::setVar('rrange', $rrange);
+$_GET['rrange'] = $rrange;
 ?>
 <script language="javascript" type="text/javascript">
 
@@ -60,7 +61,8 @@ function showRounds(){
 <br/--->
 <?php
 
-if (isset($this->runden) AND count($this->runden) > 0) {
+//if (isset($this->runden) AND count($this->runden) > 0) {
+if (isset($rcount) AND $rcount > 0) {
 foreach($this->runden as $rnd => $runde) {
 	if ($runde->nr < $rfirst) continue;
 	if ($runde->nr > ($rfirst + $rrange - 1)) { $rlast = ($runde->nr - 1); break;}
@@ -194,7 +196,11 @@ foreach($this->runden as $rnd => $runde) {
 								<tbody>";
 
 								$k = 0;
-								foreach($this->matches[$rnd] as $brett => $match) {
+								if (!isset($this->matches)) $max_rnd = 0;
+								elseif (is_null($this->matches)) $max_rnd = 0;
+								else $max_rnd = max(array_keys($this->matches));
+								if ($max_rnd >= $rnd) {
+								  foreach($this->matches[$rnd] as $brett => $match) {
 									echo "<tr class='row".$k."'>";
 										echo "<td align='center'>".$brett."<input type='hidden' name='brett[".$rnd."][".$brett."]' 	value='".$match->brett."' /></td>";
 										echo "<td>".JHtml::_('select.genericlist', $this->teilnehmer_options, 'spieler['.$rnd.']['.$brett.']', 'class="inputbox" autocomplete="off"', 'value', 'text', $match->spieler, false)."</td>";
@@ -202,9 +208,9 @@ foreach($this->runden as $rnd => $runde) {
 										echo "<td>".JHtml::_('select.genericlist', $this->ergebnis_options, 'ergebnisWhite['.$rnd.']['.$brett.']', 'class="inputbox" autocomplete="off"', 'value', 'text', $match->ergebnisWhite, false)."
 												<input type='hidden' name='ergebnisBlack[".$rnd."][".$brett."]' 	value='".$match->ergebnisBlack."' /></td>";
 									echo "</tr>";
-								$k = 1 - $k;
+								    $k = 1 - $k;
+								  }
 								}
-	
 	
 	echo"
 									</tbody>
@@ -227,13 +233,14 @@ foreach($this->runden as $rnd => $runde) {
 	
 	<div class="clr"></div>
 	
-	<input type="hidden" name="rnd" 	value="<?php echo JRequest::getVar('rnd'); ?>" />
+	<input type="hidden" name="rnd" 	value="<?php echo clm_core::$load->request_int('rnd'); ?>" />
 	
-	<input type="hidden" name="swt" 	value="<?php echo JRequest::getVar('swt'); ?>" />
-	<input type="hidden" name="update" 	value="<?php echo JRequest::getVar('update'); ?>" />
-	<input type="hidden" name="tid" 	value="<?php echo JRequest::getVar('tid'); ?>" />
-	<input type="hidden" name="swt_tid" value="<?php echo JRequest::getVar('swt_tid'); ?>" />
-	<input type="hidden" name="sid" 	value="<?php echo JRequest::getVar('sid'); ?>" />
+	<input type="hidden" name="swt" 	value="<?php echo clm_core::$load->request_string('swt'); ?>" />
+	<input type="hidden" name="swt_file" 	value="<?php echo clm_core::$load->request_string('swt_file'); ?>" />
+	<input type="hidden" name="update" 	value="<?php echo clm_core::$load->request_int('update'); ?>" />
+	<input type="hidden" name="tid" 	value="<?php echo clm_core::$load->request_int('tid'); ?>" />
+	<input type="hidden" name="swt_tid" value="<?php echo clm_core::$load->request_int('swt_tid'); ?>" />
+	<input type="hidden" name="sid" 	value="<?php echo clm_core::$load->request_int('sid'); ?>" />
 	
 	<input type="hidden" name="rfirst" 	value="<?php echo $rfirst; ?>" />
 	<input type="hidden" name="rlast" 	value="<?php echo $rlast; ?>" />

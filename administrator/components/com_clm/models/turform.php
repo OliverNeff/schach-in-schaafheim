@@ -1,9 +1,9 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
- * @link http://www.fishpoke.de
+ * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
  * @email fishpoke@fishpoke.de
  * @author Andreas Dorn
@@ -32,6 +32,7 @@ class CLMModelTurForm extends JModelLegacy {
 	function _getForms() {
 	
 		
+		if (!isset($this->form) OR is_null($this->form)) $this->form = array();	// seit J 4.2 nötig um notice zu vermeiden
 		// category
 		list($this->parentArray, $this->parentKeys) = CLMCategoryTree::getTree();
 		if (count($this->parentArray) > 0)  { // nur, wenn Kategorien existieren
@@ -60,17 +61,20 @@ class CLMModelTurForm extends JModelLegacy {
 		
 		// director/tl
 		$this->form['tl']	= CLMForm::selectDirector('tl', $this->turnier->tl);
+		$this->form['torg']	= CLMForm::selectDirector('torg', $this->turnier->torg);
 		
 		// bezirksveranstaltung?
 		$this->form['bezirkTur']= JHtml::_('select.booleanlist', 'bezirkTur', 'class="inputbox"', $this->turnier->bezirkTur);
 		
 		// vereinZPS
-		if (strlen($this->turnier->vereinZPS) < 2) $this->turnier->vereinZPS = null;
+//		if (strlen($this->turnier->vereinZPS) < 2) $this->turnier->vereinZPS = null;
+		if (is_null($this->turnier->vereinZPS)) $this->turnier->vereinZPS = '';
+		if (strlen($this->turnier->vereinZPS) < 2) $this->turnier->vereinZPS = '';
 		$this->form['vereinZPS']= CLMForm::selectVereinZPSuVerband('vereinZPS', $this->turnier->vereinZPS);
 		
 		
 		// director/tl
-		$this->form['tl']	= CLMForm::selectDirector('tl', $this->turnier->tl);
+//		$this->form['tl']	= CLMForm::selectDirector('tl', $this->turnier->tl);
 		
 		
 		// published
@@ -83,7 +87,7 @@ class CLMModelTurForm extends JModelLegacy {
 		
 		// Instanz der Tabelle
 		$this->turnier = JTable::getInstance( 'turniere', 'TableCLM');
-		if ($id = JRequest::getInt('id')) {
+		if ($id = clm_core::$load->request_int('id')) {
 			$this->turnier->load($id);
 		}
 		

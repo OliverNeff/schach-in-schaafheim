@@ -1,59 +1,48 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2016 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
- * @link http://www.fishpoke.de
+ * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
  * @email fishpoke@fishpoke.de
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 defined('_JEXEC') or die('Restricted access');
 
-$swt    = JRequest::getVar('swt', '', 'default', 'string');
-$update = JRequest::getVar('update', 0);
-$swt_id = JRequest::getVar('swt_id', 0, 'default', 'int');
-$man	= JRequest::getVar('man', 0, 'default', 'int');
+$swt_file    = clm_core::$load->request_string('swt_file', '');
+$update = clm_core::$load->request_int('update', 0);
+$swt_id = clm_core::$load->request_int('swt_id', 0);
+$man	= clm_core::$load->request_int('man', 0);
 $sid	= $this->swt_db_data['sid'];
-$mturnier = JRequest::getVar('mturnier', 0, 'default', 'int');
-$noOrgReference = JRequest::getVar('noOrgReference', '0', 'default', 'string');
-$noBoardResults = JRequest::getVar('noBoardResults', '0', 'default', 'string');
-$ungerade = JRequest::getVar('ungerade', false, 'default', 'bool');
+$mturnier = clm_core::$load->request_int('mturnier', 0);
+$noOrgReference = clm_core::$load->request_string('noOrgReference', '0');
+$noBoardResults = clm_core::$load->request_string('noBoardResults', '0');
+$ungerade = clm_core::$load->request_int('ungerade', 0);
 
-$spielerid = JRequest::getVar ('spielerid');
-$lid = JRequest::getVar('lid', 0, 'default', 'int');
+$spielerid = clm_core::$load->request_array_int('spielerid', NULL, true);
+$lid = clm_core::$load->request_int('lid', 0);
+$dwz_handling   = clm_core::$load->request_string( 'dwz_handling', '0');
+$name_land   = clm_core::$load->request_string( 'name_land', '0');
 ?>
 
 <script language="javascript" type="text/javascript">
-    <!--
-    function submitbutton(pressbutton) {
+    
+	Joomla.submitbutton = function (pressbutton) { 		
         var form = document.adminForm;
         if (pressbutton == 'cancel') {
-            submitform( pressbutton );
+            Joomla.submitform( pressbutton );
             return;
         }
         // do field validation
-        /*if (form.name.value == "") {
-            alert( "<?php echo JText::_( 'LEAGUE_HINT_1', true ); ?>" );
-        } else if ( getSelectedValue('adminForm','sid') == 0 ) {
-            alert( "<?php echo JText::_( 'LEAGUE_HINT_2', true ); ?>" );
-        } else if (form.stamm.value == "") {
-            alert( "<?php echo JText::_( 'LEAGUE_HINT_3', true ); ?>" );
-        } else if (form.ersatz.value == "") {
-            alert( "<?php echo JText::_( 'LEAGUE_HINT_4', true ); ?>" );
-        } else if (form.teil.value == "") {
-            alert( "<?php echo JText::_( 'LEAGUE_HINT_5', true ); ?>" );
-        } else if (form.runden.value == "") {
-            alert( "<?php echo JText::_( 'LEAGUE_HINT_6', true ); ?>" );
-        } else if ( getSelectedValue('adminForm','durchgang') == "" ) {
-            alert( "<?php echo JText::_( 'LEAGUE_HINT_7', true ); ?>" );
-        } else {*/
-            submitform( pressbutton );
-        //}
+        if (form.name.value == "") {
+            alert( "<?php echo JText::_( 'MANNSCHAFT_NAMEN_ANGEBEN', true ); ?>" );
+        } else {
+            Joomla.submitform( pressbutton );
+        }
     }
-	//-->
+	
 </script>
 
 <form action="index.php" method="get" name="adminForm" id="adminForm">
@@ -66,7 +55,7 @@ $lid = JRequest::getVar('lid', 0, 'default', 'int');
                         <label for="name"><?php echo JText::_( 'SWT_LEAGUE_TEAM_NAME' ); ?></label>
                     </td>
                     <td colspan="2">
-                        <input class="inputbox" type="text" name="name" id="name" size="22" maxlength="32" value="<?php echo $this->swt_data['man_name']; ?>" />
+                        <input class="inputbox" type="text" name="name" id="name" size="22" maxlength="32" value="<?php echo htmlspecialchars($this->swt_data['man_name'], ENT_QUOTES); ?>" />
                     </td>
                     <?php if (isset($this->db_man_nr)) { ?>
 						<td nowrap="nowrap">
@@ -137,7 +126,7 @@ $lid = JRequest::getVar('lid', 0, 'default', 'int');
 	<input type="hidden" name="view" value="swtligaman" />
 	<input type="hidden" name="controller" value="swtligaman" />
 	<input type="hidden" name="task" value="" />
-	<input type="hidden" name="swt" value="<?php echo $swt; ?>" />
+	<input type="hidden" name="swt_file" value="<?php echo $swt_file; ?>" />
 	<input type="hidden" name="update" value="<?php echo $update; ?>" />
     <input type="hidden" name="swt_id" value="<?php echo $swt_id; ?>" />
     <input type="hidden" name="lid" value="<?php echo $lid; ?>" />
@@ -147,6 +136,8 @@ $lid = JRequest::getVar('lid', 0, 'default', 'int');
 	<input type="hidden" name="noOrgReference" value="<?php echo $noOrgReference; ?>" />
 	<input type="hidden" name="noBoardResults" value="<?php echo $noBoardResults; ?>" />
 	<input type="hidden" name="ungerade" value="<?php echo $ungerade; ?>" />
+	<input type="hidden" name="dwz_handling" value="<?php echo $dwz_handling; ?>" />
+	<input type="hidden" name="name_land" value="<?php echo $name_land; ?>" />
    	<?php
    		for ($i = 1; $i <= $this->swt_db_data['anz_spieler']; $i++) {
 			if (!isset($this->swt_data['spieler_'.$i])) continue;

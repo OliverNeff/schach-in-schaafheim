@@ -2,12 +2,12 @@
 <extension type="module" version="1.7.0" client="site" method="upgrade">
 	<name>CLM Modul Turnier</name>
 	<author>Helge Frowein</author>
-	<creationDate>27.03.2017</creationDate>
+	<creationDate>23.09.2022</creationDate>
 	<copyright>This extension in released under the GNU/GPL License - http://www.gnu.org/copyleft/gpl.html</copyright>
 	<license>GNU/GPL</license>
 	<authorEmail>helge-frowein@online.de</authorEmail>
 	<authorUrl>www.chessleaguemanager.de</authorUrl>
-	<version>3.1.1</version>
+	<version>4.0.0</version>
 	<description>CLM_MODULE_TURNIER_DESCRIPTION</description>
 
 	<files>

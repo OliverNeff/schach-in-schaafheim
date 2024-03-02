@@ -1,10 +1,17 @@
 <?php
+/**
+ * @ Chess League Manager (CLM) Turnier Modul 
+ * @Copyright (C) 2008-2021 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
 // no direct access
 defined('_JEXEC') or die('Restricted access');
 
 class modCLM_TurnierHelper {
 	
-	public static function makeLink($gotoView, $gotoID, $param = array(), $name, $currentView, $currentID, $itemid) {
+	//public static function makeLink($gotoView, $gotoID, $param = array(), $name, $currentView, $currentID, $itemid) {
+	public static function makeLink($gotoView, $gotoID, $param, $name, $currentView, $currentID, $itemid) {
 	
 		// current?
 		$flagActive = false;

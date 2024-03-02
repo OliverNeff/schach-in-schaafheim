@@ -1,8 +1,10 @@
 <?php
+use \Joomla\CMS\Version;
+
 /**
  * Chess League Manager Turnier Erweiterungen
  *
- * @copyright (C) 2018 Andreas Hrubesch; All rights reserved
+ * @copyright (C) 2021 Andreas Hrubesch; All rights reserved
  * @license GNU General Public License; see https://www.gnu.org/licenses/gpl.html
  * @author Andreas Hrubesch
  */
@@ -10,7 +12,9 @@
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
 
-JHtml::_('bootstrap.framework');
+JHtml::_('bootstrap.dropdown');
+
+$dataToggle = ((Version::MAJOR_VERSION == 4) ? 'data-bs-toggle' : 'data-toggle') . '="dropdown"';
 
 ?>
 
@@ -19,10 +23,10 @@ JHtml::_('bootstrap.framework');
 
 		<?php if ($displayData['params']->get('show_print_icon') || $displayData['params']->get('show_email_icon') || $displayData['params']->get('show_filter_icon')) : ?>
         	<div class="btn-group pull-right">
-        		<a class="btn dropdown-toggle" data-toggle="dropdown" href="#"> <span
+        		<a class="btn dropdown-toggle" <?php echo $dataToggle?> href="#"> <span
         			class="icon-cog"></span><span class="caret"></span>
         		</a>
-        
+
         		<ul class="dropdown-menu">
         			<?php if ($displayData['params']->get('show_print_icon')) : ?>
         				<li class="print-icon"><?php echo JHtml::_('icon.print_popup', $displayData['state'], $displayData['params']); ?></li>

@@ -1,0 +1,51 @@
+<?xml version="1.0" encoding="utf-8"?>
+<extension version="2.5" method="upgrade" type="plugin" group="content">
+  <name>plg_content_clm_show_ext</name>
+  <author>CLM Team</author>
+  <creationDate>18.11.2019</creationDate>
+  <copyright>Copyright (C) 2018-2019 - CLM Team</copyright>
+  <license>http://www.gnu.org/licenses/gpl-2.0.html GNU/GPL</license>
+  <authorEmail>kbaerthel@t-online.de</authorEmail>
+  <authorUrl>chessleaguemanager.de</authorUrl>
+  <version>1.0.0</version>
+  <description>PLG_CLM_SHOW_EXT_DESC</description>
+
+  <files>
+    <filename plugin="clm_show_ext">clm_show_ext.php</filename>
+    <filename>index.html</filename>
+    <filename>clm_plg_content.css</filename>
+    <filename>css_path.php</filename>
+    <filename>changelog.txt</filename>
+    <folder>language</folder>
+  </files>
+
+  <languages folder="language">
+    <language tag="de-DE">de-DE/de-DE.plg_content_clm_show_ext.ini</language>
+    <language tag="en-GB">en-GB/en-GB.plg_content_clm_show_ext.ini</language>
+    <language tag="de-DE">de-DE/de-DE.plg_content_clm_show_ext.sys.ini</language>
+    <language tag="en-GB">en-GB/en-GB.plg_content_clm_show_ext.sys.ini</language>
+ </languages>
+
+         <config>
+                <fields name="params">
+ 
+					<fieldset name="basic">
+						<field name="source1" type="text" default="http://..." label="PLG_CLM_SHOW_PARAM_SOURCE_LABEL1" 
+							description="PLG_CLM_SHOW_PARAM_SOURCE_DESC" />
+						<field name="source2" type="text" default="http://..." label="PLG_CLM_SHOW_PARAM_SOURCE_LABEL2" 
+							description="PLG_CLM_SHOW_PARAM_SOURCE_DESC" />
+						<field name="source3" type="text" default="http://..." label="PLG_CLM_SHOW_PARAM_SOURCE_LABEL3" 
+                 			description="PLG_CLM_SHOW_PARAM_SOURCE_DESC" />							
+											   
+				        <field name="ajax" type="hidden"
+                            default="2"
+                            label="AJAX">
+                                <option value="0">DISABLE</option>
+                                <option value="1">WITHOUT OVERLAY</option>
+                                <option value="2">ENABLE</option>
+                        </field>
+                    </fieldset>
+ 
+                </fields>
+        </config>
+</extension>

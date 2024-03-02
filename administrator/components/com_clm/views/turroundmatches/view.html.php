@@ -1,15 +1,14 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008 Thomas Schwietert & Andreas Dorn. All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
- * @link http://www.fishpoke.de
+ * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
  * @email fishpoke@fishpoke.de
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 defined( '_JEXEC' ) or die( 'Restricted access' );
 
 class CLMViewTurRoundMatches extends JViewLegacy {
@@ -26,7 +25,6 @@ class CLMViewTurRoundMatches extends JViewLegacy {
 	
 		if ($model->round->tl_ok != 1) {
 			JToolBarHelper::addNew('add', JText::_('MATCH_ADD'));
-			//JToolBarHelper::deleteList('delete', JText::_('DELETE'));
 			JToolBarHelper::custom( 'delete', 'minus.png', 'minus.png', JText::_('MATCH_DELETE'), false);
 			JToolBarHelper::spacer();
 			
@@ -34,6 +32,7 @@ class CLMViewTurRoundMatches extends JViewLegacy {
 			JToolBarHelper::apply( 'apply' );
 			JToolBarHelper::spacer();
 			JToolBarHelper::trash( 'reset', JText::_('RESET_RESULTS'), FALSE );
+			JToolBarHelper::trash( 'p_reset', JText::_('RESET_PAIRINGS'), FALSE );
 			JToolBarHelper::spacer();
 		}
 		if ($model->round->tl_ok == 1) {
@@ -42,10 +41,23 @@ class CLMViewTurRoundMatches extends JViewLegacy {
 			JToolBarHelper::custom( 'approve', 'default.png', 'default.png', JText::_('SET_APPROVAL'), FALSE );
 		}
 		JToolBarHelper::spacer();
+		
+		//drawing parameter auslesen
+		$turParams = new clm_class_params($model->turnier->params);
+		$drawing_mode = $turParams->get('drawing_mode', 0);
+//		if (JComponentHelper::isInstalled ( 'com_clm_pairing' ) AND $model->turnier->typ == 1) {
+		if (JPluginHelper::isEnabled('xxx', 'clm_pairing_files') AND $model->turnier->typ == 1) { 
+			if ($drawing_mode > 0) {
+				JToolBarHelper::custom('draw','add.png','add_f2.png', JText::_('DRAW_PAIRINGS'), false);
+				JToolBarHelper::spacer();
+			}
+		}
+		// Goto Teilnehmern
+		JToolBarHelper::custom( 'goto_players', 'forward.png', 'forward_f2.png', JText::_('GOTO_PLAYERS'), false);
 		JToolBarHelper::cancel();
 
 		// das MainMenu abschalten
-		JRequest::setVar( 'hidemainmenu', 1 );
+		$_GET['hidemainmenu'] = 1;
 
 
 		// Document/Seite
@@ -58,21 +70,19 @@ class CLMViewTurRoundMatches extends JViewLegacy {
 
 
 		// Daten an Template übergeben
-		$this->assignRef('user', $model->user);
+		$this->user = $model->user;
 		
-		$this->assignRef('turnier', $model->turnier);
-		$this->assignRef('matches', $model->matches);
-		$this->assignRef('ergebnisse', $model->ergebnisse);
-		$this->assignRef('players', $model->players);
-		$this->assignRef('round', $model->round);
+		$this->turnier = $model->turnier;
+		$this->matches = $model->matches;
+		$this->ergebnisse = $model->ergebnisse;
+		$this->players = $model->players;
+		$this->round = $model->round;
 
-		$this->assignRef('form', $model->form);
-		$this->assignRef('param', $model->param);
+		$this->param = $model->param;
 
-		$this->assignRef('pagination', $model->pagination);
-		
 		// zusätzliche Funktionalitäten
-		JHtml::_('behavior.tooltip');
+//		JHtml::_('behavior.tooltip');
+		require_once (JPATH_COMPONENT_SITE . DS . 'includes' . DS . 'tooltip.php');
 
 
 		parent::display();

@@ -1,5 +1,11 @@
 <?php
 /**
+ * @ Chess League Manager (CLM) Component 
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
+/**
  * @version		$Id: reset.php 7399 2007-05-14 04:10:09Z eddieajau $
  * @package		Joomla
  * @subpackage	User
@@ -47,7 +53,8 @@ class CLMModelReset extends JModelLegacy
 	function confirmReset($token)
 	{
 	$mainframe	= JFactory::getApplication();
-	$option 	= JRequest::getCmd( 'option' );
+//	$option 	= JRequest::getCmd( 'option' );
+	$option 	= clm_core::$load->request_string('option', '');
 
 		$db	= JFactory::getDBO();
 		$db->setQuery('SELECT id FROM #__users WHERE block = 0 AND activation = '.$db->Quote($token));
@@ -81,19 +88,28 @@ class CLMModelReset extends JModelLegacy
 		jimport('joomla.user.helper');
 
 		$mainframe	= JFactory::getApplication();
-		$option 	= JRequest::getCmd( 'option' );
+		//$option 	= JRequest::getCmd( 'option' );
+		$option 	= clm_core::$load->request_string('option', '');
 
 		// Make sure that we have a pasword
 		if ( ! $password1 )
 		{
-			$this->setError(JText::_('MUST_SUPPLY_PASSWORD'));
+			$this->setError(JText::_('PASSWORD_MUST_GIVEN'));
 			return false;
 		}
 
 		// Verify that the passwords match
 		if ($password1 != $password2)
 		{
-			$this->setError(JText::_('PASSWORDS_DO_NOT_MATCH_LOW'));
+			$this->setError(JText::_('PASSWORDS_DO_NOT_MATCH'));
+			return false;
+		}
+
+		// Verify the password against the rules
+		$pattern = '/(?=^.{8,}$)(?=.*\d)(?=.*[A-Z])(?=.*[a-z])(?=.*[+,.;:\-_!%&\/]).*$/';
+		if (!preg_match($pattern, $password1) == 1) 
+		{
+			$this->setError(JText::_('PASSWORD_DO_NOT_MATCH_RULES'));
 			return false;
 		}
 
@@ -101,17 +117,19 @@ class CLMModelReset extends JModelLegacy
 		$db			= JFactory::getDBO();
 		$id			= $mainframe->getUserState($this->_namespace.'id');
 		$token		= $mainframe->getUserState($this->_namespace.'token');
-		$salt		= JUserHelper::genRandomPassword(32);
-		$crypt		= JUserHelper::getCryptedPassword($password1, $salt);
-		$password	= $crypt.':'.$salt;
+//		$salt		= JUserHelper::genRandomPassword(32);
+//		$crypt		= JUserHelper::getCryptedPassword($password1, $salt);
+//		$password	= $crypt.':'.$salt;
 
+		$password = JUserHelper::hashPassword($password1);
+ 
 		// Get the user object
 		$user = new JUser($id);
 
 		// Fire the onBeforeStoreUser trigger
 		JPluginHelper::importPlugin('user');
-		$dispatcher =& JDispatcher::getInstance();
-		$dispatcher->trigger('onBeforeStoreUser', array($user->getProperties(), false));
+//		$dispatcher =& JDispatcher::getInstance();
+//		$dispatcher->trigger('onBeforeStoreUser', array($user->getProperties(), false));
 
 		// Build the query
 		$query 	= 'UPDATE #__users'
@@ -124,7 +142,8 @@ class CLMModelReset extends JModelLegacy
 		$db->setQuery($query);
 
 		// Save the password
-		if (!$result = $db->query())
+//		if (!$result = $db->query())
+		if (!clm_core::$db->query($query))
 		{
 			$this->setError(JText::_('DATABASE_ERROR'));
 			return false;
@@ -136,7 +155,7 @@ class CLMModelReset extends JModelLegacy
 		$user->password_clear	= $password1;
 
 		// Fire the onAfterStoreUser trigger
-		$dispatcher->trigger('onAfterStoreUser', array($user->getProperties(), false, $result, $this->getError()));
+//		$dispatcher->trigger('onAfterStoreUser', array($user->getProperties(), false, $result, $this->getError()));
 
 		// Flush the variables from the session
 		$mainframe->setUserState($this->_namespace.'id',	null);

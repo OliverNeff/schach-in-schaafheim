@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2017 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2020 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -17,8 +17,8 @@ class CLMViewMannschaft extends JViewLegacy
 	function display($tpl = null)
 	{
 		$config = clm_core::$db->config();
-		$googlemaps_api = $config->googlemaps_api;
 		$googlemaps     = $config->googlemaps;
+		$googlemaps_msch     = $config->googlemaps_msch;
 		
 		if (isset($_SERVER['HTTPS']) AND $_SERVER['HTTPS'] != 'off') {
 			$prot = 'https';
@@ -27,7 +27,14 @@ class CLMViewMannschaft extends JViewLegacy
 		}
 		$document =JFactory::getDocument();
 		if ($googlemaps == 1) {
-			$document->addScript($prot.'://maps.google.com/maps?file=api&v=2&key='.$googlemaps_api.'');
+			if ($googlemaps_msch == 1){ //Load Leaflet
+				$document->addScript($prot.'://unpkg.com/leaflet@1.7.1/dist/leaflet.js');
+				$document->addStyleSheet($prot.'://unpkg.com/leaflet@1.7.1/dist/leaflet.css');
+			}
+			elseif ($googlemaps_msch == 3){ //Load OSM
+				$document->addScript($prot.'://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.3.0/build/ol.js');
+				$document->addStyleSheet($prot.'://cdn.rawgit.com/openlayers/openlayers.github.io/master/en/v5.3.0/css/ol.css');
+			}
 		}
 		
 		$document->addScript($prot.'://ajax.googleapis.com/ajax/libs/jquery/1.4.2/jquery.min.js');
@@ -35,39 +42,39 @@ class CLMViewMannschaft extends JViewLegacy
 		
 		$model	  = $this->getModel();
   		$mannschaft     = $model->getCLMMannschaft();
-		$this->assignRef('mannschaft'  , $mannschaft);
+		$this->mannschaft = $mannschaft;
 
 		$model	  = $this->getModel();
   		$vereine     = $model->getCLMVereine();
-		$this->assignRef('vereine'  , $vereine);
+		$this->vereine = $vereine;
 
 		$model	  = $this->getModel();
   		$count     = $model->getCLMCount();
-		$this->assignRef('count'  , $count);
+		$this->count = $count;
 
 		$model	  = $this->getModel();
   		$bp     = $model->getCLMBP();
-		$this->assignRef('bp'  , $bp);
+		$this->bp = $bp;
 
 		$model	  = $this->getModel();
   		$sumbp     = $model->getCLMSumBP();
-		$this->assignRef('sumbp'  , $sumbp);
+		$this->sumbp = $sumbp;
 
 		$model	  = $this->getModel();
   		$plan     = $model->getCLMSumPlan();
-		$this->assignRef('plan'  , $plan);
+		$this->plan = $plan;
 
 		$model	  = $this->getModel();
 		$termin     = $model->getCLMTermin();
-		$this->assignRef('termin'  , $termin);
+		$this->termin = $termin;
 
 		$model	  = $this->getModel();
 		$saison     = $model->getCLMSaison();
-		$this->assignRef('saison'  , $saison);
+		$this->saison = $saison;
 
 		$model	  = $this->getModel();
 		$einzel     = $model->getCLMEinzel();
-		$this->assignRef('einzel'  , $einzel);
+		$this->einzel = $einzel;
 
 		parent::display($tpl);
 	}	

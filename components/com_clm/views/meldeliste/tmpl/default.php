@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2017 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -13,9 +13,9 @@
 defined('_JEXEC') or die('Restricted access');
 
 // Variablen holen
-$sid = JRequest::getInt( 'saison', '1' ); 
-$zps = JRequest::getVar( 'zps','1');
-$man = JRequest::getInt( 'man' ); 
+$sid = clm_core::$load->request_int('saison',1 ); 
+$zps = clm_core::$load->request_string('zps','1');
+$man = clm_core::$load->request_int('man'); 
 $liga 		= $this->liga;
 
 
@@ -158,7 +158,7 @@ echo "<br>published ".$clmuser[0]->published;
 		</script>
 
 
-<form action="index.php?option=com_clm&amp;view=meldeliste&amp;layout=order" method="post" name="adminForm">
+<form action="index.php?option=com_clm&amp;view=meldeliste&amp;layout=order&amp;saison=<?php echo $sid ?>&amp;lid=<?php echo $liga[0]->lid ?>&amp;zps=<?php echo $zps ?>&amp;man=<?php echo $man ?>" method="post" name="adminForm">
 <center>
 <!---
 <table class="adminlist" cellpadding="0" cellspacing="0">
@@ -214,12 +214,12 @@ echo "<br>published ".$clmuser[0]->published;
 		<?php echo $spieler[$i]->name; ?>
 	</td>
 	<td>
-		<input class="inputbox" type="text" name="attr[<?php echo $spieler[$i]->id; ?>]" id="attr<?php echo $i+1; ?>" size="1" maxlength="4" value="<?php echo $spieler[$i]->attr; ?>" />
+		<input class="inputbox" style="width:auto;" type="text" name="attr[<?php echo $spieler[$i]->id; ?>]" id="attr<?php echo $i+1; ?>" size="1" maxlength="4" value="<?php echo $spieler[$i]->attr; ?>" />
 	</td>
 	<td>
 		<?php echo $spieler[$i]->dwz; ?>
 	</td>
-	<?php $j = $i + (count($spieler)/2) + (count($spieler) % 2); // +1; 
+	<?php $j = intval($i + (count($spieler)/2) + (count($spieler) % 2)); // +1; 
 		if (isset($spieler[$j]) AND $spieler[$j]->snr > "0" AND $spieler[$j]->snr < "999") { $checked_marker = ' checked="checked"'; $spieler[$j]->checked_out = "1"; }
 		else $checked_marker = '';
 		if (isset($spieler[$j])) $spieler_id = $spieler[$j]->id; else $spieler_id = '';
@@ -232,7 +232,7 @@ echo "<br>published ".$clmuser[0]->published;
 		<?php if (isset($spieler[$j])) echo $spieler[$j]->name; ?>
 	</td>
 	<td>
-		<input class="inputbox" type="text" name="attr[<?php if (isset($spieler[$j])) echo $spieler[$j]->id; ?>]" id="attr<?php echo $j+1; ?>" size="1" maxlength="4" value="<?php if (isset($spieler[$j])) echo $spieler[$j]->attr; ?>" />
+		<input class="inputbox" style="width:auto;" type="text" name="attr[<?php if (isset($spieler[$j])) echo $spieler[$j]->id; ?>]" id="attr<?php echo $j+1; ?>" size="1" maxlength="4" value="<?php if (isset($spieler[$j])) echo $spieler[$j]->attr; ?>" />
 	</td>
 	<td>
 		<?php if (isset($spieler[$j])) echo $spieler[$j]->dwz; ?>

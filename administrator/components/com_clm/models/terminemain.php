@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008 Thomas Schwietert & Andreas Dorn. All rights reserved
+ * @Copyright (C) 2008-2022 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.fishpoke.de
  * @author Thomas Schwietert
@@ -55,15 +55,16 @@ class CLMModelTermineMain extends JModelLegacy {
 		$mainframe =JFactory::getApplication();
 		global $option;
 	
+		if (!isset($this->param) OR is_null($this->param)) $this->param = array();	// seit J 4.2 nötig um notice zu vermeiden
 		// search
 		$this->param['search'] = $mainframe->getUserStateFromRequest( "$option.search", 'search', '', 'string' );
-		$this->param['search'] = JString::strtolower( $this->param['search'] );
+		$this->param['search'] = strtolower( $this->param['search'] );
 
 		// status
 		$this->param['state'] = $mainframe->getUserStateFromRequest( "$option.filter_state",'filter_state','','word' );
 		
 		// Order
-		$this->param['order'] = $mainframe->getUserStateFromRequest( "$option.filter_order", 'filter_order', 'a.startdate', 'cmd' ); // JRequest::getString('filter_order', 'a.id');
+		$this->param['order'] = $mainframe->getUserStateFromRequest( "$option.filter_order", 'filter_order', 'a.startdate', 'cmd' ); 
 		$this->param['order_Dir'] = $mainframe->getUserStateFromRequest( "$option.filter_order_Dir",'filter_order_Dir','desc','word' );
 	
 	}
@@ -76,7 +77,6 @@ class CLMModelTermineMain extends JModelLegacy {
 			.$this->_sqlWhere();
 		$this->termineTotal = $this->_getListCount($query);
 		
-		//$query .= $this->_sqlOrder().' LIMIT '.$this->limitstart.', '.$this->limit;
 		$query .= $this->_sqlOrder();
 		if($this->limit > 0){ $query .= ' LIMIT '.$this->limitstart.', '.$this->limit;}
 		

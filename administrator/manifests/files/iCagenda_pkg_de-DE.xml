@@ -1,0 +1,46 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<extension type="file" method="upgrade" version="2.5">
+    <name>iCagenda - German (Germany) de-DE Language Pack</name>
+    <version>2015-10-13100</version>
+    <creationDate>25 January 2016</creationDate>
+    <author>grisuu, mPino, Wasilis, bmbsbr, chuerner, Proton_11, keraM</author>
+    <authorEmail>joomlic.translations@gmail.com</authorEmail>
+    <authorUrl>http://www.joomlic.com</authorUrl>
+    <copyright>© 2012-2016 - JoomliC.com - All Rights Reserved.</copyright>
+    <license>GNU General Public License version 3 or later - http://www.gnu.org/licenses/gpl.html</license>
+    <packager>iCagenda</packager>
+    <packagerurl>http://www.icagenda.com/</packagerurl>
+    <description>
+        <![CDATA[
+			<h2>iCagenda Language Pack - German (Germany) de-DE Translation</h2>
+			<h3>Translators: grisuu, mPino, Wasilis, bmbsbr, chuerner, Proton_11, keraM</h3>
+			Language resources on Transifex: iCagenda [<a href="http://transifex.com/projects/p/icagenda/language/de_DE">German (Germany)</a>]<br/><br/>
+			<small>Copyright © 2012-2016 - JoomliC.com - All Rights Reserved.</small><br />If you use iCagenda&trade;, please post a rating and a review at the JED : &nbsp;<a href="http://extensions.joomla.org/extensions/calendars-a-events/events/events-management/22013" target="_blanck">Joomla! Extensions Directory</a>
+        ]]>
+    </description>
+    <fileset>
+        <files folder="admin" target="administrator/language/de-DE">
+			<filename>de-DE.com_icagenda.ini</filename>
+			<filename>de-DE.com_icagenda.sys.ini</filename>
+			<filename>de-DE.plg_search_icagenda.ini</filename>
+			<filename>de-DE.plg_search_icagenda.sys.ini</filename>
+			<filename>de-DE.plg_system_ic_library.ini</filename>
+			<filename>de-DE.plg_system_ic_library.sys.ini</filename>
+		</files>
+        <files folder="frontend" target="language/de-DE">
+			<filename>de-DE.com_icagenda.ini</filename>
+			<filename>de-DE.lib_ic_library.ini</filename>
+			<filename>de-DE.lib_ic_library.sys.ini</filename>
+			<filename>de-DE.mod_ic_event_list.ini</filename>
+			<filename>de-DE.mod_ic_event_list.sys.ini</filename>
+			<filename>de-DE.mod_iccalendar.ini</filename>
+			<filename>de-DE.plg_content_ic_jcomments.ini</filename>
+			<filename>de-DE.plg_content_ic_jcomments.sys.ini</filename>
+		</files>
+    </fileset>
+
+	<updateservers>
+		<server type="collection" priority="1" name="iCagenda Update Server">http://www.icagenda.com/ictransifex/collection/icagenda/iCagenda_collection.xml</server>
+	</updateservers>
+
+</extension>

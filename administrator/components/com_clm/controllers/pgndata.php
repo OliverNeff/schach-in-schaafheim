@@ -1,8 +1,7 @@
 <?php
-
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2016 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2022 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -21,35 +20,47 @@ class CLMControllerPGNdata extends JControllerLegacy
 	}
 	
 	function display($cachable = false, $urlparams = array()) {
-		JRequest::setVar('view','pgndata');
+		$_REQUEST['view'] = 'pgndata';
 		parent::display();
 	} 
 	
 	function next() {
-	
+		$app =JFactory::getApplication();	
 		$model = $this->getModel('pgndata');
+		$liga = clm_core::$load->request_string('liga', '');
+		$pgn_file = clm_core::$load->request_string('pgn_file', '');
 		if ($model->store ()) {
-			JRequest::setVar('view', 'swt');
-			JFactory::getApplication()->enqueueMessage( JText::_( 'PGN_STORE_SUCCESS' ),'message' );
-			parent::display ();
+			$adminLink = new AdminLink ();
+			$adminLink->view = 'pgnimport';
+			$adminLink->more = array('liga' => $liga, 'pgn_file' => $pgn_file);
+			$adminLink->makeURL ();
+			$app->enqueueMessage( JText::_( 'PGN_STORE_SUCCESS' ),'message' );
+			$app->redirect($adminLink->url);
 		}
 		else
 		{
-			JRequest::setVar('view', 'swt');
-			JFactory::getApplication()->enqueueMessage( JText::_( 'PGN_STORE_ERROR' ),'message' );
-			parent::display ();
+			$adminLink = new AdminLink ();
+			$adminLink->view = 'swt';
+			$adminLink->more = array('liga' => $liga, 'pgn_file' => $pgn_file);
+			$adminLink->makeURL ();
+			$app->enqueueMessage( JText::_( 'PGN_STORE_ERROR' ),'message' );
+			$app->redirect($adminLink->url);
 		}
 	
 	}
 	
 	function cancel() {		
-	
+		$app =JFactory::getApplication();	
+		$liga = clm_core::$load->request_string('liga', '');
+		$pgn_file = clm_core::$load->request_string('pgn_file', '');
 		$adminLink = new AdminLink ();
-		$adminLink->view = 'swt';
+		$adminLink->view = 'pgnimport';
+		$adminLink->more = array('liga' => $liga, 'pgn_file' => $pgn_file);
 		$adminLink->makeURL ();
 		
 		$msg = JText::_( 'SWT_CANCEL_MSG' );
-		$this->setRedirect($adminLink->url, $msg);
+		$app->enqueueMessage( $msg );
+		$app->redirect($adminLink->url);
 	
 	}
 	

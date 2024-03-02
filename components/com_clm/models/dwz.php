@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2017 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2022 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -9,21 +9,18 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 defined('_JEXEC') or die('Restricted access');
 jimport('joomla.application.component.model');
 
 class CLMModelDWZ extends JModelLegacy
 {
-
 	function _getCLMzps ()
 	{
-	
 	$mainframe	= JFactory::getApplication();
-	$option 	= JRequest::getCmd( 'option' );
+	$option 	= clm_core::$load->request_string( 'option' );
 
-	$zps	= clm_escape(JRequest::getVar('zps'));
-	$sid	= JRequest::getInt('saison','1');
+	$zps	= clm_escape(clm_core::$load->request_string('zps'));
+	$sid	= clm_core::$load->request_int('saison', 1);
 	$db	= JFactory::getDBO();
 	$id	= @$options['id'];
 		
@@ -35,7 +32,8 @@ class CLMModelDWZ extends JModelLegacy
 	$filter_order     = $mainframe->getUserStateFromRequest( $option.'filter_order_dwz', 'filter_order', 'DWZ', 'cmd' );
 	$filter_order_Dir = $mainframe->getUserStateFromRequest( $option.'filter_order_Dir_dwz', 'filter_order_Dir', 'DESC', 'word' );
 		
-		$this->param['order'] = $mainframe->getUserStateFromRequest( "$option.filter_order", 'filter_order', 'DWZ', 'cmd' ); // JRequest::getString('filter_order', 'a.id');
+		$this->param = array(); 
+		$this->param['order'] = $mainframe->getUserStateFromRequest( "$option.filter_order", 'filter_order', 'DWZ', 'cmd' ); 
 		$this->param['order_Dir'] = $mainframe->getUserStateFromRequest( "$option.filter_order_Dir",'filter_order_Dir','desc','word' );
 	
 	if(!empty($filter_order) && !empty($filter_order_Dir) ){
@@ -55,8 +53,8 @@ class CLMModelDWZ extends JModelLegacy
 	
 	function _getCLMLiga( &$options )
 	{
-	$zps	= clm_escape(JRequest::getVar('zps'));
-	$sid	= JRequest::getInt('saison','1');
+	$zps	= clm_escape(clm_core::$load->request_string('zps'));
+	$sid	= clm_core::$load->request_int('saison', 1);
 	$db	= JFactory::getDBO();
 	$id	= @$options['id'];
  
@@ -78,8 +76,8 @@ class CLMModelDWZ extends JModelLegacy
 	
 	function _getCLMVereinsliste( &$options )
 	{
-	$sid	= JRequest::getInt('saison','1');
-	$zps	= clm_escape(JRequest::getVar('zps'));
+	$zps	= clm_escape(clm_core::$load->request_string('zps'));
+	$sid	= clm_core::$load->request_int('saison', 1);
 	$db	= JFactory::getDBO();
 	$id	= @$options['id'];
 
@@ -99,8 +97,8 @@ class CLMModelDWZ extends JModelLegacy
 	}
 	function _getCLMSaisons( &$options )
 	{
-	$sid	= JRequest::getInt('saison','1');
-	$zps	= clm_escape(JRequest::getVar('zps'));
+	$zps	= clm_escape(clm_core::$load->request_string('zps'));
+	$sid	= clm_core::$load->request_int('saison', 1);
 	$db	= JFactory::getDBO();
 	$id	= @$options['id'];
 

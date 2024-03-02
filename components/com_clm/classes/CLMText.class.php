@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2019 CLM Team  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -9,15 +9,11 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
-
 /**
 * CLMText
 * Klassenbibliothek für text-bezogene Funktionalitäten
 */
 class CLMText {
-
-	
 	
 	/**
 	* public static function composeHeadTitle
@@ -153,7 +149,7 @@ class CLMText {
 			case 6: // Elo Schnitt
 				$format = "%01.0f";
 				break;
-			case 7: // Summenwertung
+			case 7: // Buchholz BP
 				$format = "%01.1f";
 				break;
 			case 8: // DWZ Schnitt
@@ -177,6 +173,9 @@ class CLMText {
 			case 16: // Elo Schnitt 1 Streichresultat
 				$format = "%01.0f";
 				break;
+			case 17: // Buchholz BP 1 Streichresultat
+				$format = "%01.1f";
+				break;
 			case 18: // DWZ Schnitt 1 Streichresultat
 				$format = "%01.0f";
 				break;
@@ -192,6 +191,9 @@ class CLMText {
 				break;
 			case 29: // Prozentpunkte
 				$format = "%01.2f";
+				break;
+			case 30: // Turnierleistung
+				$format = "%01.0f";
 				break;
 		
 		}
@@ -222,8 +224,8 @@ class CLMText {
 	*/
 	public static function formatNote($text) {
 	
-		$string = nl2br(JFilterOutput::cleantext($text));
-		
+		$text = nl2br(JFilterOutput::cleantext($text));
+		$string = preg_replace("~[[:alpha:]]+://[^<>[:space:]]+[[:alnum:]/]~","<a href=\"\\0\" target=\"_blank\">\\0</a>", $text);
 		return $string;
 	
 	}

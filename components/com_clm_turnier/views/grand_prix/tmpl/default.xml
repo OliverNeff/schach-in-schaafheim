@@ -5,81 +5,101 @@
 		</message>
 	</layout>
 
-	<fields name="request">
+	<fields name="request" addfieldpath="/administrator/components/com_clm_turnier/models/fields">
 		<fieldset name="request">
 			<field name="grand_prix" required="true" type="sql"
 				label="COM_CLM_TURNIER_FIELD_NAME_LABEL"
 				description="COM_CLM_TURNIER_FIELD_NAME_DESC"
 				query="SELECT a.id AS value, a.name AS kname FROM #__clm_turniere_grand_prix a WHERE a.published = 1 ORDER BY kname"
-				value_field="kname">
+				value_field="kname" class="input-xlarge">
 			</field>
 
 			<field name="kategorie" type="sql" default="0"
-				label="CATEGORY_NAME"
-				description="CATEGORY_NAME_SELECT_DESC"
+				label="CATEGORY_NAME" description="CATEGORY_NAME_SELECT_DESC"
 				query="SELECT a.id AS value, a.name AS kname FROM #__clm_categories a WHERE a.parentid = 0
 					UNION
 					SELECT a.id AS value, CONCAT(b.name, ' > ', a.name) AS kname FROM #__clm_categories a 
 						JOIN #__clm_categories b ON b.id = a.parentid
 					ORDER BY kname ASC"
-				value_field="kname">
+				value_field="kname" class="input-xlarge">
 				<option value="0">PARAMETER_SELECT</option>
 			</field>
-			
-			<field name="turniere" type="sql" default="0" 
-				label="TOURNAMENTS" 
-				description="TOURNAMENTS_SELECT_DESC" 
-				query="SELECT a.id AS value, a.name AS tname FROM #__clm_turniere a WHERE a.published = 1 ORDER BY a.datestart" 
-				value_field="tname"
-				multiple="multiple">
-				<option value="0">PARAMETER_SELECT</option>
+
+			<field name="turniere" type="sql" default="0"
+				label="TOURNAMENTS" description="TOURNAMENTS_SELECT_DESC"
+				query="SELECT a.id AS value, a.name AS tname FROM #__clm_turniere a WHERE a.published = 1 ORDER BY a.datestart"
+				value_field="tname" 
+				multiple="true" 
+				class="input-xlarge"
+				layout="joomla.form.field.list-fancy-select"
+				>
+			</field>
+
+			<field name="ranglisten" type="sonderranglisten"
+				label="SPECIALRANKINGS" description="SPECIALRANKINGS_DESC"
+				multiple="true"
+				class="input-xlarge"
+				>
 			</field>
 		</fieldset>
 	</fields>
 
 	<fields name="params">
-		<fieldset name="basic" label="COM_MENUS_LAYOUT_FEATURED_OPTIONS">
+		<fieldset name="basic"
+			label="COM_MENUS_LAYOUT_FEATURED_OPTIONS">
 			<field name="show_title" type="list" useglobal="true"
-				label="JGLOBAL_SHOW_TITLE_LABEL" description="JGLOBAL_SHOW_TITLE_DESC">
+				label="JGLOBAL_SHOW_TITLE_LABEL"
+				description="JGLOBAL_SHOW_TITLE_DESC">
 				<option value="1">JSHOW</option>
 				<option value="0">JHIDE</option>
 			</field>
 			<field name="order_by" type="list" useglobal="true"
-				label="COM_CLM_TURNIER_FIELD_ORDER_BY_LABEL" description="COM_CLM_TURNIER_FIELD_ORDER_BY_DESC">
+				label="COM_CLM_TURNIER_FIELD_ORDER_BY_LABEL"
+				description="COM_CLM_TURNIER_FIELD_ORDER_BY_DESC">
 				<option value="1">COM_CLM_TURNIER_FIELD_ORDER_BY_VALUE_1</option>
 				<option value="2">COM_CLM_TURNIER_FIELD_ORDER_BY_VALUE_2</option>
 				<option value="3">COM_CLM_TURNIER_FIELD_ORDER_BY_VALUE_3</option>
 			</field>
 			<field name="use_dwz_from" type="list" useglobal="true"
-				label="COM_CLM_TURNIER_USE_DWZ_LABEL" description="COM_CLM_TURNIER_USE_DWZ_DESC">
+				label="COM_CLM_TURNIER_USE_DWZ_LABEL"
+				description="COM_CLM_TURNIER_USE_DWZ_DESC">
 				<option value="0">COM_CLM_TURNIER_USE_DWZ_FROM_VALUE_0</option>
 				<option value="1">COM_CLM_TURNIER_USE_DWZ_FROM_VALUE_1</option>
 			</field>
 			<field name="link_turnier" type="list" useglobal="true"
-				label="COM_CLM_TURNIER_LINKED_TURNIER_LABEL" description="COM_CLM_TURNIER_LINKED_TURNIER_DESC">
-				<option value="1">JYES</option>
-				<option value="0">JNO</option>
+				label="COM_CLM_TURNIER_LINKED_TURNIER_LABEL" 
+				description="COM_CLM_TURNIER_LINKED_TURNIER_DESC">
+				<option value="0">COM_CLM_TURNIER_LINKED_TURNIER_VALUE_SELECT</option>
+				<option value="1">COM_CLM_TURNIER_LINKED_TURNIER_VALUE_1</option>
+				<option value="2">COM_CLM_TURNIER_LINKED_TURNIER_VALUE_2</option>
+				<option value="3">COM_CLM_TURNIER_LINKED_TURNIER_VALUE_3</option>
+				<option value="4">COM_CLM_TURNIER_LINKED_TURNIER_VALUE_4</option>
+				<option value="5">COM_CLM_TURNIER_LINKED_TURNIER_VALUE_5</option>
 			</field>
 
 			<field name="spacer1" type="spacer" hr="true" />
 
 			<field name="show_player_title" type="list" useglobal="true"
-				label="COM_CLM_TURNIER_SHOW_PLAYER_TITEL_LABEL" description="COM_CLM_TURNIER_SHOW_PLAYER_TITEL_DESC">
+				label="COM_CLM_TURNIER_SHOW_PLAYER_TITEL_LABEL"
+				description="COM_CLM_TURNIER_SHOW_PLAYER_TITEL_DESC">
 				<option value="1">JSHOW</option>
 				<option value="0">JHIDE</option>
 			</field>
 			<field name="show_verein" type="list" useglobal="true"
-				label="COM_CLM_TURNIER_SHOW_VEREIN_LABEL" description="COM_CLM_TURNIER_SHOW_VEREIN_DESC">
+				label="COM_CLM_TURNIER_SHOW_VEREIN_LABEL"
+				description="COM_CLM_TURNIER_SHOW_VEREIN_DESC">
 				<option value="1">JSHOW</option>
 				<option value="0">JHIDE</option>
 			</field>
 			<field name="show_dwz" type="list" useglobal="true"
-				label="COM_CLM_TURNIER_SHOW_DWZ_LABEL" description="COM_CLM_TURNIER_SHOW_DWZ_DESC">
+				label="COM_CLM_TURNIER_SHOW_DWZ_LABEL"
+				description="COM_CLM_TURNIER_SHOW_DWZ_DESC">
 				<option value="1">JSHOW</option>
 				<option value="0">JHIDE</option>
 			</field>
 			<field name="show_elo" type="list" useglobal="true"
-				label="COM_CLM_TURNIER_SHOW_ELO_LABEL" description="COM_CLM_TURNIER_SHOW_ELO_DESC">
+				label="COM_CLM_TURNIER_SHOW_ELO_LABEL"
+				description="COM_CLM_TURNIER_SHOW_ELO_DESC">
 				<option value="1">JSHOW</option>
 				<option value="0">JHIDE</option>
 			</field>
@@ -87,33 +107,29 @@
 			<field name="spacer2" type="spacer" hr="true" />
 
 			<field name="show_icons" type="list" useglobal="true"
-				label="JGLOBAL_SHOW_ICONS_LABEL"
-				description="JGLOBAL_SHOW_ICONS_DESC">
+				label="COM_CLM_TURNIER_SHOW_ICONS_LABEL"
+				description="COM_CLM_TURNIER_SHOW_ICONS_DESC">
 				<option value="1">JSHOW</option>
 				<option value="0">JHIDE</option>
 			</field>
-
 			<field name="show_print_icon" type="list" useglobal="true"
-				label="JGLOBAL_SHOW_PRINT_ICON_LABEL"
-				description="JGLOBAL_SHOW_PRINT_ICON_DESC">
+				label="COM_CLM_TURNIER_SHOW_PRINT_ICON_LABEL"
+				description="COM_CLM_TURNIER_SHOW_PRINT_ICON_DESC">
 				<option value="1">JSHOW</option>
 				<option value="0">JHIDE</option>
 			</field>
-
 			<field name="show_email_icon" type="list" useglobal="true"
-				label="JGLOBAL_SHOW_EMAIL_ICON_LABEL"
-				description="JGLOBAL_SHOW_EMAIL_ICON_DESC">
+				label="COM_CLM_TURNIER_SHOW_EMAIL_ICON_LABEL"
+				description="COM_CLM_TURNIER_SHOW_EMAIL_ICON_DESC">
 				<option value="1">JSHOW</option>
 				<option value="0">JHIDE</option>
 			</field>
-
 			<field name="show_filter_icon" type="list" useglobal="true"
 				label="COM_CLM_TURNIER_SHOW_FILTER_ICON_LABEL"
 				description="COM_CLM_TURNIER_SHOW_FILTER_ICON_DESC">
 				<option value="1">JSHOW</option>
 				<option value="0">JHIDE</option>
 			</field>
-
 		</fieldset>
 	</fields>
 </metadata>

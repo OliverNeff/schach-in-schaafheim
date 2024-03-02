@@ -1,6 +1,10 @@
 <?php
-// Eingang: Verband
-// Ausgang: Alle Vereine in diesem
+/**
+ * @ Chess League Manager (CLM) Component 
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link https://www.chessleaguemanager.de
+*/
 function clm_api_db_be_menu() {
 	$clmAccess = clm_core::$access;
 	$access = array();
@@ -40,15 +44,15 @@ function clm_api_db_be_menu() {
 	$status["version"] = $status["version"][0];
 	if ($config->status_cache_content == "" || $config->status_cache < time() - 1800) {
 		if ($status["fopen"]) {
-			$ctx = stream_context_create(array('http'=>
-    			array(
-     			   'timeout' => 10,
-   			)
-			));
+			$ctx = stream_context_create(array(
+				'http'=>array('timeout' => 10,
+					)
+				)
+			);
 
 			$jlang = JFactory::getLanguage();
-			//if (!$fp = @file_get_contents("http://www.chessleaguemanager.de/clm/updateServer/status." . clm_core::$db->config()->language, false, $ctx)) {
-			if (!$fp = @file_get_contents("http://www.chessleaguemanager.de/clm/updateServer/status." . $jlang->getTag(), false, $ctx)) {
+			
+			if (($fp = @file_get_contents("https://www.chessleaguemanager.de/clm/updateServer/status." . $jlang->getTag(), false, $ctx)) === false ) {
 				$status["content"] = "";
 			} else {
 				$status["content"] = $fp;

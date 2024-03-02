@@ -1,5 +1,10 @@
 <?php
-
+/**
+ * @ Chess League Manager (CLM) Archiv Modul 
+ * @Copyright (C) 2008-2021 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
 // no direct access
 defined('_JEXEC') or die('Restricted access');
 
@@ -10,10 +15,10 @@ class modCLM_ArchivHelper
 	global $mainframe;
 	$db			= JFactory::getDBO();
 	$par_mt_type = $params->def('mt_type', 0);
-	$sid		= JRequest::getInt( 'saison', 0);
-	$turnier	= JRequest::getInt( 'turnier', 0);
-	$liga		= JRequest::getInt( 'liga', 0);
-	$atyp		= JRequest::getInt( 'atyp', 0);
+	$sid		= clm_core::$load->request_int( 'saison', 0);
+	$turnier	= clm_core::$load->request_int( 'turnier', 0);
+	$liga		= clm_core::$load->request_int( 'liga', 0);
+	$atyp		= clm_core::$load->request_int( 'atyp', 0);
 
 	if ($par_mt_type == 0) {
 		if (($atyp == 0 OR $liga > 0) AND $turnier == 0 AND $sid > 0) {
@@ -40,7 +45,7 @@ class modCLM_ArchivHelper
 			$db->setQuery( $query );
 			$sid = $db->loadResult();
 			//echo "<br>tsid: $turnier :"; var_dump($sid);
-			JRequest::setVar('saison', $sid);
+			$_GET['saison'] = $sid;
 		}
 		if (($atyp == 1 OR $turnier > 0) AND $liga == 0 AND $sid > 0) {
 			$query = "SELECT  a.sid, a.id, a.name, a.runden, a.dg, a.typ "
@@ -109,7 +114,7 @@ class modCLM_ArchivHelper
 	}
 
 	public static function getRunde(&$params) {
-		$liga	= JRequest::getVar( 'liga', 0);
+		$liga	= clm_core::$load->request_int( 'liga', 0);
 		$db	= JFactory::getDBO();
 	
 		$query = " SELECT  a.* "

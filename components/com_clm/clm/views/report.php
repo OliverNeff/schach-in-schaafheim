@@ -1,9 +1,14 @@
 <?php
+/**
+ * @ CLM Extern Component
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
 function clm_view_report($out) {
 	clm_core::$load->load_css("report");
 	clm_core::$load->load_css("buttons");
 	clm_core::$load->load_css("notification");
-	clm_core::$load->load_js("report");
 	$lang = clm_core::$lang->report;
 	clm_core::$cms->setTitle($lang->title.' '.$out["liga"][0]->name);
 
@@ -11,6 +16,11 @@ function clm_view_report($out) {
 	$dg 		= $out["input"]["dg"];
 	$runde 		= $out["input"]["runde"];
 	$liga 		= $out["liga"];
+	$_POST['clm_p_sieg'] = $liga[0]->sieg;
+	$_POST['clm_p_remis'] = $liga[0]->remis;
+	$_POST['clm_p_nieder'] = $liga[0]->nieder;
+	$_POST['clm_p_antritt'] = $liga[0]->antritt; //die();
+	clm_core::$load->load_js("report");
 	$paar 		= $out["paar"];
 	$oldresult 	= $out["oldresult"];
 	$heim 		= $out["heim"];
@@ -103,7 +113,19 @@ function clm_view_report($out) {
 				<?php echo $lang->notice; ?>
 			</div>
 			<div class="text">
-				<textarea class="comment" ><?php echo str_replace('&','&amp;',$paar[0]->comment);?></textarea>
+<!--				<textarea class="comment" ><?php echo str_replace('&','&amp;',$paar[0]->comment);?></textarea> -->
+				<textarea class="comment" ><?php echo $paar[0]->comment;?></textarea>
+			</div>
+	</div>
+<?php } 
+	if (($config->ikommentarfeld == 1) OR ($config->ikommentarfeld == 2 AND ($liga[0]->runden_modus == 4 OR $liga[0]->runden_modus == 5))) {    // internes Kommentarfeld ?>			
+	<div class="outer_icomment">
+			<div class="info">
+				<?php echo $lang->inotice; ?>
+			</div>
+			<div class="text">
+<!--				<textarea class="icomment" ><?php echo str_replace('&','&amp;',$paar[0]->icomment);?></textarea> -->
+				<textarea class="icomment" ><?php echo $paar[0]->icomment;?></textarea>
 			</div>
 	</div>
 <?php } 

@@ -1,9 +1,9 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008 Thomas Schwietert & Andreas Dorn. All rights reserved
+ * @Copyright (C) 2008-2021 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
- * @link http://www.fishpoke.de
+ * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
  * @email fishpoke@fishpoke.de
  * @author Andreas Dorn
@@ -15,9 +15,15 @@ defined('_JEXEC') or die('Restricted access');
 <form action="index.php" method="post" name="adminForm" id="adminForm">
 
 <?php
-$editor =JFactory::getEditor();
-echo $editor->display('invitationText', $this->turnier->invitationText, '800', '600', '60', '20', false);
+//$editor =JFactory::getEditor();
+//echo $editor->display('invitationText', $this->turnier->invitationText, '800', '600', '60', '20', false);
 
+use Joomla\CMS\Editor\Editor;
+use Joomla\CMS\Factory;
+
+$user = Factory::getUser();
+$editor = Editor::getInstance($user->getParam('editor', Factory::getConfig()->get('editor')));
+echo $editor->display('invitationText', $this->turnier->invitationText, '800', '600', '60', '20', false);
 /*
 The parameters of the display method are:
 

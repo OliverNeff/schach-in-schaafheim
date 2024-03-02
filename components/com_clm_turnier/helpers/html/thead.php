@@ -16,6 +16,7 @@ defined ( '_JEXEC' ) or die ( 'Restricted access' );
  * @since 2.0.1
  * @see https://github.com/mkoryak/floatThead
  * @see http://mkoryak.github.io/floatThead/
+ * @see https://cdnjs.com/libraries/floatthead
  */
 abstract class JHtmlThead {
 	
@@ -39,7 +40,7 @@ abstract class JHtmlThead {
 		JHtml::_ ( 'jquery.framework' );
 		
 		// load floatThead JavaScript framework
-		JHtml::_ ( 'script', 'https://cdnjs.cloudflare.com/ajax/libs/floatthead/2.1.2/jquery.floatThead.js' );		
+		JHtml::_ ( 'script', 'https://cdnjs.cloudflare.com/ajax/libs/floatthead/2.2.4/jquery.floatThead.js' );
 		JHtml::_ ( 'script', 'com_clm_turnier/thead.js', array('relative' => true) );
 		
 		static::$loaded [__METHOD__] = true;

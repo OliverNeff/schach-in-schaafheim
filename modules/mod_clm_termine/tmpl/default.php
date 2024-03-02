@@ -1,48 +1,56 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2011-2018 CLM Team.  All rights reserved
+ * @Copyright (C) 2011-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Fjodor Schäfer
  * @email ich@vonfio.de
 */
-
 defined('_JEXEC') or die('Restricted access'); 
 jimport( 'joomla.html.parameter' );
 
-/*
-$liga	= JRequest::getVar( 'liga');
-$runde	= JRequest::getVar( 'runde');
-$view	= JRequest::getVar( 'view' );
-$dg		= JRequest::getVar( 'dg' );
-$itemid	= JRequest::getVar( 'Itemid','' );
-$start	= JRequest::getVar( 'start','1');
-$categoryid	= JRequest::getInt( 'categoryid',0);
-*/
-$view	= JRequest::getVar( 'view','' );
-$saison	= JRequest::getVar( 'saison','');
-$liga	= JRequest::getVar( 'liga','');
-$turnier	= JRequest::getVar( 'turnier','');
-$dg		= JRequest::getVar( 'dg','' );
-$runde	= JRequest::getVar( 'runde','');
-$snr	= JRequest::getVar( 'snr','');
-$zps	= JRequest::getVar( 'zps','');
-$typeid	= JRequest::getVar( 'typeid','');
-$atyp	= JRequest::getVar( 'atyp','');
-$itemid	= JRequest::getVar( 'Itemid','' );
-$start	= JRequest::getVar( 'start','');
-$categoryid	= JRequest::getInt( 'categoryid','');
-$spRang	= JRequest::getInt( 'spRang','');
-$tlnr	= JRequest::getInt( 'tlnr','');
-$mglnr	= JRequest::getInt( 'mglnr','');
-$PKZ	= JRequest::getInt( 'PKZ','');
-$layout	= JRequest::getInt( 'layout','');
-$format	= JRequest::getInt( 'format','');
-$id	= JRequest::getInt( 'id','');
-$orderby	= JRequest::getInt( 'orderby','');
+$option	= clm_core::$load->request_string( 'option','' );
+if ($option == '') {
+    // URL zusammenstellen
+    $url = (empty($_SERVER['HTTPS'])) ? 'http' : 'https';
+    $url .= $_SERVER['HTTP_HOST'];
+    $url .= $_SERVER['REQUEST_URI']; // $url enthält jetzt die komplette URL
+	$pcomponent = strpos($url,'/component/');
+	if ($pcomponent !== false) {
+		if (substr($url, $pcomponent + 10, 5) == '/clm/') 
+			$option = "com_clm";
+	}
+}
+$view	= clm_core::$load->request_string( 'view','' );
+$saison	= clm_core::$load->request_string( 'saison','');
+$liga	= clm_core::$load->request_string( 'liga','');
+$turnier	= clm_core::$load->request_int( 'turnier','');
+$dg		= clm_core::$load->request_string( 'dg','' );
+$runde	= clm_core::$load->request_string( 'runde','');
+$snr	= clm_core::$load->request_string( 'snr','');
+$zps	= clm_core::$load->request_string( 'zps','');
+$typeid	= clm_core::$load->request_string( 'typeid','');
+$atyp	= clm_core::$load->request_string( 'atyp','');
+$itemid	= clm_core::$load->request_string( 'Itemid','');
+$start	= clm_core::$load->request_string( 'start','');
+$categoryid	= clm_core::$load->request_string( 'categoryid','');
+$spRang	= clm_core::$load->request_string( 'spRang','');
+$tlnr	= clm_core::$load->request_string( 'tlnr','');
+$mglnr	= clm_core::$load->request_string( 'mglnr','');
+$PKZ	= clm_core::$load->request_string( 'PKZ','');
+$layout	= clm_core::$load->request_string( 'layout','');
+$format	= clm_core::$load->request_string( 'format','');
+$id	= clm_core::$load->request_string( 'id','');
+$orderby	= clm_core::$load->request_string( 'orderby','');
+$ext_view	= clm_core::$load->request_string( 'ext_view','');
+$source	= clm_core::$load->request_string( 'source','');
+$nr	= clm_core::$load->request_string( 'nr','');
+
+//echo "<br>Itemid: $itemid ";
 
 $href_string = '';
+if ($option != '') $href_string .= '&option='.$option; 
 if ($view != '' AND $view != 'categories') $href_string .= '&view='.$view; 
 if ($saison != '') $href_string .= '&saison='.$saison; 
 if ($turnier != '') $href_string .= '&turnier='.$turnier; 
@@ -53,6 +61,7 @@ if ($snr != '') $href_string .= '&snr='.$snr;
 if ($zps != '') $href_string .= '&zps='.$zps; 
 if ($typeid != '') $href_string .= '&typeid='.$typeid; 
 if ($atyp != '') $href_string .= '&atyp='.$atyp; 
+if ($itemid != '') $href_string .= '&Itemid='.$itemid; 
 if ($start != '') $href_string .= '&start='.$start; 
 if ($categoryid != '') $href_string .= '&categoryid='.$categoryid; 
 if ($spRang != '') $href_string .= '&spRang='.$spRang; 
@@ -63,33 +72,31 @@ if ($layout != '') $href_string .= '&layout='.$layout;
 if ($format != '') $href_string .= '&format='.$format; 
 if ($id != '') $href_string .= '&id='.$id; 
 if ($orderby != '') $href_string .= '&orderby='.$orderby; 
+if ($ext_view != '') $href_string .= '&ext_view='.$ext_view; 
+if ($source != '') $href_string .= '&source='.$source; 
+if ($nr != '') $href_string .= '&nr='.$nr; 
+//echo "<br>href: $href_string ";
 
 if ($href_string == '&view=categories')  { 
 	echo "<br>href_string:".$href_string; die('hhh');
 	$href_string = ''; }
-?>
-<style type="text/css">
-<?php 
 
 	$document = JFactory::getDocument();
 
-	$cssDir = JURI::base().'modules/mod_clm_termine';
-	//	$cssDir = JURI::base().'components'.DS.'com_clm'.DS.'includes';
+	$cssDir = JURI::base().'modules'.DS.'mod_clm_termine';
 
-	$document->addStyleSheet( $cssDir.'/mod_clm_termine.css', 'text/css', null, array() );
- 
-?>
-</style>
+	//$document->addStyleSheet( $cssDir.DS.'mod_clm_termine.css', 'text/css', null, array() );
+	$document->addStyleSheet( $cssDir.DS.'mod_clm_termine.css' );   // Joomla 4
 
-<?php 
-
-if ($par_liste == 0) { 
-?>
- 
-<ul class="menu">
- 
-<?php 	
-
+if ($par_liste == 0 OR $par_liste == 2) { 
+	if ($par_liste == 0) {
+		?> <ul class="menu"> <?php 	
+	} else {
+		?> <div style="height:<?php echo $par_height; ?>px;overflow:auto;font-size:100%;">
+		   <table>
+		<?php $par_anzahl = count($runden); 	
+	}
+		
 $arrWochentag = array( 
 		"Monday" => JText::_('MOD_CLM_TERMINE_T01'), 
 		"Tuesday" => JText::_('MOD_CLM_TERMINE_T02'), 
@@ -100,6 +107,7 @@ $arrWochentag = array(
 		"Sunday" => JText::_('MOD_CLM_TERMINE_T07') );
 $count = 0; 
 if ($start == '' OR $start == '1') $start = date("Y-m-d");
+
 for ($t = 0; $t < $par_anzahl; $t++) {
 	if (!isset($runden[$t])) break;
 	if ($runden[$t]->datum >= $start) { 
@@ -111,11 +119,15 @@ for ($t = 0; $t < $par_anzahl; $t++) {
 			$linkname = "index.php?option=com_clm&amp;view=termine&amp;nr=". $runden[$t]->id ."&amp;layout=termine_detail&amp;categoryid=".$categoryid_link; 
 		} elseif ($runden[$t]->ligarunde != 0) { 
 			//$linkname = "index.php?option=com_clm&amp;view=runde&amp;saison=" . $runden[$t]->sid . "&amp;liga=" .  $runden[$t]->typ_id ."&amp;runde=" . $runden[$t]->nr ."&amp;dg=" . $runden[$t]->durchgang;
-			if (($runden[$t]->durchgang > 1) AND ($runden[$t]->nr > $runden[$t]->ligarunde))
-				$linkname = "index.php?option=com_clm&amp;view=runde&amp;saison=" . $runden[$t]->sid . "&amp;liga=" .  $runden[$t]->typ_id ."&amp;runde=" . ($runden[$t]->nr - $runden[$t]->ligarunde) ."&amp;dg=2";
-			else 
+			if (($runden[$t]->durchgang > 1) AND ($runden[$t]->nr > $runden[$t]->ligarunde)) {
+				if ($runden[$t]->nr > (3 * $runden[$t]->ligarunde)) $dg = 4;
+				elseif ($runden[$t]->nr > (2 * $runden[$t]->ligarunde)) $dg = 3;
+				else $dg = 2;
+				$linkname = "index.php?option=com_clm&amp;view=runde&amp;saison=" . $runden[$t]->sid . "&amp;liga=" .  $runden[$t]->typ_id 
+				."&amp;runde=" . ($runden[$t]->nr - (($dg - 1) * $runden[$t]->ligarunde)) ."&amp;dg=". $dg;
+			} else { 
 				$linkname = "index.php?option=com_clm&amp;view=runde&amp;saison=" . $runden[$t]->sid . "&amp;liga=" .  $runden[$t]->typ_id ."&amp;runde=" . $runden[$t]->nr ."&amp;dg=1";
-			
+			}
 		} else {
 			$linkname = "index.php?option=com_clm&amp;view=turnier_runde&amp;runde=" . $runden[$t]->nr . "&amp;turnier=" . $runden[$t]->typ_id; }
 		$linkname .= "&amp;start=". $runden[$t]->datum;             
@@ -135,7 +147,12 @@ for ($t = 0; $t < $par_anzahl; $t++) {
 		}
 		$datum_link .= "</a>\n";
 						
-    echo '<li>'; 
+     
+	if ($par_liste == 0) {
+		echo '<li class="kalenderli">'; 	
+	} else {
+		echo '<tr class="kalenderli"><td>'; 	
+	}
 	
 		if ($par_datum == 1) { // Parameter prüfen: Datum
 			if ((isset($datum[$t-1])) AND ($datum[$t] == $datum[$t-1]) AND (isset($enddatum[$t-1])) AND ($enddatum[$t] == $enddatum[$t-1])) { echo ''; }      //klkl
@@ -170,15 +187,24 @@ for ($t = 0; $t < $par_anzahl; $t++) {
 			echo '<br />'; 
 		}
 		
-    echo "</li>\n";
+	if ($par_liste == 0) {
+		echo '</li>'; 	
+	} else {
+		echo '</tr></td>'; 	
+	}
 
+}
 } 
-} ?>
 
-</ul>
+	if ($par_liste == 0) {
+		?></ul><?php 	
+	} else {
+		?></table>
+		  </div>
+		  <br>
+		<?php 	
+	}
 
-
-<?php
 } else { 
 
 // Termine als Timestamp zu einem Array machen
@@ -195,10 +221,16 @@ for ( $a = 0; $a < count ($runden); $a++ ) {
  		//$linkname = "index.php?option=com_clm&amp;view=runde&amp;saison=". $runden[$a]->sid ."&amp;liga=".  $runden[$a]->typ_id ."&amp;runde=". $runden[$a]->nr ."&amp;dg=". $runden[$a]->durchgang; 
 //		if (($runden[$a]->durchgang > 1) AND ($runden[$a]->nr > $runden[$a]->runden))
 //			$linkname = "index.php?option=com_clm&amp;view=runde&amp;saison=" . $runden[$a]->sid . "&amp;liga=" .  $runden[$a]->typ_id ."&amp;runde=" . ($runden[$a]->nr - $runden[$a]->runden) ."&amp;dg=2";
-		if (($runden[$a]->durchgang > 1) AND ($runden[$a]->nr > $runden[$a]->ligarunde))
-			$linkname = "index.php?option=com_clm&amp;view=runde&amp;saison=" . $runden[$a]->sid . "&amp;liga=" .  $runden[$a]->typ_id ."&amp;runde=" . ($runden[$a]->nr - $runden[$a]->ligarunde) ."&amp;dg=2";
-		else 
+		if (($runden[$a]->durchgang > 1) AND ($runden[$a]->nr > $runden[$a]->ligarunde)) {
+			$i_ligarunde = (integer) $runden[$a]->ligarunde;
+			if ($runden[$a]->nr > (3 * $i_ligarunde)) $dg = 4;
+			elseif ($runden[$a]->nr > (2 * $i_ligarunde)) $dg = 3;
+			else $dg = 2;
+			$linkname = "index.php?option=com_clm&amp;view=runde&amp;saison=" . $runden[$a]->sid . "&amp;liga=" .  $runden[$a]->typ_id 
+			."&amp;runde=" . ($runden[$a]->nr - (($dg - 1) * $i_ligarunde)) ."&amp;dg=". $dg;
+		} else { 
 			$linkname = "index.php?option=com_clm&amp;view=runde&amp;saison=" . $runden[$a]->sid . "&amp;liga=" .  $runden[$a]->typ_id ."&amp;runde=" . $runden[$a]->nr ."&amp;dg=1";
+		}
  	} else {
  		$linkname = "index.php?option=com_clm&amp;view=turnier_runde&amp;runde=". $runden[$a]->nr ."&amp;turnier=". $runden[$a]->typ_id; 
 	}
@@ -221,7 +253,8 @@ array_multisort ($datum_stamp, $event_desc);
 // Mehrdimensionaler Array mit allen Information. Das Timestamp ist der Key
 $event	= array_combine ($datum_stamp, $event_desc);
 
-if( isset($_REQUEST['timestamp'])) { $date = $_REQUEST['timestamp']; }
+//if( isset($_REQUEST['timestamp'])) { $date = $_REQUEST['timestamp']; }
+if( isset($_REQUEST['timestamp'])) { $date = $_REQUEST['timestamp']; $start = ''; }
 else { $date = time(); }
 if ($start != '' AND $start != '1') {
 	$start_arr = explode("-",$start);
@@ -257,8 +290,7 @@ $linkname_tl = "index.php?option=com_clm&amp;view=termine&amp;Itemid=1";
 $htext = $arrMonth[date('F',$date)].' '.date('y',$date);
 
 ?>
-<?php // URI holen  $uri     = &JFactory::getUri();  
-// URL :  $uri->toString(); ?>
+
 <center>
 <div class="kalender">
     <div class="kal_pagination">
@@ -269,7 +301,7 @@ $htext = $arrMonth[date('F',$date)].' '.date('y',$date);
         <a href="index.php?timestamp=<?php echo modCLMTermineHelper::yearForward($date).$href_string; ?>" class="next">&raquo;</a>
         <div class="clear"></div>
     </div>
-    <?php modCLMTermineHelper::getCalender($date,$headline,$event,$datum_stamp); ?>
+    <?php modCLMTermineHelper::getCalender($date,$event,$datum_stamp,$headline); ?>
     <div class="clear"></div>
 </div>
 </center>

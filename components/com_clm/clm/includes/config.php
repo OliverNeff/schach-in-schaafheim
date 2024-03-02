@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
 */
@@ -142,7 +142,22 @@ $config["email_type"]=array(121,9,1,array(0,1));
 $config["upload_pgn"]=array(122,9,0,array(0,1));
 $config["import_pgn"]=array(123,9,0,array(0,1));
 $config["test_button"]=array(124,9,0,array(0,1)); 
-$config["view_archive"]=array(125,9,0,array(0,1));
+$config["view_archive"]=array(125,9,0,array(0,1,2));
 $config["user_member"]=array(126,9,0,array(0,1)); 
-
+$config["privacy_notice"]=array(127,14,"",null);
+$config["trial_and_error"]=array(128,9,0,array(0,1)); 
+$config["dewis_import_delay"]=array(129,0,2500,null);
+$config["maps_resolver"]=array(130,9,2,array(1,2));
+$config["maps_zoom"]=array(131,9,15,array(11,12,13,14,15,16));
+$config["ikommentarfeld"]=array(132,9,0,array(0,1,2));
+$config["show_sl_mail"]=array(133,9,1,array(0,1));
+$config["tourn_ch_system"]=array(134,9,0,array(0,1,2,3));
+$config["tourn_ch_server"]=array(135,7,"",null);
+$config["tourn_ch_url"]=array(136,7,"",null);
+$config["tourn_ch_key"]=array(137,7,"",null);
+$config["tourn_ch_ip"]=array(138,7,"",null);
+$config["tourn_ch_mail"]=array(139,7,"",null);
+$config["verein_mail"]=array(140,9,0,array(0,1));
+$config["verein_tel"]=array(141,9,0,array(0,1));
+$config["verein_fe_mail"]=array(142,9,0,array(0,1));
 ?>

@@ -1,8 +1,7 @@
 <?php
-
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2022 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -10,7 +9,6 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 class CLMViewMannschaften
 {
 public static function setMannschaftenToolbar()
@@ -21,10 +19,10 @@ public static function setMannschaftenToolbar()
 
 		JToolBarHelper::title( JText::_( 'TITLE_MANNSCHAFT' ), 'clm_headmenu_mannschaften.png' );
 	if($clmAccess->access('BE_team_registration_list') !== false) {
-		JToolBarHelper::custom('delete_meldeliste','send.png','send_f2.png', JText::_( 'MANNSCHAFT_BUTTON_ML_DEL'), false);
-		JToolBarHelper::custom('meldeliste','send.png','send_f2.png', JText::_( 'MANNSCHAFT_BUTTON_ML_UPD'), false);
-		JToolBarHelper::custom('spielfrei','cancel.png','cancel_f2.png', JText::_( 'MANNSCHAFT_BUTTON_SPIELFREI'), false);
-		JToolBarHelper::custom('annull','cancel.png','cancel_f2.png', JText::_( 'MANNSCHAFT_BUTTON_ANNULL'), false);
+		JToolBarHelper::custom('delete_meldeliste','send.png','send_f2.png', JText::_( 'MANNSCHAFT_BUTTON_ML_DEL'));
+		JToolBarHelper::custom('meldeliste','send.png','send_f2.png', JText::_( 'MANNSCHAFT_BUTTON_ML_UPD'));
+		JToolBarHelper::custom('spielfrei','cancel.png','cancel_f2.png', JText::_( 'MANNSCHAFT_BUTTON_SPIELFREI'));
+		JToolBarHelper::custom('annull','cancel.png','cancel_f2.png', JText::_( 'MANNSCHAFT_BUTTON_ANNULL'));
 		JToolBarHelper::publishList();
 		JToolBarHelper::unpublishList();
 		JToolBarHelper::custom( 'copy', 'copy.png', 'copy_f2.png', JText::_( 'MANNSCHAFT_BUTTON_COPY' )); 
@@ -43,7 +41,8 @@ public static function mannschaften( $rows, $lists, $pageNav, $option )
 		//Ordering allowed ?
 		$ordering = ($lists['order'] == 'a.ordering');
 
-		JHtml::_('behavior.tooltip');
+//		JHtml::_('behavior.tooltip');
+		require_once (JPATH_COMPONENT_SITE . DS . 'includes' . DS . 'tooltip.php');
 		?>
 		<form action="index.php?option=com_clm&section=mannschaften" method="post" name="adminForm" id="adminForm">
 
@@ -129,9 +128,10 @@ public static function mannschaften( $rows, $lists, $pageNav, $option )
 				//$row = &$rows[$i];
 				// load the row from the db table 
 				$row->load( $rows[$i]->id );
-				$link 		= JRoute::_( 'index.php?option=com_clm&section=mannschaften&task=edit&cid[]='. $row->id );
+				$link 		= JRoute::_( 'index.php?option=com_clm&section=mannschaften&task=edit&id='. $row->id );
 				$checked 	= JHtml::_('grid.checkedout',   $row, $i );
-				$published 	= JHtml::_('grid.published', $row, $i );
+//				$published 	= JHtml::_('grid.published', $row, $i );
+				$published 	= JHtml::_('jgrid.published', $row->published, $i );
 
 				?>
 				<tr class="<?php echo 'row'. $k; ?>">
@@ -184,8 +184,8 @@ public static function mannschaften( $rows, $lists, $pageNav, $option )
 						<?php echo $published;?>
 					</td>
 	<td class="order">
-	<span><?php echo $pageNav->orderUpIcon($i, ($row->liga == @$rows[$i-1]->liga), 'orderup()', 'Move Up', $ordering ); ?></span>
-	<span><?php echo $pageNav->orderDownIcon($i, $n, ($row->liga == @$rows[$i+1]->liga), 'orderdown()', 'Move Down', $ordering ); ?></span>
+	<span><?php echo $pageNav->orderUpIcon($i, ($row->liga == @$rows[$i-1]->liga), 'orderup', 'Move Up', $ordering ); ?></span>
+	<span><?php echo $pageNav->orderDownIcon($i, $n, ($row->liga == @$rows[$i+1]->liga), 'orderdown', 'Move Down', $ordering ); ?></span>
 	<?php $disabled = $ordering ?  '' : 'disabled="disabled"'; ?>
 	<input type="text" name="order[]" size="5" value="<?php echo $row->ordering;?>" <?php echo $disabled ?> class="text_area" style="text-align: center" />
 					</td>
@@ -216,9 +216,9 @@ public static function setMannschaftToolbar()
 	// Menubilder laden
 		clm_core::$load->load_css("icons_images");
 
-		$cid = JRequest::getVar( 'cid', array(0), '', 'array' );
-		JArrayHelper::toInteger($cid, array(0));
-		if (JRequest::getVar( 'task') == 'edit') { $text = JText::_( 'Edit' );}
+		$cid = clm_core::$load->request_array_int('cid');
+										  
+		if (clm_core::$load->request_string( 'task') == 'edit') { $text = JText::_( 'Edit' );}
 			else { $text = JText::_( 'New' );}
 		JToolBarHelper::title(  JText::_( 'MANNSCHAFT' ).': [ '. $text.' ]' , 'clm_headmenu_mannschaften.png'  );
 		JToolBarHelper::save();
@@ -230,36 +230,12 @@ public static function setMannschaftToolbar()
 public static function mannschaft( &$row,$lists, $option )
 	{
 		CLMViewMannschaften::setMannschaftToolbar();
-		JRequest::setVar( 'hidemainmenu', 1 );
+		$_REQUEST['hidemainmenu'] = 1;
 		JFilterOutput::objectHTMLSafe( $row, ENT_QUOTES, 'extrainfo' );
-		?>
-	<script language="javascript" type="text/javascript">
 
-		 Joomla.submitbutton = function (pressbutton) { 		
-			var form = document.adminForm;
-			if (pressbutton == 'cancel') {
-				submitform( pressbutton );
-				return;
-			}
-			// do field validation
-			if (form.name.value == "") {
-				alert( "<?php echo JText::_( 'MANNSCHAFT_NAMEN_ANGEBEN', true ); ?>" );
-			} else if (form.man_nr.value == "") {
-				alert( "<?php echo JText::_( 'MANNSCHAFT_NUMMER_ANGEBEN', true ); ?>" );
-			} else if (form.tln_nr.value == "") {
-				alert( "<?php echo JText::_( 'MANNSCHAFT_TEILNEHMER_NR_ANGEBEN', true ); ?>" );
-			} else if ( getSelectedValue('adminForm','sid') == 0 ) {
-				alert( "<?php echo JText::_( 'MANNSCHAFT_SAISON_AUSWAEHLEN', true ); ?>" );
-			} else if ( getSelectedValue('adminForm','liga') == 0 ) {
-				alert( "<?php echo JText::_( 'MANNSCHAFT_LIGA_AUSWAEHLEN', true ); ?>" );
-			} else if ( getSelectedValue('adminForm','zps') == 0 ) {
-				alert( "<?php echo JText::_( 'MANNSCHAFT_VEREIN_AUSWAEHLEN', true ); ?>" );
-			} else {
-				submitform( pressbutton );
-			}
-		}
-		
-		</script>
+		$_POST['clm_noOrgReference'] = $lists['noOrgReference'];
+		clm_core::$load->load_js("mannschaft");
+		?>
 
 		<form action="index.php" method="post" name="adminForm" id="adminForm">
 
@@ -367,7 +343,7 @@ public static function mannschaft( &$row,$lists, $option )
 			<input class="inputbox" type="text" name="bpabzug" id="bpabzug" size="10" maxlength="10" value="<?php echo $row->bpabzug; ?>" />
 			</td>
 		</tr>
-<tr><td colspan="2"><hr></td></tr>
+		<tr><td colspan="2"><hr></td></tr>
 
 		<tr>
 			<td class="key" nowrap="nowrap">
@@ -413,12 +389,14 @@ public static function mannschaft( &$row,$lists, $option )
  <div class="width-50 fltrt">
   <fieldset class="adminform">
    <legend><?php echo JText::_( 'REMARKS' ); ?></legend>
+	<?php if (is_null($row->bemerkungen)) $row->bemerkungen = ''; ?>
+	<?php if (is_null($row->bem_int)) $row->bem_int = ''; ?>
 	<table class="adminlist">
 	<legend><?php echo JText::_( 'REMARKS_PUBLIC' ); ?></legend>
 	<br>
 	<tr>
 	<td width="100%" valign="top">
-	<textarea class="inputbox" name="bemerkungen" id="bemerkungen" cols="40" rows="5" style="width:90%"><?php echo str_replace('&','&amp;',$row->bemerkungen);?></textarea>
+	<textarea class="inputbox" name="bemerkungen" id="bemerkungen" cols="40" rows="5" style="width:90%"><?php echo $row->bemerkungen;?></textarea>
 	</td>
 	</tr>
 	</table>
@@ -427,7 +405,7 @@ public static function mannschaft( &$row,$lists, $option )
 	<tr><legend><?php echo JText::_( 'REMARKS_INTERNAL' ); ?></legend>
 	<br>
 	<td width="100%" valign="top">
-	<textarea class="inputbox" name="bem_int" id="bem_int" cols="40" rows="5" style="width:90%"><?php echo str_replace('&','&amp;',$row->bem_int);?></textarea>
+	<textarea class="inputbox" name="bem_int" id="bem_int" cols="40" rows="5" style="width:90%"><?php echo $row->bem_int;?></textarea>
 	</td>
 	</tr>
 	</table>

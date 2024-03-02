@@ -1,9 +1,9 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008 Thomas Schwietert & Andreas Dorn. All rights reserved
+ * @Copyright (C) 2008-2022 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
- * @link http://www.fishpoke.de
+ * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
  * @email fishpoke@fishpoke.de
  * @author Andreas Dorn
@@ -42,11 +42,12 @@ class CLMModelTurRoundForm extends JModelLegacy {
 	// alle vorhandenen Parameter auslesen
 	function _getParameters() {
 	
+		if (!isset($this->param) OR is_null($this->param)) $this->param = array();	// seit J 4.2 nötig um notice zu vermeiden
 		// turnierid
-		$this->param['turnierid'] = JRequest::getInt('turnierid');
+		$this->param['turnierid'] = clm_core::$load->request_int('turnierid');
 		
 		// roundid
-		$this->param['roundid'] = JRequest::getInt('roundid');
+		$this->param['roundid'] = clm_core::$load->request_int('roundid');
 	
 	}
 

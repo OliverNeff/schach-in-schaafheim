@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2014 Thomas Schwietert & Andreas Dorn. All rights reserved
+ * @Copyright (C) 2008-2020 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -9,7 +9,6 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 jimport( 'joomla.application.component.view');
 
 class CLMViewTurnier_DWZ extends JViewLegacy
@@ -20,10 +19,10 @@ class CLMViewTurnier_DWZ extends JViewLegacy
 		$config = clm_core::$db->config();
 		$model	  = $this->getModel();
   		
-		$this->assignRef('turnier', $model->turnier);
+		$this->turnier = $model->turnier;
 		$out = $config->tourn_linkclub;
-		$this->assignRef('tourn_linkclub', $out);
-		$this->assignRef('players', $model->players);
+		$this->tourn_linkclub = $out;
+		$this->players = $model->players;
 		
 	// Dokumenttyp setzen
 		$document = JFactory::getDocument();

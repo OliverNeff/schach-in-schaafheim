@@ -1,3 +1,10 @@
+/*
+ * @ Chess League Manager (CLM) Component 
+ * @Copyright (C) 2008-2023 CLM Team  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
+	
 // author: Simon Willison (addLoadEvent)
 function clm_report_addLoadEvent(func) {http://blog.simonwillison.net/
   var oldonload = window.onload;
@@ -39,17 +46,23 @@ function clm_report_change_result(box,mother) {
 	nothing = 0;
 	for (i = 0; i < elements.length; i++) {
 		r = elements[i].options[elements[i].selectedIndex].value;
-		if(r == "1" || r == "5") {
-			h++;
-		} else if (r == "0" || r == "4") {
-			g++;
+		if(r == "1") {
+			h = h + clm_p_sieg*1 + clm_p_antritt*1; 
+			g = g + clm_p_antritt*1; 
+		} else if (r == "5") {
+			h = h + clm_p_sieg*1 + clm_p_antritt*1; 
+		} else if (r == "0") {
+			h = h + clm_p_antritt*1; 
+			g = g + clm_p_sieg*1 + clm_p_antritt*1; 
+		} else if (r == "4") {
+			g = g + clm_p_sieg*1 + clm_p_antritt*1; 
 		} else if (r == "2") {
-			h=h+0.5;
-			g=g+0.5;
+			h = h + clm_p_remis*1 + clm_p_antritt*1; 
+			g = g + clm_p_remis*1 + clm_p_antritt*1; 
 		} else if (r == "9") {
-			g=g+0.5;
+			g = g + clm_p_remis*1 + clm_p_antritt*1; 
 		} else if (r == "10") {
-			h=h+0.5;
+			h = h + clm_p_remis*1 + clm_p_antritt*1; 
 		} else if (r == "-2") {
 			nothing++;
 		}
@@ -149,9 +162,12 @@ function clm_report_block(box) {
 	if(box.getElementsByClassName("ko_decision").length>0) {
 		box.getElementsByClassName("ko_decision")[0].disabled=disable;
 	}
+	if(box.getElementsByClassName("icomment").length>0) {
+		box.getElementsByClassName("icomment")[0].disabled=disable;
+	}
 }
 function clm_report_genData(box) {
-	output = new Array(9);
+	output = new Array(10);
 	output[0] = box.getElementsByClassName("liga")[0].value;
 	output[1] = box.getElementsByClassName("runde")[0].value;
 	output[2] = box.getElementsByClassName("dg")[0].value;
@@ -173,6 +189,11 @@ function clm_report_genData(box) {
 		output[6][i] = home[i].options[home[i].selectedIndex].value;
 		output[7][i] = guest[i].options[guest[i].selectedIndex].value;
 		output[8][i] = result[i].options[result[i].selectedIndex].value;
+	}
+	if(box.getElementsByClassName("icomment").length>0) {
+		output[9] = box.getElementsByClassName("icomment")[0].value;
+	} else {
+		output[9] = "";
 	}
 	return output;
 }
@@ -227,6 +248,9 @@ function clm_report_message(box,msg,stats) {
 	} while (childs.length>0);
 	if(box.getElementsByClassName("outer_comment").length>0) {
 		box.removeChild(box.getElementsByClassName("outer_comment")[0]);
+	}
+	if(box.getElementsByClassName("outer_icomment").length>0) {
+		box.removeChild(box.getElementsByClassName("outer_icomment")[0]);
 	}
 	if(box.getElementsByClassName("ko").length>0) {
 		box.removeChild(box.getElementsByClassName("ko")[0]);

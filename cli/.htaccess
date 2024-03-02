@@ -1,0 +1,4 @@
+AuthType Basic
+AuthName "Skripte"
+AuthUserFile /var/www/web22538773/files/pass/.htpasswd
+Require valid-user

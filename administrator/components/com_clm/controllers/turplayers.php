@@ -1,8 +1,7 @@
 <?php
-
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2014 Thomas Schwietert & Andreas Dorn. All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -10,7 +9,6 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 // no direct access
 defined( '_JEXEC' ) or die( 'Restricted access' );
 
@@ -23,9 +21,10 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 		parent::__construct( $config );
 		
 		// turnierid
-		$this->id = JRequest::getInt('id');
+		$this->id = clm_core::$load->request_int('id');
 		
-		$this->_db		= JFactory::getDBO();
+		$this->_db	= JFactory::getDBO();
+		$this->app	= JFactory::getApplication();
 		
 		// Register Extra tasks
 		$this->registerTask( 'unactive','active' );
@@ -41,7 +40,7 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 		$this->adminLink->view = "turform";
 		$this->adminLink->makeURL();
 		
-		$this->setRedirect( $this->adminLink->url );
+		$this->app->redirect( $this->adminLink->url );
 	
 	}
 
@@ -52,7 +51,7 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 		$this->adminLink->view = "turplayerform";
 		$this->adminLink->makeURL();
 		
-		$this->setRedirect( $this->adminLink->url );
+		$this->app->redirect( $this->adminLink->url );
 	
 	}
 	// Nachzügler aufnehmen =  Anzahl erhöhen + Weiterleitung!
@@ -64,22 +63,21 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 		$this->adminLink->more = array('id' => $this->id, 'add_nz' => 1 );
 		$this->adminLink->makeURL();
 		
-		$this->setRedirect( $this->adminLink->url );
+		$this->app->redirect( $this->adminLink->url );
 	}
 
 	function del_player() {
 		// ausgewählte Einträge
-		$cid = JRequest::getVar('cid', array(), '', 'array');
+		$cid = clm_core::$load->request_array_int('cid');
 
 		$output = clm_core::$api->db_tournament_player_del($this->id,$cid);
 		$error = clm_core::$load->load_view("notification", array($output[1],false));	
 
 		// Message
-		$app =JFactory::getApplication();
-		$app->enqueueMessage($error[0][0]);
+		$this->app->enqueueMessage($error[0][0]);
 
 		$this->adminLink->makeURL();
-		$this->setRedirect( $this->adminLink->url );
+		$this->app->redirect( $this->adminLink->url );
 	}
 
 	function plusTln() {
@@ -87,7 +85,7 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 		$this->_plusTlnDo();
 
 		$this->adminLink->makeURL();
-		$this->setRedirect( $this->adminLink->url );
+		$this->app->redirect( $this->adminLink->url );
 	
 	}
 
@@ -108,7 +106,7 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 		$this->_removeDo();
 
 		$this->adminLink->makeURL();
-		$this->setRedirect( $this->adminLink->url );
+		$this->app->redirect( $this->adminLink->url );
 	
 	}
 
@@ -116,7 +114,7 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 	function _removeDo() {
 	
 		// Check for request forgeries
-		JRequest::checkToken() or die( 'Invalid Token' );
+		defined('_JEXEC') or die( 'Invalid Token' );
 	
 		// Turnierdaten holen
 		$turnier =JTable::getInstance( 'turniere', 'TableCLM' );
@@ -124,14 +122,13 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 
 		// Turnier existent?
 		if (!$turnier->id) {
-			JError::raiseWarning( 500, CLMText::errorText('TOURNAMENT', 'NOTEXISTING') );
+			$this->app->enqueueMessage( CLMText::errorText('TOURNAMENT', 'NOTEXISTING'),'warning' );
 			return false;
 		}
 	
 		$clmAccess = clm_core::$access;      
 		if (($turnier->tl != clm_core::$access->getJid() AND $clmAccess->access('BE_tournament_edit_detail') !== true) OR $clmAccess->access('BE_tournament_edit_detail') === false) {
-		//if (clm_core::$access->getType() != 'admin' AND clm_core::$access->getType() != 'tl') {
-			JError::raiseWarning(500, JText::_('TOURNAMENT_NO_ACCESS') );
+			$this->app->enqueueMessage( JText::_('TOURNAMENT_NO_ACCESS'),'warning' );
 			return false;
 		}
 	
@@ -139,28 +136,36 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 		$tournament = new CLMTournament($this->id);
 		$tournament->checkTournamentStarted();
 		if ($tournament->started) {
-			JError::raiseWarning( 500, JText::_( 'DELETION_NOT_POSSIBLE' ).": ".JText::_('RESULTS_ENTERED') );
+			$this->app->enqueueMessage( JText::_('DELETION_NOT_POSSIBLE').": ".JText::_('RESULTS_ENTERED'),'warning' );
 			return false;
 		}
 	
 		// ausgewählte Einträge
-		$cid = JRequest::getVar('cid', array(), '', 'array');
-		JArrayHelper::toInteger($cid);
+		$cid = clm_core::$load->request_array_int('cid');								
 	
 		if (count($cid) < 1) {
-			JError::raiseWarning(500, JText::_( 'NO_ITEM_SELECTED', true ) );
+			$this->app->enqueueMessage( JText::_('NO_ITEM_SELECTED'),'warning' );
 			return false;
 		}
 		// alle Checks erledigt
 	
 	
 		$cids = implode(',', $cid );
-		$query = 'DELETE FROM #__clm_turniere_tlnr'
-				.' WHERE turnier = '.$turnier->id.' AND id IN ( '. $cids .' )'
-			;
-		$this->_db->setQuery( $query );
-		if (!$this->_db->query()) {
-			JError::raiseWarning(500, JText::_( 'DB_ERROR', true ) );
+		for ($i=0; $i<count($cid); $i++) {
+			$query='SELECT * FROM #__clm_turniere_tlnr'
+				. ' WHERE id = '. $cid[$i];
+			$tlnr	= clm_core::$db->loadObjectList($query);
+			$query = 'DELETE FROM #__clm_turniere_tlnr'
+				.' WHERE turnier = '.$turnier->id.' AND id = '. $cid[$i];
+			clm_core::$db->query($query);
+			$query='UPDATE #__clm_turniere_tlnr  SET snr = (snr - 1) '	
+				.' WHERE turnier = '. $turnier->id.' AND snr > '.$tlnr[0]->snr;
+			clm_core::$db->query($query);
+		}
+//		$this->_db->setQuery($query);
+//		if (!$this->_db->query()) { 
+		if (!clm_core::$db->query($query)) { 
+			$this->app->enqueueMessage( JText::_('DB_ERROR'),'warning' );
 			return false;
 		}
 	
@@ -174,8 +179,7 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 	
 	
 		// Message
-		$app =JFactory::getApplication();
-		$app->enqueueMessage( $text );
+		$this->app->enqueueMessage( $text );
 	
 		return true;
 		
@@ -187,7 +191,7 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 		$this->_order(1);
 		
 		$this->adminLink->makeURL();
-		$this->setRedirect( $this->adminLink->url );
+		$this->app->redirect( $this->adminLink->url );
 	
 	}
 
@@ -197,7 +201,7 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 		$this->_order(-1);
 		
 		$this->adminLink->makeURL();
-		$this->setRedirect( $this->adminLink->url );
+		$this->app->redirect( $this->adminLink->url );
 	
 	}
 
@@ -206,28 +210,27 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 	function _order($inc) {
 	
 		// Check for request forgeries
-		JRequest::checkToken() or die( 'Invalid Token' );
+		defined('_JEXEC') or die( 'Invalid Token' );
 	
 		$clmAccess = clm_core::$access;      
 		if ($clmAccess->access('BE_tournament_edit_detail') === false) {
-		//if (clm_core::$access->getType() != 'admin' AND clm_core::$access->getType() != 'tl') {
-			JError::raiseWarning(500, JText::_('TOURNAMENT_NO_ACCESS') );
+			$this->app->enqueueMessage( JText::_('TOURNAMENT_NO_ACCESS'),'warning' );
 			return false;
 		}
 	
-		$cid = JRequest::getVar('cid', array(), '', 'array');
-		JArrayHelper::toInteger($cid);
+		$cid = clm_core::$load->request_array_int('cid');
 		$tlnid = $cid[0];
 	
 		$row =JTable::getInstance( 'turnier_teilnehmer', 'TableCLM' );
-		if ( !$row->load($tlnid) ) {
-			JError::raiseWarning( 500, CLMText::errorText('PLAYER', 'NOTEXISTING') );
+		if ( !$row->load((int)$tlnid) ) {
+			$this->app->enqueueMessage( CLMText::errorText('PLAYER', 'NOTEXISTING'),'warning' );
 			return false;
 		}
-		$row->move($inc, '');
-	
-		$app =JFactory::getApplication();
-		$app->enqueueMessage( JText::_('ORDERING_CHANGED') );
+		//$row->move($inc, '');
+		$row->move($inc, 'turnier = '.$row->turnier);
+		$row->reorder('turnier = '.$row->turnier);
+									   
+		$this->app->enqueueMessage( JText::_('ORDERING_CHANGED') );
 		
 		return true;
 		
@@ -238,23 +241,20 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 	function saveOrder() {
 	
 		// Check for request forgeries
-		JRequest::checkToken() or die( 'Invalid Token' );
+		defined('_JEXEC') or die( 'Invalid Token' );
 	
 		$clmAccess = clm_core::$access;      
 		if ($clmAccess->access('BE_tournament_edit_detail') === false) {
-		//if (clm_core::$access->getType() != 'admin' AND clm_core::$access->getType() != 'tl') {
-			JError::raiseWarning(500, JText::_('TOURNAMENT_NO_ACCESS') );
+			$this->app->enqueueMessage( JText::_('TOURNAMENT_NO_ACCESS'),'warning' );
 			return false;
 		}
 	
 		// alle enthaltenen IDs
-		$cid		= JRequest::getVar( 'cid', array(), 'post', 'array' );
-		JArrayHelper::toInteger($cid);
+		$cid		= clm_core::$load->request_array_int('cid');
 		$total		= count( $cid );
 	
 		// alle Order-Einträge
-		$order		= JRequest::getVar( 'order', array(0), 'post', 'array' );
-		JArrayHelper::toInteger($order, array(0));
+		$order		= clm_core::$load->request_array_int('order');
 	
 		$row =JTable::getInstance( 'turnier_teilnehmer', 'TableCLM' );
 		
@@ -269,7 +269,7 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 			if ($row->ordering != $order[$i]) {
 				$row->ordering = $order[$i];
 				if (!$row->store()) {
-					JError::raiseError(500, $db->getErrorMsg() );
+					$this->app->enqueueMessage( $db->getErrorMsg(),'error' );
 				}
 			}
 		}
@@ -278,13 +278,11 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 		foreach ($groupings as $group){
 			$row->reorder('turnier = '.(int) $group);
 		}
-		
-		
-		$app =JFactory::getApplication();
-		$app->enqueueMessage( JText::_('NEW_ORDERING_SAVED') );
+										   
+		$this->app->enqueueMessage( JText::_('NEW_ORDERING_SAVED') );
 	
 		$this->adminLink->makeURL();
-		$this->setRedirect( $this->adminLink->url );
+		$this->app->redirect( $this->adminLink->url );
 	
 	}
 
@@ -292,37 +290,36 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 	function sortByTWZ() {
 		$this->_sortBy('twz');
 		$this->adminLink->makeURL();
-		$this->setRedirect( $this->adminLink->url );
+		$this->app->redirect( $this->adminLink->url );
 	}
 	
 	function sortByRandom() {
 		$this->_sortBy('random');
 		$this->adminLink->makeURL();
-		$this->setRedirect( $this->adminLink->url );
+		$this->app->redirect( $this->adminLink->url );
 	}
 	
 	function sortByOrdering() {
 		$this->_sortBy('ordering');
 		$this->adminLink->makeURL();
-		$this->setRedirect( $this->adminLink->url );
+		$this->app->redirect( $this->adminLink->url );
 	}
 	
 	function _sortBy($by) {
 		
 		// Check for request forgeries
-		JRequest::checkToken() or die( 'Invalid Token' );
+		defined('_JEXEC') or die( 'Invalid Token' );
 	
 		$clmAccess = clm_core::$access;      
 		if ($clmAccess->access('BE_tournament_edit_detail') === false) {
-		//if (clm_core::$access->getType() != 'admin' AND clm_core::$access->getType() != 'tl') {
-			JError::raiseWarning(500, JText::_('TOURNAMENT_NO_ACCESS') );
+			$this->app->enqueueMessage( JText::_('TOURNAMENT_NO_ACCESS'),'warning' );
 			return false;
 		}
 	
 		$tournament = new CLMTournament($this->id);
 		$tournament->checkTournamentStarted();
 		if ($tournament->started) {
-			JError::raiseWarning( 500, JText::_( 'SORTING_NOT_POSSIBLE' ).": ".JText::_('RESULTS_ENTERED') );
+			$this->app->enqueueMessage( JText::_( 'SORTING_NOT_POSSIBLE' ).": ".JText::_('RESULTS_ENTERED'),'warning' );
 			return false;
 		}
 	
@@ -370,11 +367,11 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 		// Log schreiben
 		$clmLog = new CLMLog();
 		$clmLog->aktion = $stringMessage;
-		$clmLog->params = array('sid' => $turnier->sid, 'tid' => $this->id, 'cids' => count($cid));
+//		$clmLog->params = array('sid' => $turnier->sid, 'tid' => $this->id, 'cids' => count($cid));
+		$clmLog->params = array('sid' => $turnier->sid, 'tid' => $this->id, 'sort' => $by );
 		$clmLog->write();
 		
-		$app =JFactory::getApplication();
-		$app->enqueueMessage( $stringMessage );
+		$this->app->enqueueMessage( $stringMessage );
 	
 	}
 
@@ -382,29 +379,28 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 	function setRanking() {
 		$this->_setRankingDo();
 		$this->adminLink->makeURL();
-		$this->setRedirect( $this->adminLink->url );
+		$this->app->redirect( $this->adminLink->url );
 	}
 
 
 	function _setRankingDo() {
 		
 		// Check for request forgeries
-		JRequest::checkToken() or die( 'Invalid Token' );
+		defined('_JEXEC') or die( 'Invalid Token' );
 	
 		$clmAccess = clm_core::$access;      
 		if ($clmAccess->access('BE_tournament_edit_detail') === false) {
-		//if (clm_core::$access->getType() != 'admin' AND clm_core::$access->getType() != 'tl') {
-			JError::raiseWarning(500, JText::_('TOURNAMENT_NO_ACCESS') );
+			$this->app->enqueueMessage( JText::_('TOURNAMENT_NO_ACCESS'),'warning' );
 			return false;
 		}
 	
 		$tournament = new CLMTournament($this->id, true);
 		$tournament->checkTournamentStarted();
 		if (!$tournament->started) {
-			JError::raiseWarning( 500, JText::_( 'RANKING_NOT_POSSIBLE' ).": ".JText::_('NO_RESULTS_ENTERED') );
+			$this->app->enqueueMessage( JText::_( 'RANKING_NOT_POSSIBLE' ).": ".JText::_('NO_RESULTS_ENTERED'),'warning' );
 			return false;
 		} elseif ($tournament->data->typ == 3) {
-			JError::raiseWarning( 500, JText::_( 'RANKING_NOT_POSSIBLE' ).": ".JText::_('MODUS_TYP_3') );
+			$this->app->enqueueMessage( JText::_( 'RANKING_NOT_POSSIBLE' ).": ".JText::_('MODUS_TYP_3'),'warning' );
 			return false;
 		}
 	
@@ -419,8 +415,7 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 		$clmLog->params = array('sid' => $tournament->data->sid, 'tid' => $this->id);
 		$clmLog->write();
 		
-		$app =JFactory::getApplication();
-		$app->enqueueMessage( $stringMessage );
+		$this->app->enqueueMessage( $stringMessage );
 	
 		return true;
 	
@@ -433,7 +428,7 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 		$this->adminLink->view = "turmain";
 		$this->adminLink->makeURL();
 		
-		$this->setRedirect( $this->adminLink->url );
+		$this->app->redirect( $this->adminLink->url );
 		
 	}
 	function active() {
@@ -442,17 +437,16 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 
 		$this->adminLink->view = "turplayers";
 		$this->adminLink->makeURL();
-		$this->setRedirect( $this->adminLink->url );
+		$this->app->redirect( $this->adminLink->url );
 		
 	}
 
 	function _activeDo() {
 
 		// Check for request forgeries
-		JRequest::checkToken() or die( 'Invalid Token' );
+		defined('_JEXEC') or die( 'Invalid Token' );
 
-		$cid = JRequest::getVar('cid', array(), '', 'array');
-		JArrayHelper::toInteger($cid);
+		$cid = clm_core::$load->request_array_int('cid');
 		$tlnrID = $cid[0];
 	
 		// Teilnehmerdaten holen
@@ -460,29 +454,28 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 		$tlnr->load( $tlnrID ); // Daten zu dieser ID laden
 		// Teilnehmer existent?
 		if (!$tlnr->id) {
-			JError::raiseWarning( 500, CLMText::errorText('PLAYER', 'NOTEXISTING') );
+			$this->app->enqueueMessage( CLMText::errorText('PLAYER', 'NOTEXISTING'),'warning' );
 			return false;
 		
 		// Teilnehmer gehört zu Turnier?
 		} elseif ($tlnr->turnier != $this->id) {
-			JError::raiseWarning( 500, CLMText::errorText('PLAYER', 'NOACCESS') );
+			$this->app->enqueueMessage( CLMText::errorText('PLAYER', 'NOACCESS'),'warning' );
 			return false;
 	}
 
-		$task		= JRequest::getCmd('task');
+		$task		= clm_core::$load->request_string('task');
 		$active	= ($task == 'active'); // zu vergebender Wert 0/1
 		// jetzt schreiben
-		$tlnr->tlnrStatus = $active;
+		if ($active) $tlnr->tlnrStatus = 1; else $tlnr->tlnrStatus = 0;
 		if (!$tlnr->store()) {
-			JError::raiseError(500, $row->getError() );
+			$this->app->enqueueMessage( 'Fehler beim Speichern','error' );
 			return false;
 		}
-	
-		$app =JFactory::getApplication();
+									   
 		if ($active) {
-			$app->enqueueMessage( $tlnr->name.": "." ".JText::_('PLAYER_ACTIVE') );
+			$this->app->enqueueMessage( $tlnr->name.": "." ".JText::_('PLAYER_ACTIVE') );
 		} else {
-			$app->enqueueMessage( $tlnr->name.": "." ".JText::_('PLAYER_DEACTIVE') );
+			$this->app->enqueueMessage( $tlnr->name.": "." ".JText::_('PLAYER_DEACTIVE') );
 		}
 	
 		// Log
@@ -513,6 +506,101 @@ class CLMControllerTurPlayers extends JControllerLegacy {
 			}
 		}
 		return $twz;
+	}
+
+	// Weiterleitung!
+	function goto_rounds() {		
+		$this->adminLink->view = "turrounds";
+		$this->adminLink->more = array('id' => $this->id);
+		$this->adminLink->makeURL();		
+		$this->app->redirect( $this->adminLink->url );	
+	}
+
+	// Weiterleitung!
+	function onlineRegList() {		
+		$this->adminLink->view = "turregistrations";
+		$this->adminLink->makeURL();		
+		$this->app->redirect( $this->adminLink->url );	
+	}
+
+	// Weiterleitung!
+	function mail_to_all() {		
+		$this->adminLink->view = "turplayersmail";
+		$this->adminLink->more = array('turnierid' => $this->id);
+		$this->adminLink->makeURL();		
+		$this->app->redirect( $this->adminLink->url );	
+	}
+
+	// Weiterleitung!
+	function edit_teams() {		
+		$this->adminLink->view = "turteams";
+		$this->adminLink->more = array('turnierid' => $this->id);
+		$this->adminLink->makeURL();		
+		$this->app->redirect( $this->adminLink->url );	
+	}
+
+	// Weiterleitung!
+	function player_decode() {		
+		$this->adminLink->view = "turdecode";
+		$this->adminLink->more = array('turnierid' => $this->id, 'init_numberlines' => 1);
+		$this->adminLink->makeURL();		
+		$this->app->redirect( $this->adminLink->url );	
+	}
+
+	// Copy der Nicknamen aus Vorsaison
+	function player_decode_copy() {	
+		// id aktuelle Saison bestimmen
+		$sql	=" SELECT id FROM #__clm_saison "
+			." WHERE archiv = 0 AND published = 1"
+			." ORDER BY id ASC LIMIT 1"
+			;
+		$this->_db->setQuery($sql);
+		$sid	= $this->_db->loadResult();
+		// id Vorsaison
+		if (is_numeric($sid)) $vsid = $sid - 1;
+		else $vsid = 0;
+		
+		// schon vorhandenen Nicknamen in aktueller Saison bestimmen und in Array ablegen		
+		$query = 'SELECT concat(source,oname) as oname FROM `#__clm_player_decode`'
+				.' WHERE sid = '.$sid
+				;
+		$this->_db->setQuery($query);
+		$sid_nicknames = $this->_db->loadObjectList();
+		$arr_nicknames = array();
+		foreach ($sid_nicknames as $nickname) {
+			$arr_nicknames[] = "'".$nickname->oname."'";
+		}
+		$str_nicknames = implode( ',', $arr_nicknames );
+			
+		// Alle Nicknames aus Vorsaison laden, die noch nicht vorhanden sind
+		$sql = " SELECT id FROM #__clm_player_decode "
+		." WHERE sid = ".$vsid;
+		if (count($arr_nicknames) > 0) { 
+			$sql = $sql.' AND concat(source,oname) NOT IN ('.$str_nicknames.') ';}
+		$sql = $sql." ORDER BY id ASC "
+		;
+		$this->_db->setQuery($sql);
+		$vsid_nicknames	= $this->_db->loadObjectList();
+		$this->adminLink->view = "turplayers";
+		$this->adminLink->more = array('id' => $this->id);
+		$this->adminLink->makeURL();
+		
+		// Nicknamen laden und mit neuer Saison speichern
+		$row =JTable::getInstance( 'decode', 'TableCLM' );
+		$i = 0;
+		for($x=0; $x < count($vsid_nicknames); $x++) {
+			$row->load( $vsid_nicknames[$x]->id);
+			$row->id	= "0";
+			$row->sid	= $sid;
+			if (!$row->store()) {	
+				$this->app->enqueueMessage( $row->getError(), 'error' );
+				$this->app->redirect( $this->adminLink->url );
+			}
+			$i++;
+		}
+		
+		$this->app->enqueueMessage( $i.' '.JText::_('DECODE_SEASON_COPIED') );
+		$this->app->redirect( $this->adminLink->url );
 	}
 
 }

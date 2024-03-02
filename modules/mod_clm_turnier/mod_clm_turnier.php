@@ -1,4 +1,10 @@
 <?php
+/**
+ * @ Chess League Manager (CLM) Turnier Modul 
+ * @Copyright (C) 2008-2022 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
 // no direct access
 defined('_JEXEC') or die('Restricted access');
 
@@ -66,9 +72,23 @@ $arrayTurniere = $param['turnierid'];
 
 foreach($arrayTurniere_object as $array)
 {
-$arrayTurniere[]=$array->id;
+	$arrayTurniere[]=$array->id;
 }
 
+// Turniere sortieren nach ordering und id
+$hstring = implode(',',$arrayTurniere);
+$query = 'SELECT id'
+			. ' FROM #__clm_turniere'
+			. ' WHERE FIND_IN_SET(id,"'.$hstring.'")'
+			. ' AND published=1 ORDER BY ordering, id'
+			;
+$db->setQuery($query);
+$arrayTurniere_object = $db->loadObjectList(); 
+$arrayTurniere = array();
+foreach($arrayTurniere_object as $array)
+{
+	$arrayTurniere[]=$array->id;
+}
 
 // sollen Turniere ausgegeben werden?
 if (count($arrayTurniere) > 0) {

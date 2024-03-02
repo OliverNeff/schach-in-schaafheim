@@ -1,8 +1,7 @@
 <?php
-
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -10,7 +9,6 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 class CLMViewLigen
 {
 	public static function setLigaToolbar($new, $sid)
@@ -28,8 +26,8 @@ class CLMViewLigen
 
 	public static function liga(&$row, $lists, $option, $new )
 	{
+	JFactory::getApplication()->input->set('hidemainmenu', true);
 	CLMViewLigen::setLigaToolbar($new, $row->sid);
-	JRequest::setVar( 'hidemainmenu', 1 );
 
 	// Konfigurationsparameter auslesen
 	$config = clm_core::$db->config();
@@ -83,6 +81,8 @@ class CLMViewLigen
 		$row->params['noOrgReference'] = '0'; }
 	if (!isset($row->params['noBoardResults']))  {   //Standardbelegung
 		$row->params['noBoardResults'] = '0'; }
+	if (!isset($row->params['inofDWZ']))  {   //Standardbelegung
+		$row->params['inofDWZ'] = '0'; }
 	if (!isset($row->params['ReportForm']))  {   //Standardbelegung
 		$row->params['ReportForm'] = '0'; }
 	if (!isset($row->params['pgnInput']))  {   //Standardbelegung
@@ -93,6 +93,16 @@ class CLMViewLigen
 		$row->params['pgnDownload'] = '0'; }
 	if (!isset($row->params['firstView']))  {   //Standardbelegung
 		$row->params['firstView'] = '0'; }
+	if (!isset($row->params['time_control']))  {   //Standardbelegung
+		$row->params['time_control'] = ''; }
+	if (!isset($row->params['waiting_period']))  {   //Standardbelegung
+		$row->params['waiting_period'] = ''; }
+	if (!isset($row->params['pseudo_dwz']))  {   //Standardbelegung
+		$row->params['pseudo_dwz'] = '0'; }
+	if (!isset($row->params['dwz_date']))  {   //Standardbelegung
+		$row->params['dwz_date'] = '1970-01-01'; }
+	if (!isset($row->params['import_date']))  {   //Standardbelegung
+		$row->params['import_date'] = '1970-01-01'; }
 	?>
 	
 	<script language="javascript" type="text/javascript">
@@ -101,13 +111,38 @@ class CLMViewLigen
 			var form = document.adminForm;
 			var rteil = Math.round(form.teil.value / 2) * 2;
 			if (pressbutton == 'cancel') {
-				submitform( pressbutton );
+				Joomla.submitform( pressbutton );
 				return;
 			}
 			// do field validation
+			// check season
+			var vals = 0;
+			// get references to select list and display text box
+			var sel = document.getElementById('sid');			
+			var opt;
+			for ( var i = 0, len = sel.options.length; i < len; i++ ) {
+				opt = sel.options[i];
+				if ( opt.selected === true ) {
+					vals = opt.value;
+					break;
+				}
+			}
+			// check lap - durchgang
+			var vald = 0;
+			// get references to select list 
+			var sel = document.getElementById('durchgang');			
+			var opt;
+			for ( var i = 0, len = sel.options.length; i < len; i++ ) {
+				opt = sel.options[i];
+				if ( opt.selected === true ) {
+					vald = opt.value;
+					break;
+				}
+			}
+			
 			if (form.name.value == "") {
 				alert( "<?php echo JText::_( 'LEAGUE_HINT_1', true ); ?>" );
-			} else if ( getSelectedValue('adminForm','sid') == 0 ) {
+			} else if ( vals == 0 ) { 	//display text box checking season
 				alert( "<?php echo JText::_( 'LEAGUE_HINT_2', true ); ?>" );
 			} else if (form.stamm.value == "") {
 				alert( "<?php echo JText::_( 'LEAGUE_HINT_3', true ); ?>" );
@@ -117,7 +152,7 @@ class CLMViewLigen
 				alert( "<?php echo JText::_( 'LEAGUE_HINT_5', true ); ?>" );
 			} else if (form.runden.value == "") {
 				alert( "<?php echo JText::_( 'LEAGUE_HINT_6', true ); ?>" );
-			} else if ( getSelectedValue('adminForm','durchgang') == "" ) {
+			} else if ( vald == 0 ) {  //display text box checking lap
 				alert( "<?php echo JText::_( 'LEAGUE_HINT_7', true ); ?>" );
 			} else if (form.anz_sgp.value < 0 ) {
 				alert( "<?php echo JText::_( 'LEAGUE_HINT_8', true ); ?>" );
@@ -126,7 +161,7 @@ class CLMViewLigen
 			} else if (form.runden.value <  (rteil - 1)) {
 				alert( "<?php echo JText::_( 'LEAGUE_HINT_9', true ); ?>" );
 			} else {
-				submitform( pressbutton );
+				Joomla.submitform( pressbutton );
 			}
 		}
  
@@ -139,16 +174,16 @@ class CLMViewLigen
       <table class="paramlist admintable">
 
 	<tr>
-	<td width="20%" nowrap="nowrap">
-	<label for="name"><?php echo JText::_( 'LEAGUE_NAME' ); ?></label>
-	</td><td colspan="2">
-	<input class="inputbox" type="text" name="name" id="name" size="20" maxlength="30" value="<?php echo $row->name; ?>" />
-	</td>
-	<td nowrap="nowrap">
-	<label for="sl"><?php echo JText::_( 'LEAGUE_CHIEF' ); ?></label>
-	</td><td colspan="2">
-	<?php echo $lists['sl']; ?>
-	</td>
+		<td width="20%" nowrap="nowrap">
+		<label for="name"><?php echo JText::_( 'LEAGUE_NAME' ); ?></label>
+		</td><td colspan="2">
+		<input class="inputbox" type="text" name="name" id="name" size="20" maxlength="30" value="<?php echo $row->name; ?>" />
+		</td>
+		<td nowrap="nowrap">
+		<label for="sl"><?php echo JText::_( 'LEAGUE_CHIEF' ); ?></label>
+		</td><td colspan="2">
+		<?php echo $lists['sl']; ?>
+		</td>
 	</tr>
 	<?php
 	// Kategorien
@@ -272,7 +307,7 @@ class CLMViewLigen
 			<option <?php if ($row->durchgang == 4) {echo 'selected="selected"';} ?>>4</option>
 		</select>
 	</td>
-</tr>
+	</tr>
 
 	<tr>
 	<td nowrap="nowrap">
@@ -316,20 +351,20 @@ class CLMViewLigen
 	</tr>
 
 	<tr>
-	<td nowrap="nowrap">
-	<label for="ersatz_regel"><?php echo JText::_( 'LEAGUE_ERSATZ_REGEL' ); ?></label>
-	</td><td colspan="2">
-		<select name="ersatz_regel" id="ersatz_regel" value="<?php echo $row->ersatz_regel; ?>" size="1">
-		<!--<option>- wählen -</option>-->
-		<option value="0" <?php if ($row->ersatz_regel == 0) {echo 'selected="selected"';} ?>><?php echo JText::_( 'LEAGUE_ERSATZ_REGEL_0' );?></option>
-		<option value="1" <?php if ($row->ersatz_regel == 1) {echo 'selected="selected"';} ?>><?php echo JText::_( 'LEAGUE_ERSATZ_REGEL_1' );?></option>
-		</select>
-	</td>
-	<td nowrap="nowrap">
-	<label for="anz_sgp"><?php echo JText::_( 'LEAGUE_ANZ_SGP' ); ?></label>
-	</td><td colspan="2">
-	<input class="inputbox" type="text" name="anz_sgp" id="anz_sgp" size="4" maxlength="4" value="<?php echo $row->params['anz_sgp'] ?>" />
-	</td>
+		<td nowrap="nowrap">
+		<label for="ersatz_regel"><?php echo JText::_( 'LEAGUE_ERSATZ_REGEL' ); ?></label>
+		</td><td colspan="2">
+			<select name="ersatz_regel" id="ersatz_regel" value="<?php echo $row->ersatz_regel; ?>" size="1">
+			<!--<option>- wählen -</option>-->
+			<option value="0" <?php if ($row->ersatz_regel == 0) {echo 'selected="selected"';} ?>><?php echo JText::_( 'LEAGUE_ERSATZ_REGEL_0' );?></option>
+			<option value="1" <?php if ($row->ersatz_regel == 1) {echo 'selected="selected"';} ?>><?php echo JText::_( 'LEAGUE_ERSATZ_REGEL_1' );?></option>
+			</select>
+		</td>
+		<td nowrap="nowrap">
+		<label for="anz_sgp"><?php echo JText::_( 'LEAGUE_ANZ_SGP' ); ?></label>
+		</td><td colspan="2">
+		<input class="inputbox" type="text" name="anz_sgp" id="anz_sgp" size="4" maxlength="4" value="<?php echo $row->params['anz_sgp'] ?>" />
+		</td>
 	</tr>
 	<tr>
 		<td class="paramlist_key">
@@ -371,6 +406,39 @@ class CLMViewLigen
 				$optionlist[]	= JHtml::_('select.option', $key, $val, 'id', 'name' );
 			}
 			echo JHtml::_('select.genericlist', $optionlist, 'params[autoRANKING]', 'class="inputbox"', 'id', 'name', (isset($row->params['autoRANKING']) ? $row->params['autoRANKING'] : "0")); ?>
+		</td>
+	</tr>
+	<tr>
+		<td nowrap="nowrap">
+		<label for="params[pseudo_dwz]"><?php echo JText::_( 'LEAGUE_PSEUDO_DWZ' ); ?></label>
+		</td><td colspan="2">
+		<input class="inputbox" type="text" name="params[pseudo_dwz]" id="params[pseudo_dwz]" size="4" maxlength="4" value="<?php echo $row->params['pseudo_dwz']; ?>" />
+		</td>
+		<td class="paramlist_key">
+			<?php echo JText::_('ANNUL_PROC'); ?>:
+		</td>
+		<td colspan="2" class="paramlist_value">
+			<?php 
+			$options = array();
+			$options[0] = JText::_('ANNUL_PROC_0');
+			$options[1] = JText::_('ANNUL_PROC_1');
+			$optionlist = array();
+			foreach ($options as $key => $val) {
+				$optionlist[]	= JHtml::_('select.option', $key, $val, 'id', 'name' );
+			}
+			echo JHtml::_('select.genericlist', $optionlist, 'params[annul_proc]', 'class="inputbox"', 'id', 'name', (isset($row->params['annul_proc']) ? $row->params['annul_proc'] : "0")); ?>
+		</td>
+	</tr>
+	<tr>
+		<td width="20%" nowrap="nowrap">
+			<label for="params[time_control]"><?php echo JText::_( 'LEAGUE_TIME_CONTROL' ); ?></label>
+		</td><td colspan="2">
+		<input class="inputbox" type="text" name="params[time_control]" id="params[time_control]" size="36" maxlength="120" value="<?php echo $row->params['time_control']; ?>" />
+		</td>
+		<td nowrap="nowrap">
+			<label for="params[waiting_period]"><?php echo JText::_( 'LEAGUE_WAITING_PERIOD' ); ?></label>
+		</td><td colspan="2">
+		<input class="inputbox" type="text" name="params[waiting_period]" id="params[waiting_period]" size="20" maxlength="50" value="<?php echo $row->params['waiting_period']; ?>" />
 		</td>
 	</tr>
       </table>
@@ -606,20 +674,29 @@ class CLMViewLigen
 	<?php if ($import_pgn == 1) { ?>
 	<tr>
 		<td nowrap="nowrap" colspan="2">
-			<label for="pgninput"><?php echo JText::_( 'OPTION_PGNINPUT' ); ?></label>
+<!--			<label for="pgninput"><?php echo JText::_( 'OPTION_PGNINPUT' ); ?></label> -->
+			<label for="pgninput">
+				<span class="editlinktip hasTip" title="<?php echo JText::_( 'OPTION_PGNINPUT_HINT' );?>">
+				<?php echo JText::_( 'OPTION_PGNINPUT' )." : "; ?></span></label>
 		</td><td class="paramlist_value"><fieldset class="radio">
 			<?php echo JHtml::_('select.booleanlist', 'params[pgnInput]', 'class="inputbox"', $row->params['pgnInput']); ?>
 		</fieldset></td>
 		<td>&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;&nbsp;</td>
 		<td nowrap="nowrap" colspan="2">
-			<label for="pgnpublic"><?php echo JText::_( 'OPTION_PGNPUBLIC' ); ?></label>
+<!--			<label for="pgnpublic"><?php echo JText::_( 'OPTION_PGNPUBLIC' ); ?></label> -->
+			<label for="pgnpublic">
+				<span class="editlinktip hasTip" title="<?php echo JText::_( 'OPTION_PGNPUBLIC_HINT' );?>">
+				<?php echo JText::_( 'OPTION_PGNPUBLIC' )." : "; ?></span></label>
 		</td><td colspan="1"><fieldset class="radio">
 			<?php echo JHtml::_('select.booleanlist', 'params[pgnPublic]', 'class="inputbox"', $row->params['pgnPublic']); ?>
 		</fieldset></td>
 	</tr>
 	<tr>
 		<td nowrap="nowrap" colspan="2">
-			<label for="pgndownload"><?php echo JText::_( 'OPTION_PGNDOWNLOAD' ); ?></label>
+<!--			<label for="pgndownload"><?php echo JText::_( 'OPTION_PGNDOWNLOAD' ); ?></label> -->
+			<label for="pgndownload">
+				<span class="editlinktip hasTip" title="<?php echo JText::_( 'OPTION_PGNDOWNLOAD_HINT' );?>">
+				<?php echo JText::_( 'OPTION_PGNDOWNLOAD' )." : "; ?></span></label>
 		</td><td class="paramlist_value"><fieldset class="radio">
 			<?php echo JHtml::_('select.booleanlist', 'params[pgnDownload]', 'class="inputbox"', $row->params['pgnDownload']); ?>
 		</fieldset></td>
@@ -663,14 +740,19 @@ class CLMViewLigen
   </fieldset>
   </div>
 
-  <div class="width-40 fltrt">
+  <div class="width-30 fltrt">
   <fieldset class="adminform">
    <legend><?php echo JText::_( 'REMARKS' ); ?></legend>
 	<table class="adminlist">
+	<?php if ($new) { ?>
+		<tr><font color=red><b>Hinweis:</b></font> Manchmal ist es sinnvoll bzw. nötig, eine Punktspielliga als Mannschaftsturnier anzulegen. Siehe auch<b><a href="https://clm4.de/faq/item/190-punktspielligen-als-liga-oder-als-mannschaftsturnier"><?php echo JText::_(' hier'); ?></a></b></tr>
+		<p>&nbsp;&nbsp;</p>
+	<?php } ?>
 	<legend><?php echo JText::_( 'REMARKS_PUBLIC' ); ?></legend>
 	<tr>
 	<td width="100%" valign="top">
-	<textarea class="inputbox" name="bemerkungen" id="bemerkungen" cols="40" rows="4" style="width:90%"><?php echo str_replace('&','&amp;',$row->bemerkungen);?></textarea>
+	<?php if (is_null($row->bemerkungen)) $row->bemerkungen = ''; ?>
+	<textarea class="inputbox" name="bemerkungen" id="bemerkungen" cols="30" rows="4" style="width:90%"><?php echo str_replace('&','&amp;',$row->bemerkungen);?></textarea>
 	</td>
 	</tr>
 	</table>
@@ -679,7 +761,8 @@ class CLMViewLigen
 	<legend><?php echo JText::_( 'REMARKS_INTERNAL' ); ?></legend>
 	<tr>
 	<td width="100%" valign="top">
-	<textarea class="inputbox" name="bem_int" id="bem_int" cols="40" rows="4" style="width:90%"><?php echo str_replace('&','&amp;',$row->bem_int);?></textarea>
+	<?php if (is_null($row->bem_int)) $row->bem_int = ''; ?>
+	<textarea class="inputbox" name="bem_int" id="bem_int" cols="30" rows="4" style="width:90%"><?php echo str_replace('&','&amp;',$row->bem_int);?></textarea>
 	</td>
 	</tr>
 	</table>
@@ -742,6 +825,9 @@ class CLMViewLigen
 	<input type="hidden" name="task" value="" />
 	<input type="hidden" name="params[noOrgReference]" value="<?php echo $row->params['noOrgReference']; ?>" />
 	<input type="hidden" name="params[noBoardResults]" value="<?php echo $row->params['noBoardResults']; ?>" />
+	<input type="hidden" name="params[inofDWZ]" value="<?php echo $row->params['inofDWZ']; ?>" />
+	<input type="hidden" name="params[dwz_date]" value="<?php echo $row->params['dwz_date']; ?>" />
+	<input type="hidden" name="params[import_date]" value="<?php echo $row->params['import_date']; ?>" />
 	<input type="hidden" name="ordering" value="<?php echo $row->ordering; ?>" />
 
 	<?php echo JHtml::_( 'form.token' ); ?>

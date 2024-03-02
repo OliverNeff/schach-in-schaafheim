@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2015 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2022 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -29,7 +29,7 @@ defined('_JEXEC') or die('Restricted access');
 	</tbody>
 </table>
 <?php if( !$this->turnierExists ) {
-	JError::raiseWarning( 500, $row->name.": ".JText::_( 'SPECIALRANKINGS_WARNING_NO_TOURNAMENT' ) );
+	//::raiseWarning( 500, $row->name.": ".JText::_( 'SPECIALRANKINGS_WARNING_NO_TOURNAMENT' ) );
 } ?>
 <div id="editcell"> 
 	<table class="adminlist">
@@ -64,7 +64,8 @@ defined('_JEXEC') or die('Restricted access');
 		foreach ($this->sonderranglisten as $i => $value) {
 			$row = &$value;
 			$checked 	= JHtml::_('grid.checkedout',   $row, $i );
-			$published 	= JHtml::_('grid.published', $row, $i );
+//			$published 	= JHtml::_('grid.published', $row, $i );
+			$published 	= JHtml::_('jgrid.published', $row->published, $i );
 			?>
 			<tr class="<?php echo 'row'. $k; ?>">
 				<td align="center"><?php echo $this->pagination->getRowOffset( $i ); ?></td>
@@ -76,7 +77,7 @@ defined('_JEXEC') or die('Restricted access');
 						$adminLink = new AdminLink();
 						$adminLink->view = "sonderranglistenform";
 						//$adminLink->more = array('task' => 'edit', 'layout' => 'form', 'hidemainmenu' => 1, 'cid' => $row->id);
-						$adminLink->more = array('task' => 'edit', 'hidemainmenu' => 1, 'cid' => $row->id);
+						$adminLink->more = array('task' => 'edit', 'hidemainmenu' => 1, 'id' => $row->id);
 
 						$adminLink->makeURL();
 					

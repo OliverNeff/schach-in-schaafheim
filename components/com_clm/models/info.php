@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2016 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2020 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -20,7 +20,7 @@ class CLMModelInfo extends JModelLegacy
 	public static function CLMSid()
 	{
 	$db			= JFactory::getDBO();
-	$sid = JRequest::getInt('saison','0');     	
+	$sid = clm_core::$load->request_int('saison',0);     	
 	If ($sid == 0) {							
 		$query = " SELECT id,name FROM #__clm_saison"
 			." WHERE published = 1 "
@@ -219,7 +219,7 @@ class CLMModelInfo extends JModelLegacy
 		$db			= JFactory::getDBO();
 		$id			= @$options['id'];
  
-		$query = " SELECT a.mgl_nr,a.zps,a.Punkte,a.Partien,a.Niveau,a.Leistung,a.ZPS,a.DWZ,a.Spielername,v.Vereinname "
+		$query = " SELECT a.mgl_nr,a.PKZ,a.zps,a.Punkte,a.Partien,a.Niveau,a.Leistung,a.ZPS,a.DWZ,a.Spielername,v.Vereinname "
 			." FROM #__clm_dwz_spieler as a"
 			." LEFT JOIN #__clm_dwz_vereine as v ON v.ZPS = a.zps AND v.sid = a.sid"
 			." WHERE a.sid = ".$sid

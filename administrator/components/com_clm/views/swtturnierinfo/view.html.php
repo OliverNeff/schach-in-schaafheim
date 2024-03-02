@@ -1,9 +1,9 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008 Thomas Schwietert & Andreas Dorn. All rights reserved
+ * @Copyright (C) 2008-2020 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
- * @link http://www.fishpoke.de
+ * @link http://www.chessleagueamanager.de
  * @author Thomas Schwietert
  * @email fishpoke@fishpoke.de
  * @author Andreas Dorn
@@ -14,6 +14,8 @@ defined( '_JEXEC' ) or die( 'Restricted access' );
 
 class CLMViewSWTTurnierInfo extends JViewLegacy {
 	function display($tpl = null) { 
+		$update = clm_core::$load->request_int('update', 0);
+		$filter_saison = clm_core::$load->request_string('filter_saison', '');
 		
 		
 		//Daten vom Model
@@ -41,8 +43,10 @@ class CLMViewSWTTurnierInfo extends JViewLegacy {
 		$lists['catidEdition'] 	= JHtml::_('select.genericlist', $parentlist, 'catidEdition', 'class="inputbox" size="1" style="max-width: 250px;"', 'id', 'name', $turnier->catidEdition);
 		
 		//Saison
-		$lists['sid'] 			= CLMForm::selectSeason('sid', $turnier->sid);
-		
+		if ($update == 1)
+			$lists['sid'] 			= CLMForm::selectSeason('sid', $turnier->sid, FALSE, $filter_saison);
+		else
+			$lists['sid'] 			= CLMForm::selectSeason('sid', $turnier->sid, FALSE, FALSE);
 		// Modus
 		$lists['modus']			= CLMForm::selectModus('typ', $turnier->modus, FALSE, ' onChange="showFormRoundscount()";');
 		
@@ -68,9 +72,9 @@ class CLMViewSWTTurnierInfo extends JViewLegacy {
 		
 		
 		//Daten an Template
-		$this->assignRef( 'lists', $lists );
-		$this->assignRef( 'turnier', $turnier );
-		$this->assignRef( 'params', $params);
+		$this->lists = $lists ;
+		$this->turnier = $turnier ;
+		$this->params = $params;
 		
 		parent::display($tpl);
 	}

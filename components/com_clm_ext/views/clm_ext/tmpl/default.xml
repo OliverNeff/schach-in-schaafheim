@@ -1,0 +1,38 @@
+<?xml version="1.0" encoding="utf-8"?>
+<metadata>
+        <layout title="COM_CLM_EXT_DATA_VIEW_DEFAULT_TITLE">
+                <message>
+                        <![CDATA[COM_CLM_EXT_DATA_VIEW_DEFAULT_DESC]]>
+                </message>
+        </layout>
+        <fields name="request">
+			<fieldset name="request" >
+				<field
+					name="source"
+					type="text"
+					label="COM_CLM_EXT_SOURCE"
+					description="COM_CLM_EXT_SOURCE_DESC" >
+				</field>
+				<field
+					name="saison"
+					type="text"
+					label="COM_CLM_EXT_SEASON"
+					description="COM_CLM_EXT_SEASON_DESC" >
+				</field>
+				<field
+					name="liga"
+					type="text"
+					label="COM_CLM_EXT_LEAGUE"
+					description="COM_CLM_EXT_LEAGUE_DESC" >
+				</field>
+				<field 
+					name="ext_view" type="list" default="rangliste"
+					label="COM_CLM_EXT_VIEW"
+					description="COM_CLM_EXT_VIEW_DESC">
+						<option value="rangliste">COM_CLM_EXT_VIEW_RANGLISTE</option>
+						<option value="tabelle">COM_CLM_EXT_VIEW_TABELLE</option>
+						<option value="paarungsliste">COM_CLM_EXT_VIEW_PAARUNGSLISTE</option>
+				</field>
+            </fieldset>
+        </fields>
+</metadata>

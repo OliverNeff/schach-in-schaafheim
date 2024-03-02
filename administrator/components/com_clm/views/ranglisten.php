@@ -1,26 +1,24 @@
 <?php
-
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2017 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
- * @link http://www.fishpoke.de
+ * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
  * @email fishpoke@fishpoke.de
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 class CLMViewRanglisten
 {
 public static function setRanglistenToolbar($check)
 	{
 	JToolBarHelper::title(   JText::_( 'TITLE_RANGLISTE' ), 'generic.png' );	
-	JToolBarHelper::publish();
-	JToolBarHelper::unpublish();
+	JToolBarHelper::publishList();
+	JToolBarHelper::unpublishList();
 	$clmAccess = clm_core::$access;
 	if ($clmAccess->access('BE_club_edit_ranking') === true) {
-	JToolBarHelper::custom( 'copy', 'copy.png', 'copy_f2.png', JText::_('COPY') ); 
+		JToolBarHelper::custom( 'copy', 'copy.png', 'copy_f2.png', JText::_('COPY') ); 
 	}
 	JToolBarHelper::deleteList();
 	JToolBarHelper::editList();
@@ -112,10 +110,11 @@ public static function Ranglisten ( &$rows, &$lists, &$pageNav, $option )
 			for ($i=0, $n=count( $rows ); $i < $n; $i++) {
 				$row = &$rows[$i];
 
-				$link 		= JRoute::_( 'index.php?option=com_clm&section=ranglisten&task=edit&cid[]='. $row->id );
+				$link 		= JRoute::_( 'index.php?option=com_clm&section=ranglisten&task=edit&id='. $row->id );
 
 				$checked 	= JHtml::_('grid.checkedout',   $row, $i );
-				$published 	= JHtml::_('grid.published', $row, $i );
+//				$published 	= JHtml::_('grid.published', $row, $i );
+				$published 	= JHtml::_('jgrid.published', $row->published, $i );
 
 				?>
 				<tr class="<?php echo 'row'. $k; ?>">
@@ -153,7 +152,7 @@ public static function Ranglisten ( &$rows, &$lists, &$pageNav, $option )
 					</td>
 	<td class="order">
 	<?php $disabled = $ordering ?  '' : 'disabled="disabled"'; ?>
-	<input type="text" name="order[]" size="5" value="<?php echo $row->ordering;?>" <?php echo $disabled ?> class="text_area" style="text-align: center" />
+	<input type="text" name="order" size="5" value="<?php echo $row->ordering;?>" <?php echo $disabled ?> class="text_area" style="text-align: center" />
 					</td>
 
 					<td align="center">
@@ -180,9 +179,8 @@ public static function Ranglisten ( &$rows, &$lists, &$pageNav, $option )
 public static function setRanglisteToolbar($vname)
 	{
 
-		$cid = JRequest::getVar( 'cid', array(0), '', 'array' );
-		JArrayHelper::toInteger($cid, array(0));
-		if (JRequest::getVar( 'task') == 'edit') { $text = JText::_( 'Edit' );}
+		$cid = clm_core::$load->request_array_int('cid');
+		if (clm_core::$load->request_string( 'task') == 'edit') { $text = JText::_( 'Edit' );}
 			else { $text = JText::_( 'New' );}
 		JToolBarHelper::title(  JText::_( 'RANGLISTE' )." $vname : [ ". $text.' ]' );
 		JToolBarHelper::custom('sortieren','back.png','edit_f2.png','REORDER',false);
@@ -194,283 +192,18 @@ public static function setRanglisteToolbar($vname)
 		JToolBarHelper::help( 'screen.clm.edit' );
 	}
 
-public static function Rangliste( $spieler, &$row,&$lists,$option,$jid,$vname,$gname,$sname,$cid,$exist,$count,$gid_exist)
+public static function Rangliste( $spieler, &$row,&$lists,$option,$jid,$vname,$sg_vname,$gname,$sname,$cid,$exist,$sg_exist,$pa_exist,$count,$gid_exist)
 	{
+		JFactory::getApplication()->input->set('hidemainmenu', true);
 		CLMViewRanglisten::setRanglisteToolbar($vname);
-		JRequest::setVar( 'hidemainmenu', 1 );
+
 		JFilterOutput::objectHTMLSafe( $row, ENT_QUOTES, 'extrainfo' );
+
+		clm_core::$load->load_js("ranglisten");
+		$s_error = 0;
 		?>
 
-<script language="javascript" type="text/javascript">
-	 
-	function edit()
-	{
-	var task 	= document.getElementsByName ( "task") [0];
-	var pre_task 	= document.getElementsByName ( "pre_task") [0];
-	task.value 	= "add";
-	pre_task.value 	= "add";
-	document.adminForm.submit();
-	}
-
-		 Joomla.submitbutton = function (pressbutton) { 		
-		var form = document.adminForm;
-		var pre_task = document.getElementsByName ( "pre_task") [0];
-
-		if (pressbutton == 'sortieren') { 
-			//alert( 'sort:'+pressbutton+'test2' );
-			Sortieren(); return true; }
-		if (pressbutton == 'pruefen') { 
-	//alert( 'test1'+pressbutton+'test2' );
-			Pruefbutton(); 	return true; }
-		if (pressbutton == 'neu_laden') { 
-			location.reload(); return true; }
-		if (pressbutton == 'save') { 
-			if (Pruefen()==false) return; }
-		if (pressbutton == 'apply') { 
-			if (Pruefen()==false) return; }
-		if (pre_task.value == 'add') {
-		if (pressbutton == 'cancel') {
-				submitform( pressbutton ); return; }
-			if (pressbutton == 'save') { 
-				if (Pruefen()==false) return; }
-			if (pressbutton == 'apply') { 
-				if (Pruefen()==false) return; }
-		// do field validation
-		if (form.filter_vid.value == "0") {
-			alert( "<?php echo JText::_( 'RANGLISTE_VEREIN_ANGEBEN', true ); ?>" );
-		} else if (form.filter_sid.value == "0") {
-			alert( "<?php echo JText::_( 'RANGLISTE_SAISON_ANGEBEN', true ); ?>" );
-		} else if (form.filter_gid.value == "0") {
-			alert( "<?php echo JText::_( 'RANGLISTE_GRUPPE_ANGEBEN', true ); ?>" );
-		} else {
-			submitform( pressbutton );
-		}
-		} else {
-			if (pressbutton == 'save') { 
-				if (Pruefen()==false) return; }
-			if (pressbutton == 'apply') { 
-				if (Pruefen()==false) return; }
-			submitform( pressbutton );
-		}
-	}
-
-function Zcheck(Wert)
- {
-  var chkZ = 1;
-  for (i = 0; i < Wert.length; ++i)
-    if (Wert.charAt(i) < "0" ||
-        Wert.charAt(i) > "9")
-      chkZ = -1;
-  if (chkZ == -1) {
-   return false;
-   }
-  else {return true};
- }
-function Mcheck(Ob)
- {
-  if (!Zcheck(Ob.value)) {
-    alert("Mannschaft keine Zahl!");
-    Ob.focus();
-    return false;
-   }
- }
-function Rcheck(Ob)
- {
-  if (Zcheck(Ob.value)) return true;
-  var i=Ob.value.indexOf("/")
-  if (i>0)
-   {
-    var M=Ob.value.slice(0,i);
-    var R=Ob.value.slice(i+1);
-    if ((R=='')||(!Zcheck(M))||(!Zcheck(R)))
-     {
-      Ob.focus();
-      alert("<?php echo JText::_( 'RANGLISTE_MCHECK', true ); ?>");
-      return false;
-     }
-    else
-     {
-      Ob.value=M*1000+R*1;
-      return true;
-     }
-   }
-  Ob.focus();
-  alert("Rang ist keine Zahl");
-  return false;
- }
-function Spielergroesser(S1,S2)
- {
-  if (S1[0]>S2[0]) return true; //0=Mannschaft
-  if (S1[0]<S2[0]) return false;
-  if (S1[1]>S2[1]) return true; //1=Rang
-  if (S1[1]<S2[1]) return false;
-  if (S1[4]<S2[4]) return true; //4=DWZ
-  if (S1[4]>S2[4]) return false;
-  if (S1[5]<S2[5]) return true; //5=DWZ-Index
-  if (S1[5]>S2[5]) return false;
-  if (S1[2]>S2[2]) return true; //2=Name
-  if (S1[2]<S2[2]) return false;
-  if (S1[3]>S2[3]) return true; //3=Mgl
-  return false;
- }
-function Spielerschreiben(i)
-{
-    if (Spieler[i][0]==999)  document.getElementsByName('MA'+i)[0].value=0;
-    else document.getElementsByName('MA'+i)[0].value=Spieler[i][0];
-    if (Spieler[i][1]==9999) document.getElementsByName('RA'+i)[0].value=0;
-    else document.getElementsByName('RA'+i)[0].value=Spieler[i][1];
-    document.getElementById('SP'+i).innerHTML=Spieler[i][2];
-    document.getElementsByName('MGL'+i)[0].value=Spieler[i][3];
-    document.getElementById('MGL'+i).innerHTML=Spieler[i][3];
-    document.getElementById('DWZ'+i).innerHTML=Spieler[i][4];
-    document.getElementById('DWI'+i).innerHTML=Spieler[i][5];
-    <?php if (isset($UsePKZ) AND $UsePKZ == 1) { ?>document.getElementById('PKZ'+i).innerHTML=Spieler[i][6];
-    document.getElementsByName('PKZ'+i)[0].innerHTML=Spieler[i][6];
-    <?php } ?>
-}
-function QSort(l,r,Tiefe)
- {
-  var i=l;
-  var j=r;
-  var MittelSpieler=Spieler[Math.floor((l+r)/2)];
-  do
-   {
-    while (Spielergroesser(MittelSpieler,Spieler[i])) i++;
-    while (Spielergroesser(Spieler[j],MittelSpieler)) j--;
-    if (!(i>j))
-     {
-      var VS2=Spieler[i];
-      Spieler[i]=Spieler[j];
-      Spieler[j]=VS2;
-      i++;
-      j--;
-     }
-   }
-  while (!(i>j));
-  if (l<j) QSort(l,j,Tiefe+1);
-  if (i<r) QSort(i,r,Tiefe+1); 
- }
-function Sortieren()
- {
-  Spieler=new Array;
-  i=0;
-  while (document.getElementsByName('MA'+i)[0]) {
-    Spieler[i]=new Array(5)
-    Spieler[i][0]=document.getElementsByName('MA'+i)[0].value-0;
-    if (Spieler[i][0]==0) Spieler[i][0]=999;
-    Spieler[i][1]=document.getElementsByName('RA'+i)[0].value-0;
-    if (Spieler[i][1]==0) Spieler[i][1]=9999;
-    Spieler[i][2]=document.getElementById('SP'+i).innerHTML;
-    Spieler[i][3]=document.getElementById('MGL'+i).innerHTML-0;
-    Spieler[i][4]=document.getElementById('DWZ'+i).innerHTML-0;
-    Spieler[i][5]=document.getElementById('DWI'+i).innerHTML-0;
-    <?php if (isset($UsePKZ) AND $UsePKZ == 1) { ?>Spieler[i][6]=document.getElementById('PKZ'+i).innerHTML-0;<?php } ?>
-    i++;    
-   }
-  QSort(0,i-1,0)
-  i=0;
-  while (document.getElementsByName('MA'+i)[0])
-   {
-    Spielerschreiben(i);
-    i++;    
-   }
- }
-function Pruefen()
- {
-  Sortieren();
-  var Ma=0;
-  var Ra=0;
-  var Sp=0;
-  var Ersatz=1;
-  i=0;
-  var TempMa01=document.getElementsByName('MA'+i)[0].value;
-  if (TempMa01==0) {
-	alert('Keine Daten!');
-	return false;
-  }
-  while(document.getElementsByName('MA'+i)[0]) {
-    var TempMa=document.getElementsByName('MA'+i)[0].value;
-    var TempRa=document.getElementsByName('RA'+i)[0].value;
-	if (TempMa==0) {
-		break;
-	}
-	//Hilfsprüfung: nur auf doppelte Einträge
-    if ((TempMa==Ma) && (TempRa==Ra)) {
-        alert('Doppelte Rangnummer! \n Mannschaft: '+Ma+'  Rang: '+Ra);
-		return false;
-	} else {
-        Ma=TempMa;
-        Ra=TempRa;
-		i++;
-		continue;
-	}
-	return true;
-	//Ende Hilfsprüfung
-
-    if (TempMa==Ma) {
-      if (TempRa==(Sp+1)) {
-        i++;
-        Sp++;
-        continue; }
-      else if (TempRa==(1000*Ma+Ersatz)) {
-        i++;
-        Ersatz++;
-        continue; }
-      else {
-        if (window.confirm('Die Rangnummer von Spieler '+document.getElementsByName('SP'+i)[0].innerHTML+' ist '+TempRa+'!\nErwartet wird '+(Sp+1)+'!\nFortsetzen?')) {
-          Sp=TempRa;
-          i++;
-          continue; }
-        document.getElementsByName('RA'+i)[0].focus();
-        return false; } }
-    else if (TempMa==(Ma+1)) {
-      Ma++;
-      Ersatz=1;
-      if (TempRa!=(Sp+1)) {
-        if (window.confirm('Der erste Spieler ('+document.getElementsByName('SP'+i)[0].innerHTML+') der '+Ma+'.Mannschaft hat Rangnummer '+TempRa+'!\nErwartet wird '+(Sp+1)+'\nFortsetzen?')) {
-          Sp=TempRa;
-          i++;
-          continue; }
-        document.getElementsByName('RA'+i)[0].focus();
-        return false; }
-      else {
-        Sp++;
-        i++;
-        continue; } }
-    else if (TempMa==90) {
-      Ma=90;
-      Sp=90000;
-      continue; }
-    else if (TempMa==99) {
-      Ma=99;
-      Sp=99000;
-      continue; }
-    else {
-      if (Ma!=0) var Text='Die Mannschaftsnummern müssen aufsteigend sein!\nLetzte Mannschaftsnummer war '+Ma;
-      else var Text='Die erste Mannschaft muß die Nummer 1 haben!';
-      if (window.confirm(Text+'\nFortsetzen?')) {
-        Sp=TempRa;
-        i++;
-        continue; }
-      document.getElementsByName('MA'+i)[0].focus();
-      return false; }
-    if (window.confirm('Unbekannter Aufstellungsfehler!\nMannschaft: '+TempMa+'\nRangnummer: '+TempRa+'\nSpielername: "'+document.getElementsByName('SP'+i)[0].innerHTML+'"\nFortsetzen?')) {
-      Sp=TempRa;
-      i++;
-      continue; }
-    document.getElementsByName('MA'+i)[0].focus();
-    return false; }
-  return true;
- } // end: function Pruefen()
-function Pruefbutton()
- {
-  if (Pruefen()==true) alert('Alles in Ordnung');
- }
-
- 
-</script>
-
-<?php if ($exist AND JRequest::getVar( 'task') == "add") { ?>
+<?php if ($exist AND clm_core::$load->request_string( 'task') == "add") { ?>
 
 	<div class="col width-100">
 	<fieldset class="adminform">
@@ -483,7 +216,36 @@ function Pruefbutton()
 	</fieldset>
 	</div>
 
-<?php } ?>
+<?php $s_error = 1; } ?>
+<?php if ($pa_exist AND clm_core::$load->request_string( 'task') == "add") { ?>
+
+	<div class="col width-100">
+	<fieldset class="adminform">
+	<legend><?php echo JText::_( 'RANGLISTE_TIP' ); ?></legend>
+
+	<h1><?php echo JText::_( 'RANGLISTE_TIP_PA_LINE1' ); ?></h1>
+	<h2><?php echo JText::_( 'RANGLISTE_TIP_PA_LINE2' ); ?></h2>
+	<br>
+
+	</fieldset>
+	</div>
+
+<?php $s_error = 1; } ?>
+<?php if ($sg_exist AND clm_core::$load->request_string( 'task') == "add") { ?>
+
+	<div class="col width-100">
+	<fieldset class="adminform">
+	<legend><?php echo JText::_( 'RANGLISTE_TIP' ); ?></legend>
+
+	<h1><?php echo JText::_( 'RANGLISTE_TIP_SG_LINE1' ); ?></h1>
+	<h2><?php echo JText::_( 'RANGLISTE_TIP_SG_LINE2' ); ?></h2>
+	<br>
+
+	</fieldset>
+	</div>
+
+<?php $s_error = 1; } ?>
+
 <form action="index.php" method="post" name="adminForm" id="adminForm">
 
 <div>
@@ -496,8 +258,17 @@ function Pruefbutton()
 			<td class="key" nowrap="nowrap"><label for="filter_vid"><?php echo JText::_( 'RANGLISTE_VEREIN' ).' : '; ?></label>
 			</td>
 			<td>
-			<?php if (JRequest::getVar( 'task') == 'edit' ) { echo $vname; }
+			<?php if (clm_core::$load->request_string( 'task') == 'edit' ) { echo $vname; }
 				else { echo $lists['vid']; } ?>
+			</td>
+		</tr>
+
+		<tr>
+			<td class="key" nowrap="nowrap"><label for="filter_sg_vid"><?php echo JText::_( 'RANGLISTE_VEREIN2' ).' : '; ?></label>
+			</td>
+			<td>
+			<?php if (clm_core::$load->request_string( 'task') == 'edit' ) { echo $sg_vname; }
+				else { echo $lists['sg_vid']; } ?>
 			</td>
 		</tr>
 
@@ -505,7 +276,7 @@ function Pruefbutton()
 			<td class="key" nowrap="nowrap"><label for="filter_sid"><?php echo JText::_( 'RANGLISTE_SAISON' ).' : '; ?></label>
 			</td>
 			<td>
-			<?php if (JRequest::getVar( 'task') == 'edit' ) { echo $sname; }
+			<?php if (clm_core::$load->request_string( 'task') == 'edit' ) { echo $sname; }
 				else { echo $lists['sid']; } ?>
 			</td>
 		</tr>
@@ -514,7 +285,7 @@ function Pruefbutton()
 			<td class="key" nowrap="nowrap"><label for="filter_gid"><?php echo JText::_( 'RANGLISTE_GRUPPE' ).' : '; ?></label>
 			</td>
 			<td>
-			<?php	if (JRequest::getVar( 'task') == 'edit' ) { echo $gname;}
+			<?php	if (clm_core::$load->request_string( 'task') == 'edit' ) { echo $gname;}
 				else { echo $lists['gruppe'];} ?>
 			</td>
 		</tr>
@@ -554,14 +325,15 @@ function Pruefbutton()
   </div>
 </div>
 
-<?php if ((!$exist AND JRequest::getVar( 'task') == "add") OR (JRequest::getVar( 'task') == "edit")) {
+<?php if (($s_error == 0) AND (!$exist AND clm_core::$load->request_string( 'task') == "add") OR (clm_core::$load->request_string( 'task') == "edit")) {
 	$mainframe	= JFactory::getApplication();
 
 	$filter_vid	= $mainframe->getUserStateFromRequest( "$option.filter_vid",'filter_vid',0,'int' );
+	$filter_sg_vid	= $mainframe->getUserStateFromRequest( "$option.filter_sg_vid",'filter_sg_vid',0,'int' );
 	$filter_sid	= $mainframe->getUserStateFromRequest( "$option.filter_sid",'filter_sid',0,'int' );
 	$filter_gid	= $mainframe->getUserStateFromRequest( "$option.filter_gid",'filter_gid',0,'int' );
 
-	if(JRequest::getVar( 'task') == "add" AND (!$spieler or !$gid_exist or !$filter_gid)) { ?>
+	if(clm_core::$load->request_string( 'task') == "add" AND (!$spieler or !$gid_exist or !$filter_gid)) { ?>
 	<br><br><br><br><br><br><br><br><br><br>
 	<fieldset class="adminform">
 	<legend><?php echo JText::_( 'RANGLISTE_TIP' ); ?></legend>
@@ -587,17 +359,20 @@ function Pruefbutton()
 	<table class="admintable">
 
 	<tr>
-		<td width="8%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_M_NR' ); ?></td>
-		<td width="10%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_RANG' ); ?></td>
+		<td width="5%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_M_NR' ); ?></td>
+		<td width="7%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_RANG' ); ?></td>
 		<td class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_NAME' ); ?></td>
+		<td width="9%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_ZPSM' ); ?></td>
 		<td width="7%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_MGL_NR' ); ?></td>
-		<td width="7%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_PKZ' ); ?></td>
+		<td width="11%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_PKZ' ); ?></td>
+		<td width="3%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_STATUS' ); ?></td>
 		<td colspan="2" width="10%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_DWZ' ); ?></td>
+		<td width="8" class="key" nowrap="nowrap"><?php echo JText::_( 'MELDELISTE_BLOCK' ); ?></td>
 	</tr>
 
 <?php 
 
-if (JRequest::getVar( 'task') == 'edit' ) {
+if (clm_core::$load->request_string( 'task') == 'edit' ) {
 
 	$rang	= array();
 	$cnt	= 0;
@@ -615,25 +390,33 @@ for ($x=0; $x < (count($spieler)-$count); $x++) {
 	for($x=0; $x < (1+intval((count($spieler))/2)); $x++) { ?>
 
 	<input type="hidden" name="PKZ<?php echo $x; ?>" value="<?php echo $spieler[$rang[$x]]->PKZ; ?>" />
+	<input type="hidden" name="ZPSM<?php echo $x; ?>" value="<?php echo $spieler[$rang[$x]]->ZPS; ?>" />
 	<input type="hidden" name="MGL<?php echo $x; ?>" value="<?php echo $spieler[$rang[$x]]->Mgl_Nr; ?>" />
 
 	<tr>
 	<td class="key" nowrap="nowrap">
-		<input type="text" name="MA<?php echo $x ?>" size="3" maxLength="3" value="<?php echo $spieler[$rang[$x]]->man_nr; ?>" onChange="Mcheck(this)">
+		<input type="text" name="MA<?php echo $x ?>" size="2" maxLength="2" value="<?php echo $spieler[$rang[$x]]->man_nr; ?>" onChange="Mcheck(this)">
 	</td>
 	<td class="key" nowrap="nowrap">
-	<input type="text" name="RA<?php echo $x ?>" size="5" maxLength="5" value="<?php echo $spieler[$rang[$x]]->Rang; ?>" onChange="Rcheck(this)">
+	<input type="text" name="RA<?php echo $x ?>" size="4" maxLength="4" value="<?php echo $spieler[$rang[$x]]->Rang; ?>" onChange="Rcheck(this)">
 	</td>
 	<td id="SP<?php echo $x; ?>" name="SP<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$rang[$x]]->Spielername; ?></td>
+	<td id="ZPSM<?php echo $x; ?>" class="key" nowrap="nowrap">
+		<?php echo $spieler[$rang[$x]]->ZPS; ?></td>
 	<td id="MGL<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$rang[$x]]->Mgl_Nr; ?></td>
 	<td id="PKZ<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$rang[$x]]->PKZ; ?></td>
+	<td id="Status<?php echo $x; ?>" class="key" nowrap="nowrap">
+		<?php echo $spieler[$rang[$x]]->Status; ?></td>
 	<td id="DWZ<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$rang[$x]]->DWZ; ?></td>
 	<td id="DWI<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$rang[$x]]->DWZ_Index; ?></td>
+	<td align="center">
+		<input type="checkbox" name="check<?php echo $x; ?>" id="check<?php echo $x; ?>" value="1" <?php if ($spieler[$rang[$x]]->gesperrt =="1") { echo 'checked="checked"'; }?>>
+	</td>
 	</tr>
 
 <?php }} else {
@@ -641,25 +424,33 @@ for ($x=0; $x < (count($spieler)-$count); $x++) {
 	for($x=0; $x < (1+intval((count($spieler))/2)); $x++) { ?>
 
 	<input type="hidden" name="PKZ<?php echo $x; ?>" value="<?php echo $spieler[$x]->PKZ; ?>" />
+	<input type="hidden" name="ZPSM<?php echo $x; ?>" value="<?php echo $spieler[$x]->ZPS; ?>" />
 	<input type="hidden" name="MGL<?php echo $x; ?>" value="<?php echo $spieler[$x]->Mgl_Nr; ?>" />
 
 	<tr>
 	<td class="key" nowrap="nowrap">
-		<input type="text" name="MA<?php echo $x ?>" size="3" maxLength="3" <?php if(isset($spieler[$x]->man_nr)) { ?> value="<?php echo $spieler[$x]->man_nr; ?>"<?php } ?> onChange="Mcheck(this)">
+		<input type="text" name="MA<?php echo $x ?>" size="2" maxLength="2" <?php if(isset($spieler[$x]->man_nr)) { ?> value="<?php echo $spieler[$x]->man_nr; ?>"<?php } ?> onChange="Mcheck(this)">
 	</td>
 	<td class="key" nowrap="nowrap">
-	<input type="text" name="RA<?php echo $x ?>" size="5" maxLength="5" <?php if(isset($spieler[$x]->Rang)) { ?> value="<?php echo $spieler[$x]->Rang; ?>" <?php } ?> onChange="Rcheck(this)">
+		<input type="text" name="RA<?php echo $x ?>" size="4" maxLength="4" <?php if(isset($spieler[$x]->Rang)) { ?> value="<?php echo $spieler[$x]->Rang; ?>" <?php } ?> onChange="Rcheck(this)">
 	</td>
 	<td id="SP<?php echo $x; ?>" name="SP<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$x]->Spielername; ?></td>
+	<td id="ZPSM<?php echo $x; ?>" class="key" nowrap="nowrap">
+		<?php echo $spieler[$x]->ZPS; ?></td>
 	<td id="MGL<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$x]->Mgl_Nr; ?></td>
 	<td id="PKZ<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$x]->PKZ; ?></td>
+	<td id="Status<?php echo $x; ?>" class="key" nowrap="nowrap">
+		<?php echo $spieler[$x]->Status; ?></td>
 	<td id="DWZ<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$x]->DWZ; ?></td>
 	<td id="DWI<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$x]->DWZ_Index; ?></td>
+	<td align="center">
+		<input type="checkbox" name="check<?php echo $x; ?>" id="check<?php echo $x; ?>" value="1" <?php if ($spieler[$x]->gesperrt =="1") { echo 'checked="checked"'; }?>>
+	</td>
 	</tr>
 
 <?php }} ?>
@@ -675,39 +466,50 @@ for ($x=0; $x < (count($spieler)-$count); $x++) {
 	<table class="admintable">
 
 	<tr>
-		<td width="8%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_M_NR' ); ?></td>
-		<td width="10%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_RANG' ); ?></td>
+		<td width="5%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_M_NR' ); ?></td>
+		<td width="7%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_RANG' ); ?></td>
 		<td class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_NAME' ); ?></td>
+		<td width="9%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_ZPSM' ); ?></td>
 		<td width="7%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_MGL_NR' ); ?></td>
-		<td width="7%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_PKZ' ); ?></td>
+		<td width="11%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_PKZ' ); ?></td>
+		<td width="3%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_STATUS' ); ?></td>
 		<td colspan="2" width="10%" class="key" nowrap="nowrap"><?php echo JText::_( 'RANGLISTE_DWZ' ); ?></td>
+		<td width="8" class="key" nowrap="nowrap"><?php echo JText::_( 'MELDELISTE_BLOCK' ); ?></td>
 	</tr>
 	
 <?php
-if (JRequest::getVar( 'task') == 'edit' ) {
+if (clm_core::$load->request_string( 'task') == 'edit' ) {
 
 	for($x=(1+intval((count($spieler))/2)); $x < count($spieler); $x++) { ?>
 
 	<input type="hidden" name="PKZ<?php echo $x; ?>" value="<?php echo $spieler[$rang[$x]]->PKZ; ?>" />
+	<input type="hidden" name="ZPSM<?php echo $x; ?>" value="<?php echo $spieler[$rang[$x]]->ZPS; ?>" />
 	<input type="hidden" name="MGL<?php echo $x; ?>" value="<?php echo $spieler[$rang[$x]]->Mgl_Nr; ?>" />
 
 	<tr>
 	<td class="key" nowrap="nowrap">
-		<input type="text" name="MA<?php echo $x ?>" size="3" maxLength="3" value="<?php echo $spieler[$rang[$x]]->man_nr; ?>" onChange="Mcheck(this)">
+		<input type="text" name="MA<?php echo $x ?>" size="2" maxLength="2" value="<?php echo $spieler[$rang[$x]]->man_nr; ?>" onChange="Mcheck(this)">
 	</td>
 	<td class="key" nowrap="nowrap">
-	<input type="text" name="RA<?php echo $x ?>" size="5" maxLength="5" value="<?php echo $spieler[$rang[$x]]->Rang; ?>" onChange="Rcheck(this)">
+	<input type="text" name="RA<?php echo $x ?>" size="4" maxLength="4" value="<?php echo $spieler[$rang[$x]]->Rang; ?>" onChange="Rcheck(this)">
 	</td>
 	<td id="SP<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$rang[$x]]->Spielername; ?></td>
+	<td id="ZPSM<?php echo $x; ?>" class="key" nowrap="nowrap">
+		<?php echo $spieler[$rang[$x]]->ZPS; ?></td>
 	<td id="MGL<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$rang[$x]]->Mgl_Nr; ?></td>
 	<td id="PKZ<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$rang[$x]]->PKZ; ?></td>
+	<td id="Status<?php echo $x; ?>" class="key" nowrap="nowrap">
+		<?php echo $spieler[$rang[$x]]->Status; ?></td>
 	<td id="DWZ<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$rang[$x]]->DWZ; ?></td>
 	<td id="DWI<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$rang[$x]]->DWZ_Index; ?></td>
+	<td align="center">
+		<input type="checkbox" name="check<?php echo $x; ?>" id="check<?php echo $x; ?>" value="1" <?php if ($spieler[$rang[$x]]->gesperrt =="1") { echo 'checked="checked"'; }?>>
+	</td>
 	</tr>
 
 <?php }} else {
@@ -715,25 +517,33 @@ if (JRequest::getVar( 'task') == 'edit' ) {
 	for($x=(1+intval((count($spieler))/2)); $x < count($spieler); $x++) { ?>
 
 	<input type="hidden" name="PKZ<?php echo $x; ?>" value="<?php echo $spieler[$x]->PKZ; ?>" />
+	<input type="hidden" name="ZPSM<?php echo $x; ?>" value="<?php echo $spieler[$x]->ZPS; ?>" />
 	<input type="hidden" name="MGL<?php echo $x; ?>" value="<?php echo $spieler[$x]->Mgl_Nr; ?>" />
 
 	<tr>
 	<td class="key" nowrap="nowrap">
-		<input type="text" name="MA<?php echo $x ?>" size="3" maxLength="3" <?php if(isset($spieler[$x]->man_nr)) { ?> value="<?php echo $spieler[$x]->man_nr; ?>"<?php } ?> onChange="Mcheck(this)">
+		<input type="text" name="MA<?php echo $x ?>" size="2" maxLength="2" <?php if(isset($spieler[$x]->man_nr)) { ?> value="<?php echo $spieler[$x]->man_nr; ?>"<?php } ?> onChange="Mcheck(this)">
 	</td>
 	<td class="key" nowrap="nowrap">
-	<input type="text" name="RA<?php echo $x ?>" size="5" maxLength="5" <?php if(isset($spieler[$x]->Rang)) { ?> value="<?php echo $spieler[$x]->Rang; ?>" <?php } ?> onChange="Rcheck(this)">
+		<input type="text" name="RA<?php echo $x ?>" size="4" maxLength="4" <?php if(isset($spieler[$x]->Rang)) { ?> value="<?php echo $spieler[$x]->Rang; ?>" <?php } ?> onChange="Rcheck(this)">
 	</td>
 	<td id="SP<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$x]->Spielername; ?></td>
+	<td id="ZPSM<?php echo $x; ?>" class="key" nowrap="nowrap">
+		<?php echo $spieler[$x]->ZPS; ?></td>
 	<td id="MGL<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$x]->Mgl_Nr; ?></td>
 	<td id="PKZ<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$x]->PKZ; ?></td>
+	<td id="Status<?php echo $x; ?>" class="key" nowrap="nowrap">
+		<?php echo $spieler[$x]->Status; ?></td>
 	<td id="DWZ<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$x]->DWZ; ?></td>
 	<td id="DWI<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$x]->DWZ_Index; ?></td>
+	<td align="center">
+		<input type="checkbox" name="check<?php echo $x; ?>" id="check<?php echo $x; ?>" value="1" <?php if ($spieler[$x]->gesperrt =="1") { echo 'checked="checked"'; }?>>
+	</td>
 	</tr>
 
 <?php }} ?>
@@ -750,12 +560,13 @@ if (JRequest::getVar( 'task') == 'edit' ) {
 		<input type="hidden" name="id" value="<?php echo $row->id; ?>" />
 
 		<input type="hidden" name="count" value="<?php echo count($spieler); ?>" />
-		<input type="hidden" name="zps" value="<?php if (isset($spieler[0])) echo $spieler[0]->ZPS; ?>" />
+<!--		<input type="hidden" name="zps" value="<?php if (isset($spieler[0])) echo $spieler[0]->ZPS; ?>" /> -->
+		<input type="hidden" name="zps" value="<?php echo $row->zps; ?>" />
 		<input type="hidden" name="sid" value="<?php if (isset($spieler[0])) echo $spieler[0]->sid; ?>" />
 		<input type="hidden" name="gid" value="<?php echo $row->gid; ?>" />
 		<input type="hidden" name="exist" value="<?php echo $exist; ?>" />
 
-		<input type="hidden" name="pre_task" value="<?php echo JRequest::getVar( 'task'); ?>" />
+		<input type="hidden" name="pre_task" value="<?php echo clm_core::$load->request_string( 'task'); ?>" />
 		<input type="hidden" name="task" value="edit" />
 
 		<?php echo JHtml::_( 'form.token' ); ?>

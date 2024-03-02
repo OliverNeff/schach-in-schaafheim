@@ -1,4 +1,10 @@
 <?php
+/**
+ * @ Chess League Manager (CLM) Component 
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link https://www.chessleaguemanager.de
+*/
 function clm_view_be_menu($access, $status)
 {
     clm_core::$load->load_css("be_menu");
@@ -175,6 +181,15 @@ function clm_view_be_menu($access, $status)
 ?></span></a> </div>
 	<?php
     }
+    if (($access['BE_swt_general'] AND $countryversion =="de") OR $access['BE_pgn_general']) {
+?>		
+		<div class="clm_icon"> <a href="index.php?option=com_clm&view=swt" title=""> <img src="<?php
+        echo clm_core::$load->gen_image_url("icons/clm_generic");
+?>" align="middle" border="0" alt="" /> <span><?php
+        echo $lang->swt;
+?></span></a> </div>
+	<?php
+    }
     if ($access['BE_dewis_general']) {
 ?>		
 		<div class="clm_icon"> <a href="index.php?option=com_clm&view=auswertung" title=""> <img src="<?php
@@ -193,13 +208,13 @@ function clm_view_be_menu($access, $status)
         echo $lang->db;
 ?></span></a> </div>
 	<?php
-    }
-    if (($access['BE_swt_general'] AND $countryversion =="de") OR $access['BE_pgn_general']) {
-?>		
-		<div class="clm_icon"> <a href="index.php?option=com_clm&view=swt" title=""> <img src="<?php
-        echo clm_core::$load->gen_image_url("icons/clm_generic");
+    } 
+    if ($access['BE_config_general']) {
+?>
+		<div class="clm_icon"> <a href="index.php?option=com_clm&view=view_logging" title=""> <img src="<?php
+        echo clm_core::$load->gen_image_url("icons/clm_logfile");
 ?>" align="middle" border="0" alt="" /> <span><?php
-        echo $lang->swt;
+        echo $lang->logging;
 ?></span></a> </div>
 	<?php
     } 
@@ -309,9 +324,9 @@ function clm_view_be_menu($access, $status)
 	</tr>
 	</table>
 	<br>
-	<a href="http://www.chessleaguemanager.de" target="blank"><?php
+	<a href="https://www.chessleaguemanager.de" target="blank"><?php
     echo $lang->website;
-?></a>  |  <a href="http://www.chessleaguemanager.de/index.php?option=com_kunena" target="blank"><?php
+?></a>  |  <a href="https://www.chessleaguemanager.de/index.php?option=com_kunena" target="blank"><?php
     echo $lang->support;
 ?></a>
 	<br>

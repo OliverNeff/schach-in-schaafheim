@@ -1,9 +1,9 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2019 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2022 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
- * @link http://www.fishpoke.de
+ * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
  * @email fishpoke@fishpoke.de
  * @author Andreas Dorn
@@ -40,15 +40,16 @@ class CLMModelTurPlayerEdit extends JModelLegacy {
 	// alle vorhandenen Parameter auslesen
 	function _getParameters() {
 	
+		if (!isset($this->param) OR is_null($this->param)) $this->param = array();	// seit J 4.2 nötig um notice zu vermeiden
 		// roundid
-		$this->param['playerid'] = JRequest::getInt('playerid');
+		$this->param['playerid'] = clm_core::$load->request_int('playerid');
 	
 	}
 
 	
 	function _getPlayerData() {
 	
-		$query = 'SELECT snr, name, birthYear, geschlecht, verein, start_dwz, start_I0, FIDEelo, titel, twz, turnier, sum_punkte, koStatus, sumTiebr1, sumTiebr2, sumTiebr3, s_punkte'
+		$query = 'SELECT * '
 			. ' FROM #__clm_turniere_tlnr'
 			. ' WHERE id = '.$this->param['playerid']
 			;
@@ -60,13 +61,20 @@ class CLMModelTurPlayerEdit extends JModelLegacy {
 
 	function _getTurnierData() {
 	
-		$query = 'SELECT name, typ, tiebr1, tiebr2, tiebr3'
+		$query = 'SELECT * '
 			. ' FROM #__clm_turniere'
 			. ' WHERE id = '.$this->playerData->turnier
 			;
 		$this->_db->setQuery($query);
 		$this->turnierData = $this->_db->loadObject();
 	
+		$query = 'SELECT * '
+			. ' FROM #__clm_turniere_teams'
+			. ' WHERE tid = '.$this->playerData->turnier
+			;
+		$this->_db->setQuery($query);
+		$this->teamData = $this->_db->loadObjectList();
+
 	}
 
 

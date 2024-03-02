@@ -1,9 +1,9 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2016 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2021 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
- * @link http://www.fishpoke.de
+ * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
  * @email fishpoke@fishpoke.de
  * @author Andreas Dorn
@@ -32,9 +32,9 @@ class CLMViewSWTLigaman extends JViewLegacy {
 		// $db_man_nr	=& $state->get( 'db_man_nr' ); fuer update
 
 		// Der nächste Task ist von der aktuell bearbeiteten Mannschaft abhängig
-		$man = JRequest::getVar ('man', 0, 'default', 'int');		
-		$noOrgReference = JRequest::getVar ('noOrgReference', '0', 'default', 'string');		
-		$noBoardResults = JRequest::getVar ('noBoardResults', '0', 'default', 'string');		
+		$man = clm_core::$load->request_int('man', 0);		
+		$noOrgReference = clm_core::$load->request_string('noOrgReference', '0', 'default', 'string');		
+		$noBoardResults = clm_core::$load->request_string('noBoardResults', '0', 'default', 'string');		
 		$anz_mannschaften = $swt_db_data['anz_mannschaften'];
 
 		// Toolbar
@@ -57,8 +57,8 @@ class CLMViewSWTLigaman extends JViewLegacy {
 		// Listen
 		//echo "GET1: "; print_r ($_GET); //DBG
 		//echo "swt_data[zps]: ".$swt_data['zps']; //DBG
-		$filter_zps = JRequest::getVar ('filter_zps', $swt_data['zps'], 'default', 'string');
-		$filter_sg_zps = JRequest::getVar ('filter_sg_zps', $swt_data['sg_zps'], 'default', 'string');
+		$filter_zps = clm_core::$load->request_string('filter_zps', $swt_data['zps']);
+		$filter_sg_zps = clm_core::$load->request_string('filter_sg_zps', $swt_data['sg_zps']);
 		//echo "filter_zps: $filter_zps"; //DBG
 		//echo "GET: "; print_r ($_GET); //DBG
 		// Vereinsliste
@@ -88,17 +88,25 @@ class CLMViewSWTLigaman extends JViewLegacy {
 		// Stammspieler-Auswahl
 		$stammtable = '';
 		for ($i = 1; $i <= $swt_db_data['anz_bretter']; $i++) {
-			$dwzid		= $swt_data['spieler_'.$i]['dwzid'];
+			if (isset($swt_data['spieler_'.$i])) {
+				$dwzid		= $swt_data['spieler_'.$i]['dwzid'];
+				$swt_spieler = $swt_data['spieler_'.$i]['name'];
+			} else {
+				$dwzid		= 0;
+				$swt_spieler = '';
+			}
 			$splist		= array ();
 			$splist[]	= JHtml::_('select.option', '0', JText::_( 'SWT_LEAGUE_PLAYER_SELECT' ), 'id', 'name');
 			$splist		= array_merge( $splist, $db_splist );
 			if ($noOrgReference == '0')
-				$splist[]	= JHtml::_('select.option', '-1', $swt_data['spieler_'.$i]['name'] . " " . JText::_( 'SWT_LEAGUE_NEW' ), 'id', 'name');
+//				$splist[]	= JHtml::_('select.option', '-1', $swt_data['spieler_'.$i]['name'] . " " . JText::_( 'SWT_LEAGUE_NEW' ), 'id', 'name');
+				$splist[]	= JHtml::_('select.option', '-1', $swt_spieler . " " . JText::_( 'SWT_LEAGUE_NEW' ), 'id', 'name');
 			else
-				$splist[]	= JHtml::_('select.option', '-1', $swt_data['spieler_'.$i]['name'], 'id', 'name');
+//				$splist[]	= JHtml::_('select.option', '-1', $swt_data['spieler_'.$i]['name'], 'id', 'name');
+				$splist[]	= JHtml::_('select.option', '-1', $swt_spieler, 'id', 'name');
 			$blist		= JHtml::_('select.genericlist', $splist, 'dwzid_'.$i, 'class="inputbox" size="1"', 'id', 'name', $dwzid);
 			
-			$swt_spieler = $swt_data['spieler_'.$i]['name'];
+//			$swt_spieler = $swt_data['spieler_'.$i]['name'];
 			if ($dwzid == -1) {
 				$swt_spieler = '<b style="color: #f00">' . $swt_spieler . '</b>';
 				$swt_spieler .= '<br>'.$swt_data['spieler_'.$i]['zps'].($swt_data['spieler_'.$i]['mgl_nr']!="" ? "/".$swt_data['spieler_'.$i]['mgl_nr'] : "");
@@ -173,10 +181,10 @@ class CLMViewSWTLigaman extends JViewLegacy {
 
 
 		// Daten an Template
-		$this->assignRef ('lists', $lists);
-		$this->assignRef ('tables', $tables);
-		$this->assignRef ('swt_data', $swt_data);
-		$this->assignRef ('swt_db_data', $swt_db_data);
+		$this->lists = $lists;
+		$this->tables = $tables;
+		$this->swt_data = $swt_data;
+		$this->swt_db_data = $swt_db_data;
 
 		parent::display ($tpl);
 
@@ -184,56 +192,4 @@ class CLMViewSWTLigaman extends JViewLegacy {
 
 }
 
-// swtligainfo-controller ab hier:
-/*
-		//Toolbar
-		clm_core::$load->load_css("icons_images");
-		JToolBarHelper::title( JText::_('TITLE_SWT_LEAGUE') ,'clm_headmenu_manager.png' );
-		
-		JToolBarHelper::custom('next','next.png','next_f2.png', JText::_('SWT_LEAGUE_NEXT'), false);
-		JToolBarHelper::custom('cancel','cancel.png','cancel_f2.png', JText::_('SWT_LEAGUE_CANCEL'), false);
-		
-		
-		// Listen
-		// Heimrecht vertauscht
-		$lists['heim']	= JHtml::_('select.booleanlist',  'heim', 'class="inputbox"', $swt_data['heimrecht_vertauscht'] );
-		// Published
-		$lists['published']	= JHtml::_('select.booleanlist',  'published', 'class="inputbox"', $default['published'] );
-		// automat. Mail
-		$lists['mail']	= JHtml::_('select.booleanlist',  'mail', 'class="inputbox"', $default['mail'] );
-		// Staffelleitermail als BCC
-		$lists['sl_mail']	= JHtml::_('select.booleanlist',  'sl_mail', 'class="inputbox"', $sl_mail );
-		// Ordering für Rangliste
-		$lists['order']	= JHtml::_('select.booleanlist',  'order', 'class="inputbox"', $default['order'] );
-		// SL Listen
-		$sllist[]	= JHtml::_('select.option',  '0', JText::_( 'LIGEN_SL' ), 'jid', 'name' );
-		$sllist		= array_merge( $sllist, $db_sllist );
-		$lists['sl']	= JHtml::_('select.genericlist',   $sllist, 'sl', 'class="inputbox" size="1"', 'jid', 'name', $default['sl'] );
-		// Saisonliste
-		$saisonlist[]	= JHtml::_('select.option',  '0', JText::_( 'LIGEN_SAISON' ), 'sid', 'name' );
-		$saisonlist	= array_merge( $saisonlist, $db_saisonlist );
-		$lists['saison']= JHtml::_('select.genericlist',   $saisonlist, 'sid', 'class="inputbox" size="1"','sid', 'name', $saison_id );
-		// Ranglisten
-		$glist[]	= JHtml::_('select.option',  '0', JText::_( 'LIGEN_ML' ), 'id', 'Gruppe' );
-		$glist		= array_merge( $glist, $db_glist );
-		$lists['gruppe']= JHtml::_('select.genericlist',   $glist, 'rang', 'class="inputbox" size="1"', 'id', 'Gruppe', $rang );
-		
-
-		// Konfigurationsparameter an Template
-		$this->assignRef( 'rang', $rang );
-		$this->assignRef( 'sl_mail', $sl_mail );
-		
-		// Daten an Template
-		$this->assignRef( 'lists', $lists );
-		$this->assignRef( 'default', $default );
-
-		// SWT-Daten an Template
-		$this->assignRef( 'swt_data', $swt_data );
-
-		parent::display($tpl);
-		
-	}
-
-}
- */
 ?>

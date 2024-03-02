@@ -1,4 +1,10 @@
 <?php
+/**
+ * @ Chess League Manager (CLM) Component 
+ * @Copyright (C) 2008-2021 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
 class clm_class_db {
 	// Verwendete Datenbank Konfiguration
 	private $dbConfig;
@@ -245,13 +251,19 @@ class clm_class_db {
 				continue;
 			}
 
-			if (strlen($q) == 1)
+			if ($q === false)		// Verhindern von Notice: Trying to access array offset on value of type bool in ... ab php 7.4
+			{
+				$parts[] = $part;
+			}
+			elseif (strlen($q) == 1)
+//			if (strlen($q) == 1)
 			{
 				$parts[] = $q . $part . $q;
 			}
 			else
 			{
-				$parts[] = $q{0} . $part . $q{1};
+				//$parts[] = $q{0} . $part . $q{1};
+				$parts[] = $q[0] . $part . $q[1];
 			}
 		}
 

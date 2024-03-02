@@ -10,30 +10,13 @@
 // No direct access to this file
 defined('_JEXEC') or die('Restricted access');
 
-// Component definitions
-if (! jimport('components.com_clm_turnier.includes.defines', JPATH_SITE)) {
+// Component definitions / Libraries
+if (! jimport('components.com_clm_turnier.bootstrap', JPATH_SITE)) {
     throw new Exception(JText::_('COM_CLM_TURNIER_ERROR'), '404');
 }
 
-// TODO: intelligenten CLMLoader ...
-jimport('joomla.filesystem.folder');
-
-// lädt alle CLM-Klassen - quasi autoload
-$classpath = JPATH_CLM_COMPONENT . DIRECTORY_SEPARATOR . 'classes';
-foreach (JFolder::files($classpath) as $file) {
-    JLoader::register(str_replace('.class.php', '', $file), $classpath . DIRECTORY_SEPARATOR . $file);
-}
-
-$classpath = JPATH_CLM_TURNIER_COMPONENT . DIRECTORY_SEPARATOR . 'classes';
-foreach (JFolder::files($classpath) as $file) {
-    JLoader::register(str_replace('.class.php', '', $file), $classpath . DIRECTORY_SEPARATOR . $file);
-}
-
-JLoader::register('Grand_PrixHelperRoute', JPATH_CLM_TURNIER_COMPONENT . '/helpers/route.php');
-
-// Add include path for ...
-JHtml::addIncludePath(JPATH_COMPONENT . '/helpers/html');
-JTable::addIncludePath(JPATH_ADMIN_CLM_TURNIER_COMPONENT . DIRECTORY_SEPARATOR . 'tables');
+// Bootstrap CSS / JS
+JHtml::_('grandprix.stylesheet');
 
 // set current locale for date and time formatting with strftime()
 setlocale(LC_TIME, JFactory::getLanguage()->getLocale());

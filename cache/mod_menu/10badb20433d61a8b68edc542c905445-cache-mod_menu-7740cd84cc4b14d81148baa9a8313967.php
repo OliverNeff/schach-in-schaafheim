@@ -1,0 +1,4 @@
+<?php die("Access Denied"); ?>#x#a:2:{s:6:"result";s:485:"
+<ul class="menu">
+<li  id="current" class="active  item-120 level1  first"><a href="/index.php" ><span class="menutitle">Home</span></a></li><li  class=" item-117 level1 "><a href="/index.php/news" ><span class="menutitle">Neues</span></a></li><li  class=" item-119 level1 "><a href="/index.php/tournaments" ><span class="menutitle">Ausschreibungen</span></a></li><li  class=" item-165 level1  last"><a href="/index.php/clm" ><span class="menutitle">Spielbetrieb</span></a></li></ul>
+";s:6:"output";a:3:{s:4:"body";s:0:"";s:4:"head";a:0:{}s:13:"mime_encoding";s:9:"text/html";}}

@@ -1,8 +1,7 @@
 <?php
-
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2017 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -10,7 +9,6 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 class CLMViewRunden
 {
 public static function setRundenToolbar($sid, $params_round_date)
@@ -44,7 +42,8 @@ public static function setRundenToolbar($sid, $params_round_date)
 public static function runden( $rows, $lists, $pageNav, $option )
 	{
 		$mainframe	= JFactory::getApplication();
-		$cliga 		= intval(JRequest::getVar( 'liga' ));
+		$cliga 		= clm_core::$load->request_int('liga'); 
+		JFactory::getApplication()->input->set('hidemainmenu', true);
 
 		// Liga-Parameter holen 
 		$db 		=JFactory::getDBO();
@@ -77,7 +76,8 @@ public static function runden( $rows, $lists, $pageNav, $option )
 		//Ordering allowed ?
 		$ordering = ($lists['order'] == 'a.ordering');
 
-		JHtml::_('behavior.tooltip');
+//		JHtml::_('behavior.tooltip');
+		require_once (JPATH_COMPONENT_SITE . DS . 'includes' . DS . 'tooltip.php');
 
 	if(isset($rows[0]) && $rows[0]->sid_pub =="0" AND $val !=0) {
 	JError::raiseNotice( 6000,  JText::_( 'RUNDE_ERROR_SAISON_UNPUBLISHED' ));
@@ -109,10 +109,10 @@ public static function runden( $rows, $lists, $pageNav, $option )
 			<table class="adminlist">
 			<thead>
 				<tr>
-					<th width="3%">
+					<th width="2%">
 						#
 					</th>
-					<th width="3%">
+					<th width="2%">
 						<?php echo $GLOBALS["clm"]["grid.checkall"]; ?>
 					</th>
 					<th class="title">
@@ -122,7 +122,7 @@ public static function runden( $rows, $lists, $pageNav, $option )
 						<?php echo JHtml::_('grid.sort',   'RUNDE_NR', 'a.nr', @$lists['order_Dir'], @$lists['order'] ); ?>
 					</th>
 
-					<th width="7%">
+					<th width="6%">
 						<?php echo JHtml::_('grid.sort',   'JDATE', 'a.datum', @$lists['order_Dir'], @$lists['order'] ); ?>
 					</th>
 				<?php if ($lparams['round_date'] == '0')  { ?>
@@ -131,17 +131,20 @@ public static function runden( $rows, $lists, $pageNav, $option )
 					</th>
 				<?php }
 					if ($lparams['round_date'] == '1')  { ?>
-					<th width="7%">
+					<th width="6%">
 						<?php echo JHtml::_('grid.sort',   'RUNDE_ENDDATUM', 'a.enddatum', @$lists['order_Dir'], @$lists['order'] ); ?>
 					</th>
 				<?php } ?>
+					<th width="10%" colspan="2">
+						<?php echo JText::_( 'RUNDE_MELDETERMIN' ); ?>
+					</th>
 					<th width="8%">
 						<?php echo JHtml::_('grid.sort',   'ERGEBNISSE', 'e.name', @$lists['order_Dir'], @$lists['order'] ); ?>
 					</th>
 					<th width="15%">
 						<?php echo JHtml::_('grid.sort',   'RUNDE_LIGA', 'd.name', @$lists['order_Dir'], @$lists['order'] ); ?>
 					</th>
-					<th width="9%">
+					<th width="6%">
 						<?php echo JHtml::_('grid.sort',   'RUNDE_SAISON', 'c.name', @$lists['order_Dir'], @$lists['order'] ); ?>
 					</th>
 					<th width="4%">
@@ -156,7 +159,7 @@ public static function runden( $rows, $lists, $pageNav, $option )
 					<th width="4%">
 						<?php echo JHtml::_('grid.sort',   'JPUBLISHED', 'a.published', @$lists['order_Dir'], @$lists['order'] ); ?>
 					</th>
-					<th width="9%" nowrap="nowrap">
+					<th width="11%" nowrap="nowrap">
 						<?php echo JHtml::_('grid.sort',   'JGRID_HEADING_ORDERING', 'a.ordering', @$lists['order_Dir'], @$lists['order'] ); ?>
 						<?php echo JHtml::_('grid.order',  $rows ); ?>
 					</th>
@@ -178,7 +181,7 @@ public static function runden( $rows, $lists, $pageNav, $option )
 				$row 	= JTable::getInstance( 'runden', 'TableCLM' );
 			for ($i=0, $n=count( $rows ); $i < $n; $i++) {
 				$row->load( $rows[$i]->id );
-			if ($val == 0) { $menu = 'index.php?option=com_clm&section=runden&task=edit&cid[]='. $row->id; }
+			if ($val == 0) { $menu = 'index.php?option=com_clm&section=runden&task=edit&id='. $row->id; }
 			else {
 				if ($rows[$i]->durchgang >1 ) {
 					if($row->nr > (3 * $rows[$i]->runden)) {$menu ='index.php?option=com_clm&section=ergebnisse&runde='.($row->nr-(3 * $rows[$i]->runden)).'&dg=4&liga='.$row->liga;}
@@ -192,7 +195,8 @@ public static function runden( $rows, $lists, $pageNav, $option )
 
 				$link 		= JRoute::_( $menu );
 				$checked 	= JHtml::_('grid.checkedout',   $row, $i );
-				$published 	= JHtml::_('grid.published', $row, $i );
+//				$published 	= JHtml::_('grid.published', $row, $i );
+				$published 	= JHtml::_('jgrid.published', $row->published, $i );
 
 				?>
 				<tr class="<?php echo 'row'. $k; ?>">
@@ -202,14 +206,14 @@ public static function runden( $rows, $lists, $pageNav, $option )
 						<?php echo $pageNav->getRowOffset( $i ); ?>
 					</td>
 
-					<td>
+					<td align="center">
 						<?php echo $checked; ?>
 					</td>
 
 					<td>
 	
 								<span class="editlinktip hasTip" title="<?php echo JText::_( 'Edit Runde' );?>::<?php echo $row->name; ?>">
-							<a href="index.php?option=com_clm&section=runden&task=edit&cid[]=<?php echo $row->id; ?>&liga=<?php echo $cliga; ?>">
+							<a href="index.php?option=com_clm&section=runden&task=edit&id=<?php echo $row->id; ?>&liga=<?php echo $cliga; ?>">
 								<?php echo $row->name; ?></a></span>
 	
 					</td>
@@ -218,18 +222,24 @@ public static function runden( $rows, $lists, $pageNav, $option )
 						<?php echo $row->nr;?>
 					</td>
 					<td align="center">
-						<?php echo $row->datum;?>
+						<?php if ($row->datum == '1970-01-01') echo ''; else echo $row->datum; ?>
 					</td>
 				<?php if ($lparams['round_date'] == '0')  { ?>
 					<td align="center">
-						<?php echo substr($row->startzeit,0,5);?>
+						<?php if (substr($row->startzeit,0,5) == '00:00') echo ''; else echo substr($row->startzeit,0,5); ?>
 					</td>
 				<?php } 
 					if ($lparams['round_date'] == '1')  { ?>
 					<td align="center">
-						<?php echo $row->enddatum;?>
+						<?php if ($row->enddatum == '1970-01-01') echo ''; else echo $row->enddatum; ?>
 					</td>
 				<?php } ?>
+					<td align="center">
+						<?php if ($row->deadlineday == '1970-01-01') echo ''; else echo $row->deadlineday; ?>
+					</td>
+					<td align="center">
+						<?php if (substr($row->deadlinetime,0,5) == '00:00') echo ''; else echo substr($row->deadlinetime,0,5); ?>
+					</td>
 					<td align="center">
 						<a href="<?php echo $link; ?>"><?php echo JText::_( 'ERGEBNISSE' );?></a>
 					</td>
@@ -240,14 +250,24 @@ public static function runden( $rows, $lists, $pageNav, $option )
 						<?php echo $rows[$i]->saison;?>
 					</td>
 					<td align="center">
-						<?php if ($row->meldung=='1') 
-							{ ?><img width="16" height="16" src="components/com_clm/images/apply_f2.png" /> <?php }
-						else 	{ ?><img width="16" height="16" src="components/com_clm/images/cancel_f2.png" /> <?php }?>
+					<?php 
+						// Ergebnismeldung möglich
+						if ($rows[$i]->meldung == 1) { 
+							echo '<a href="javascript:void(0);" onclick="Joomla.listItemTask(\'cb'.($i).'\', \'notpossible\')" title="'.JText::_('RUNDE_REMOVE_RESULTINPUT').'"><img width="16" height="16" src="components/com_clm/images/apply_f2.png" /></a>';
+						} else {
+							echo '<a href="javascript:void(0);" onclick="Joomla.listItemTask(\'cb'.($i).'\', \'possible\')" title="'.JText::_('RUNDE_SET_RESULTINPUT').'"><img width="16" height="16" src="components/com_clm/images/cancel_f2.png" /></a>';
+						}
+					?>
 					</td>
 					<td align="center">
-						<?php if ($row->sl_ok=='1') 
-							{ ?><img width="16" height="16" src="components/com_clm/images/apply_f2.png" /> <?php }
-						else 	{ ?><img width="16" height="16" src="components/com_clm/images/cancel_f2.png" /> <?php }?>
+					<?php 
+						// tl_ok/director approval
+						if ($rows[$i]->sl_ok == 1) { 
+							echo '<a href="javascript:void(0);" onclick="Joomla.listItemTask(\'cb'.($i).'\', \'unapprove\')" title="'.JText::_('RUNDE_REMOVE_APPROVAL').'"><img width="16" height="16" src="components/com_clm/images/apply_f2.png" /></a>';
+						} else {
+							echo '<a href="javascript:void(0);" onclick="Joomla.listItemTask(\'cb'.($i).'\', \'approve\')" title="'.JText::_('RUNDE_SET_APPROVAL').'"><img width="16" height="16" src="components/com_clm/images/cancel_f2.png" /></a>';
+						}
+					?>
 					</td>
 					<td align="center">
 						<?php if ($row->bemerkungen<>'') 
@@ -259,8 +279,8 @@ public static function runden( $rows, $lists, $pageNav, $option )
 					</td>
 
 	<td class="order">
-	<span><?php echo $pageNav->orderUpIcon($i, (isset($rows[$i-1]) AND $rows[$i]->liga == $rows[$i-1]->liga), 'orderup()', 'Move Up', $ordering ); ?></span>
-	<span><?php echo $pageNav->orderDownIcon($i, $n, (isset($rows[$i+1]) AND $rows[$i]->liga == $rows[$i+1]->liga), 'orderdown()', 'Move Down', $ordering ); ?></span>
+	<span><?php echo $pageNav->orderUpIcon($i, (isset($rows[$i-1]) AND $rows[$i]->liga == $rows[$i-1]->liga), 'orderup', 'Move Up', $ordering ); ?></span>
+	<span><?php echo $pageNav->orderDownIcon($i, $n, (isset($rows[$i+1]) AND $rows[$i]->liga == $rows[$i+1]->liga), 'orderdown', 'Move Down', $ordering ); ?></span>
 	<?php $disabled = $ordering ?  '' : 'disabled="disabled"'; ?>
 	<input type="text" name="order[]" size="4" value="<?php echo $row->ordering;?>" <?php echo $disabled ?> class="text_area" style="text-align: center" />
 					</td>
@@ -278,7 +298,7 @@ public static function runden( $rows, $lists, $pageNav, $option )
 
 		<input type="hidden" name="option" value="<?php echo $option;?>" />
 		<input type="hidden" name="task" value="" />
-		<input type="hidden" name="liga" value="<?php echo JRequest::getVar( 'liga' ); ?>" />
+		<input type="hidden" name="liga" value="<?php echo clm_core::$load->request_int('liga');; ?>" />
 		<input type="hidden" name="boxchecked" value="0" />
 		<input type="hidden" name="filter_order" value="<?php echo $lists['order']; ?>" />
 		<input type="hidden" name="filter_order_Dir" value="<?php echo $lists['order_Dir']; ?>" />
@@ -289,10 +309,12 @@ public static function runden( $rows, $lists, $pageNav, $option )
 
 public static function setRundeToolbar($sid)
 	{
-
-		$cid = JRequest::getVar( 'cid', array(0), '', 'array' );
-		JArrayHelper::toInteger($cid, array(0));
-		if (JRequest::getVar( 'task') == 'edit') { $text = JText::_( 'Edit' );}
+		$cid = clm_core::$load->request_array_int('cid');
+		$id = clm_core::$load->request_int('id',0);
+		if (is_null($cid)) {
+			$cid[0] = $id;
+		}
+		if (clm_core::$load->request_string('task') == 'edit') { $text = JText::_( 'Edit' );}
 			else { $text = JText::_( 'New' );}
 		JToolBarHelper::title(  JText::_( 'RUNDE' ).': [ '. $text.' ]' );
 		if (clm_core::$db->saison->get($sid)->published == 1 AND clm_core::$db->saison->get($sid)->archiv == 0) {
@@ -305,28 +327,31 @@ public static function setRundeToolbar($sid)
 		
 public static function runde( &$row,$lists, $option )
 	{
+		if ($row->sid < 1) $row->sid = clm_core::$access->getSeason(); // aktuelle Saison
 		CLMViewRunden::setRundeToolbar($row->sid);
-		JRequest::setVar( 'hidemainmenu', 1 );
+		$_REQUEST['hidemainmenu'] = 1;
 		JFilterOutput::objectHTMLSafe( $row, ENT_QUOTES, 'extrainfo' );
-		$cliga 		= intval(JRequest::getVar( 'liga' ));
+		$cliga 		= clm_core::$load->request_int('liga');
 		// Liga-Parameter holen 
 		$db 	=JFactory::getDBO();
 		$sql = "SELECT params FROM #__clm_liga as l"
 			." WHERE l.id = ".$row->liga;
 		$db->setQuery( $sql );
 		$tparams = $db->loadObjectList();
-		//Liga-Parameter aufbereiten
-		$paramsStringArray = explode("\n", $tparams[0]->params);
+		//Liga-Parameter aufbereiten														  
 		$lparams = array();
-		foreach ($paramsStringArray as $value) {
-			$ipos = strpos ($value, '=');
-			if ($ipos !==false) {
-				$key = substr($value,0,$ipos);
-				if (substr($key,0,2) == "\'") $key = substr($key,2,strlen($key)-4);
-				if (substr($key,0,1) == "'") $key = substr($key,1,strlen($key)-2);
-				$lparams[$key] = substr($value,$ipos+1);
-			}
-		}	
+		if (isset($tparams[0])) {
+			$paramsStringArray = explode("\n", $tparams[0]->params);
+			foreach ($paramsStringArray as $value) {
+				$ipos = strpos ($value, '=');
+				if ($ipos !==false) {
+					$key = substr($value,0,$ipos);
+					if (substr($key,0,2) == "\'") $key = substr($key,2,strlen($key)-4);
+					if (substr($key,0,1) == "'") $key = substr($key,1,strlen($key)-2);
+					$lparams[$key] = substr($value,$ipos+1);
+				}
+			}	
+		}
 		if (!isset($lparams['round_date']))  {   //Standardbelegung
 			$lparams['round_date'] = '0'; }
 
@@ -336,7 +361,7 @@ public static function runde( &$row,$lists, $option )
 		 Joomla.submitbutton = function (pressbutton) { 		
 			var form = document.adminForm;
 			if (pressbutton == 'cancel') {
-				submitform( pressbutton );
+				Joomla.submitform( pressbutton );
 				return;
 			}
 			// do field validation
@@ -346,12 +371,41 @@ public static function runde( &$row,$lists, $option )
 				alert( "<?php echo JText::_( 'RUNDE_NUMMER_ANGEBEN', true ); ?>" );
 			} else if (form.datum.value == "") {
 				alert( "<?php echo JText::_( 'RUNDE_DATE_ANGEBEN', true ); ?>" );
-			} else if ( getSelectedValue('adminForm','sid') == 0 ) {
+//			} else if ( getSelectedValue('adminForm','sid') == 0 ) {
+//				alert( "<?php echo JText::_( 'RUNDE_SAISON_AUSWAEHLEN', true ); ?>" );
+			} else {
+				// get references to select list and display text box
+				var sel = document.getElementById('sid');			
+				var opt;
+				for ( var i = 0, len = sel.options.length; i < len; i++ ) {
+					opt = sel.options[i];
+					if ( opt.selected === true ) {
+						val = opt.value;
+						break;
+					}
+				}
+			}
+			if ( val == 0 ) {
 				alert( "<?php echo JText::_( 'RUNDE_SAISON_AUSWAEHLEN', true ); ?>" );
-			} else if ( getSelectedValue('adminForm','liga') == 0 ) {
+				return;
+//			} else if ( getSelectedValue('adminForm','liga') == 0 ) {
+//				alert( "<?php echo JText::_( 'RUNDE_LIGA_AUSWAEHLEN', true ); ?>" );
+			} else {
+				// get references to select list and display text box
+				var sel = document.getElementById('liga');			
+				var opt;
+				for ( var i = 0, len = sel.options.length; i < len; i++ ) {
+					opt = sel.options[i];
+					if ( opt.selected === true ) {
+						val = opt.value;
+						break;
+					}
+				}
+			}
+			if ( val == 0 ) {
 				alert( "<?php echo JText::_( 'RUNDE_LIGA_AUSWAEHLEN', true ); ?>" );
 			} else {
-				submitform( pressbutton );
+				Joomla.submitform( pressbutton );
 			}
 		}
 		</script>
@@ -482,6 +536,7 @@ public static function runde( &$row,$lists, $option )
 	<br>
 	<tr>
 	<td width="100%" valign="top">
+	<?php if (is_null($row->bemerkungen)) $row->bemerkungen = ''; ?>
 	<textarea class="inputbox" name="bemerkungen" id="bemerkungen" cols="40" rows="5" style="width:90%"><?php echo str_replace('&','&amp;',$row->bemerkungen);?></textarea>
 	</td>
 	</tr>
@@ -491,6 +546,7 @@ public static function runde( &$row,$lists, $option )
 	<tr><legend><?php echo JText::_( 'REMARKS_INTERNAL' ); ?></legend>
 	<br>
 	<td width="100%" valign="top">
+	<?php if (is_null($row->bem_int)) $row->bem_int = ''; ?>
 	<textarea class="inputbox" name="bem_int" id="bem_int" cols="40" rows="5" style="width:90%"><?php echo str_replace('&','&amp;',$row->bem_int);?></textarea>
 	</td>
 	</tr>

@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2015 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -9,7 +9,6 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 defined('_JEXEC') or die('Restricted access');
 
 $document = JFactory::getDocument();
@@ -17,10 +16,10 @@ $cssDir = JURI::base().DS. 'components'.DS.'com_clm'.DS.'includes';
 $document->addStyleSheet( $cssDir.DS.'clm_content.css', 'text/css', null, array() );
 	
 // Variablen holen
-$sid = JRequest::getInt( 'saison', '1' );
-$zps = JRequest::getVar( 'zps','1');
-$man = JRequest::getInt( 'man' );
-$gid	= JRequest::getInt('gid');
+$sid = clm_core::$load->request_int('saison', '1' );
+$zps = clm_core::$load->request_string('zps','1');
+$man = clm_core::$load->request_int('man' );
+$gid	= clm_core::$load->request_int('gid');
 
 // Login Status prüfen
 $clmuser 	= $this->clmuser;
@@ -33,19 +32,23 @@ $user		= JFactory::getUser();
 
 if ($conf_meldeliste != 1) {
 	$msg = JText::_( '<h2>Die Eingabe von Ranglisten wurde durch den Administrator gesperrt !</h2>');
-	$mainframe->redirect( $link, $msg );
+	$mainframe->enqueueMessage( $msg );
+	$mainframe->redirect( $link );
 			}
 if (!$user->get('id')) {
 	$msg = JText::_( '<h1>Sie sind nicht angemeldet !</h1> <h2>Loggen Sie sich zuerst ein, bevor Sie eine Rangliste abgeben.</h2>' );
-	$mainframe->redirect( $link, $msg );
+	$mainframe->enqueueMessage( $msg );
+	$mainframe->redirect( $link );
  			}
 if ($clmuser[0]->published < 1) {
 	$msg = JText::_( '<h1>Ihr Account wurde gesperrt !</h1> <h2>Wenden Sie sich umgehend an einen Administrator.</h2>' );
-	$mainframe->redirect( $link, $msg );
+	$mainframe->enqueueMessage( $msg );
+	$mainframe->redirect( $link );
 				}
 if ($clmuser[0]->zps <> $zps) {
 	$msg = JText::_( '<h1>Sie können nicht für einen anderen Verein melden !</h1>' );
-	$mainframe->redirect( $link, $msg );
+	$mainframe->enqueueMessage( $msg );
+	$mainframe->redirect( $link );
 				}
 
 // Prüfen ob Datensatz schon vorhanden ist
@@ -143,9 +146,13 @@ function Spielerschreiben(i)
     document.getElementById('MGL'+i).innerHTML=Spieler[i][3];
     document.getElementById('DWZ'+i).innerHTML=Spieler[i][4];
     document.getElementById('DWI'+i).innerHTML=Spieler[i][5];
-    <?php if (isset($UsePKZ) AND $UsePKZ == 1) { ?>document.getElementById('PKZ'+i).innerHTML=Spieler[i][6];
-    document.getElementsByName('PKZ'+i)[0].innerHTML=Spieler[i][6];
+    document.getElementsByName('ZPSM'+i)[0].value=Spieler[i][6];
+    document.getElementById('ZPSM'+i).innerHTML=Spieler[i][6];
+    <?php if (isset($UsePKZ) AND $UsePKZ == 1) { ?>document.getElementById('PKZ'+i).innerHTML=Spieler[i][7];
+    document.getElementsByName('PKZ'+i)[0].innerHTML=Spieler[i][7];
     <?php } ?>
+    document.getElementById('Status'+i).innerHTML=Spieler[i][8];
+    document.getElementById('check'+i).checked=Spieler[i][9];
 }
 function QSort(l,r,Tiefe)
  {
@@ -174,7 +181,7 @@ function Sortieren()
   Spieler=new Array;
   i=0;
   while (document.getElementsByName('MA'+i)[0]) {
-    Spieler[i]=new Array(5)
+    Spieler[i]=new Array(10)
     Spieler[i][0]=document.getElementsByName('MA'+i)[0].value-0;
     if (Spieler[i][0]==0) Spieler[i][0]=999;
     Spieler[i][1]=document.getElementsByName('RA'+i)[0].value-0;
@@ -183,7 +190,10 @@ function Sortieren()
     Spieler[i][3]=document.getElementById('MGL'+i).innerHTML-0;
     Spieler[i][4]=document.getElementById('DWZ'+i).innerHTML-0;
     Spieler[i][5]=document.getElementById('DWI'+i).innerHTML-0;
-    <?php if (isset($UsePKZ) AND $UsePKZ == 1) { ?>Spieler[i][6]=document.getElementById('PKZ'+i).innerHTML-0;<?php } ?>
+    Spieler[i][6]=document.getElementById('ZPSM'+i).innerHTML;
+    <?php if (isset($UsePKZ) AND $UsePKZ == 1) { ?>Spieler[i][7]=document.getElementById('PKZ'+i).innerHTML-0;<?php } ?>
+    Spieler[i][8]=document.getElementById('Status'+i).innerHTML;
+    Spieler[i][9]=document.getElementById('check'+i).checked;
     i++;    
    }
   QSort(0,i-1,0)
@@ -300,7 +310,11 @@ function Sendbutton()
 <br><b>(3)</b> Mit dem "Sortieren" Knopf können Sie die Liste in die aktuelle Reihenfolge bringen.
 <br><b>(4)</b> Der "Neu laden" Knopf <u><i>verwirft ALLE Änderungen</i></u> und lädt die Seite neu !
 <br><b>(5)</b> Sobald "Liste absenden" gedrückt wurde ist die Rangliste verbindlich gemeldet.
-<br><br><br>
+<br><br>
+<small><u><b>Update-Hinweis</u></b> : 
+<br><b>(*)</b> Spieler, die den Verein während der Saison verlassen haben, sollten nicht aus der Rangliste gelöscht werden, sondern 'gesperrt' ist zu setzen.
+<br>Damit wird die Zuordnung bereits gespielter Partien ermöglicht und gleichzeitig der aktive Einsatz während der restlichen Saison verhindert.
+</small><br><br><br>
 
 <center>
 
@@ -321,31 +335,34 @@ echo $bar->render();
 ?>
 <table class="toolbar"><tr>
  
-<td class="button" id="Ranglisten-pruefen">
+<td class="button" id="Ranglisten-pruefen" width="15%" style="background-color:#E6E6E6;">
 <a href="#" onclick="javascript:Pruefbutton(); return false;" class="toolbar">
 <span class="icon-32-trash" title="Prüfen">
 </span>
 Prüfen
 </a>
 </td>
+<td width="10%">&nbsp;&nbsp;&nbsp;</td>
  
-<td class="button" id="Ranglisten-sortieren">
+<td class="button" id="Ranglisten-sortieren" width="15%" style="background-color:#E6E6E6;">
 <a href="#" onclick="javascript:Sortieren(); return false;" class="toolbar">
 <span class="icon-32-pruefen" title="Sortieren">
 </span>
 Sortieren
 </a>
 </td>
+<td width="10%">&nbsp;&nbsp;&nbsp;</td>
 
-<td class="button" id="Ranglisten-neuladen">
+<td class="button" id="Ranglisten-neuladen" width="15%" style="background-color:#E6E6E6;">
 <a href="#" onclick="javascript: window.location.href=window.location.href; return false;" class="toolbar">
 <span class="icon-32-pruefen" title="Neu laden">
 </span>
 Neu laden
 </a>
 </td>
+<td width="10%">&nbsp;&nbsp;&nbsp;</td>
 
-<td class="button" id="Ranglisten-speichern">
+<td class="button" id="Ranglisten-speichern" width="18%" style="background-color:#E6E6E6;">
 <!-- <a href="#" onclick="javascript:document.adminForm.submit(); return false;" class="toolbar"> -->
 <a href="#" onclick="javascript:Sendbutton(); return false;" class="toolbar"> 
 
@@ -354,13 +371,14 @@ Neu laden
 Liste absenden !
 </a>
 </td>
+<td>&nbsp;&nbsp;&nbsp;</td>
 
-<tr>
+</tr>
 </table>
 
 <br><br>
 
-<form action="index.php?option=com_clm&amp;view=meldeliste&amp;layout=sent_rangliste" method="post" name="adminForm">
+<form action="index.php?option=com_clm&amp;view=meldeliste&amp;layout=sent_rangliste&amp;saison=<?php echo $sid ?>&amp;gid=<?php echo $gid ?>&amp;zps=<?php echo $zps ?>&amp;count=<?php echo count($spieler) ?>" method="post" name="adminForm">
 
 <style type="text/css">table { width:60%; }</style>
 
@@ -371,12 +389,15 @@ Liste absenden !
 	<table class="admintable meldeliste_rangliste">
 
 	<tr>
-		<td width="8%" class="key" nowrap="nowrap">Mnr</td>
-		<td width="10%" class="key" nowrap="nowrap">Rang</td>
+		<td width="6%" class="key" nowrap="nowrap">Mnr</td>
+		<td width="7%" class="key" nowrap="nowrap">Rang</td>
 		<td class="key" nowrap="nowrap">Name</td>
-		<td width="7%" class="key" nowrap="nowrap">MglNr</td>
-		<td width="7%" class="key" nowrap="nowrap">PKZ</td>
-		<td colspan="2" width="15%" class="key" nowrap="nowrap">DWZ</td>
+		<td width="10%" class="key" nowrap="nowrap">Verein</td>
+		<td width="9%" class="key" nowrap="nowrap">MglNr</td>
+		<td width="14%" class="key" nowrap="nowrap">PKZ</td>
+		<td width="4%" class="key" nowrap="nowrap">ST</td>
+		<td colspan="2" width="12%" class="key" nowrap="nowrap">DWZ</td>
+		<td width="8" class="key" nowrap="nowrap"><?php echo JText::_( 'gesperrt' ); ?></td>
 	</tr>
 
 <?php 
@@ -384,6 +405,7 @@ Liste absenden !
 	for($x=0; $x < count($spieler); $x++) { ?>
 
 	<input type="hidden" name="PKZ<?php echo $x; ?>" value="<?php echo $spieler[$x]->PKZ; ?>" />
+	<input type="hidden" name="ZPSM<?php echo $x; ?>" value="<?php echo $spieler[$x]->ZPS; ?>" />
 	<input type="hidden" name="MGL<?php echo $x; ?>" value="<?php echo $spieler[$x]->Mgl_Nr; ?>" />
 
 	<tr>
@@ -395,18 +417,36 @@ Liste absenden !
 	</td>
 	<td id="SP<?php echo $x; ?>" name="SP<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$x]->Spielername; ?></td>
+	<td id="ZPSM<?php echo $x; ?>" class="key" nowrap="nowrap">
+		<?php echo $spieler[$x]->ZPS; ?></td>
 	<td id="MGL<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$x]->Mgl_Nr; ?></td>
 	<td id="PKZ<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$x]->PKZ; ?></td>
+	<td id="Status<?php echo $x; ?>" class="key" nowrap="nowrap">
+		<?php echo $spieler[$x]->Status; ?></td>
 	<td id="DWZ<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$x]->DWZ; ?></td>
 	<td id="DWI<?php echo $x; ?>" class="key" nowrap="nowrap">
 		<?php echo $spieler[$x]->DWZ_Index; ?></td>
+	<td align="center">
+		<input type="checkbox" name="check<?php echo $x; ?>" id="check<?php echo $x; ?>" value="1" <?php if ($spieler[$x]->gesperrt =="1") { echo 'checked="checked"'; }?>>
+	</td>
 	</tr>
 
 <?php } ?>
 	</table>
+	
+	<table class="adminlist">
+	<legend><?php echo 'Bemerkung'; ?></legend>
+	<tr>
+	<td width="100%" valign="top">
+	<?php if (is_null($liga[0]->bemerkungen)) $liga[0]->bemerkungen = ''; ?>
+	<textarea class="inputbox" name="bemerkungen" id="bemerkungen" cols="40" rows="4" style="width:90%"><?php echo str_replace('&','&amp;',$liga[0]->bemerkungen);?></textarea>
+	</td>
+	</tr>
+	</table>
+	
   </fieldset>
   </div>
 		<div class="clr"></div>
@@ -416,7 +456,13 @@ Liste absenden !
 		<input type="hidden" name="count" value="<?php echo count($spieler); ?>" />
 		<input type="hidden" name="zps" value="<?php echo $spieler[0]->ZPS; ?>" />
 		<input type="hidden" name="saison" value="<?php echo $spieler[0]->sid; ?>" />
-		<input type="hidden" name="gid" value="<?php echo JRequest::getInt('gid'); ?>" />
+		<input type="hidden" name="gid" value="<?php echo clm_core::$load->request_int('gid'); ?>" />
+		<?php if (is_null($liga[0]->published)) $liga[0]->published ='1'; ?>
+		<input type="hidden" name="published" value="<?php echo $liga[0]->published; ?>" />
+		<?php if (is_null($liga[0]->ordering)) $liga[0]->ordering ='0'; ?>
+		<input type="hidden" name="ordering" value="<?php echo $liga[0]->ordering; ?>" />
+		<?php if (is_null($liga[0]->bem_int)) $liga[0]->bem_int =''; ?>
+		<input type="hidden" name="bem_int" value="<?php echo $liga[0]->bem_int; ?>" />
 
 		<?php echo JHTML::_( 'form.token' ); ?>
 		</form>

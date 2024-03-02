@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -9,14 +9,11 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 defined('_JEXEC') or die('Restricted access');
 
-//require('fpdf.php');
-
-$lid = JRequest::getInt( 'liga', '1' ); 
-$sid = JRequest::getInt( 'saison','1');
-$view = JRequest::getVar( 'view');
+$lid = clm_core::$load->request_int( 'liga', '1' ); 
+$sid = clm_core::$load->request_int( 'saison','1');
+$view = clm_core::$load->request_string( 'view');
 // Variablen ohne foreach setzen
 $liga=$this->liga;
 	//Liga-Parameter aufbereiten
@@ -31,39 +28,45 @@ $liga=$this->liga;
 	if (!isset($params['dwz_date'])) $params['dwz_date'] = '1970-01-01';
 $punkte=$this->punkte;
 $spielfrei=$this->spielfrei;
-$dwzschnitt=$this->dwzschnitt;
+//$dwzschnitt=$this->dwzschnitt;
 $saison     =$this->saison; 
 
 $name_liga = $liga[0]->name;
+// Test MP als Feinwertung -> d.h. Spalte MP als Hauptwertung wird dann unterdrückt
+if ($liga[0]->tiebr1 == 9 OR $liga[0]->tiebr2 == 9 OR $liga[0]->tiebr3 == 9) $columnMP = 0;
+else $columnMP = 1;
 
-require_once(JPATH_COMPONENT.DS.'includes'.DS.'fpdf.php');
+require_once (clm_core::$path.DS.'classes'.DS.'fpdf.php');
 
 class PDF extends FPDF
 {
 //Kopfzeile
 function Header()
 {
-	require_once(JPATH_COMPONENT.DS.'includes'.DS.'pdf_header.php');
+	require(clm_core::$path.DS.'includes'.DS.'pdf_header.php');
 }
 //Fusszeile
 function Footer()
 {
-	require_once(JPATH_COMPONENT.DS.'includes'.DS.'pdf_footer.php');
+	require(clm_core::$path.DS.'includes'.DS.'pdf_footer.php');
 }
 }
 
-	// Array für DWZ Schnitt setzen
-	$dwz = array();
-	for ($y=1; $y< ($liga[0]->teil)+1; $y++){
-		if ($params['dwz_date'] == '0000-00-00' OR $params['dwz_date'] == '1970-01-01') {
-			if(isset($dwzschnitt[($y-1)]->dwz)) {
-			$dwz[$dwzschnitt[($y-1)]->tlnr] = $dwzschnitt[($y-1)]->dwz; }
-		} else {
-			if(isset($dwzschnitt[($y-1)]->start_dwz)) {
-			$dwz[$dwzschnitt[($y-1)]->tlnr] = $dwzschnitt[($y-1)]->start_dwz; }
-		}
-	}
-  
+// DWZ Durchschnitte - Aufstellung
+$result = clm_core::$api->db_nwz_average($lid);
+//echo "<br>lid:"; var_dump($lid);
+//echo "<br>result:"; var_dump($result);
+$a_average_dwz_lineup = $result[2];
+//echo "<br>a_average_dwz_p:"; var_dump($a_average_dwz_p);
+
+	// Konfigurationsparameter auslesen
+	$config = clm_core::$db->config();
+	$show_sl_mail = $config->show_sl_mail;
+
+	// Userkennung holen
+	$user	=JFactory::getUser();
+	$jid	= $user->get('id');
+
 // Spielfreie Teilnehmer finden
 $diff = $spielfrei[0]->count;
 
@@ -103,25 +106,36 @@ $pdf->AddPage();
 
 $pdf->SetFont('Times','',$date_font);
 	$pdf->Cell(10,3,' ',0,0);
-	$pdf->Cell(175,2,utf8_decode(JText::_('WRITTEN')).' '.utf8_decode(JText::_('ON_DAY')).' '.utf8_decode(JHTML::_('date',  $now, JText::_('DATE_FORMAT_CLM_PDF'))),0,1,'R');
+	$pdf->Cell(175,2,clm_core::$load->utf8decode(JText::_('WRITTEN')).' '.clm_core::$load->utf8decode(JText::_('ON_DAY')).' '.clm_core::$load->utf8decode(JHTML::_('date',  $now, JText::_('DATE_FORMAT_CLM_PDF'))),0,1,'R');
 
 $pdf->SetFont('Times','B',$head_font+2);	
-	$pdf->Cell(180,15,utf8_decode($liga[0]->name),0,1,'C');
-	$pdf->Cell(180,10,utf8_decode($saison[0]->name),0,1,'C');
+	$pdf->Cell(180,15,clm_core::$load->utf8decode($liga[0]->name),0,1,'C');
+	$pdf->Cell(180,10,clm_core::$load->utf8decode($saison[0]->name),0,1,'C');
 	$pdf->Ln(30);    	
 $pdf->SetFont('Times','',$font+2);
 $pdf->SetFillColor(100);
 $pdf->SetTextColor(255);
-	$pdf->Cell($leer,$zelle,' ',0,0,'L');
+// max. Länge des Names bestimmen
+$lmax = 0;
+for ($x=0; $x< ($liga[0]->teil)-$diff; $x++){
+	$n = $pdf->GetStringWidth(clm_core::$load->utf8decode($punkte[$x]->name));
+	if ($n > $lmax) $lmax = $n;
+}
+if ($lmax < (50-$nbreite)) $lmax = 50 - $nbreite;
+if ($lmax > 66) $lmax = 66;
+ 	$pdf->Cell($leer,$zelle,' ',0,0,'L');
 	$pdf->Cell(7-$rbreite,$zelle,JText::_('RANG'),1,0,'C',1);
 	$pdf->Cell(7-$rbreite,$zelle,JText::_('TLN'),1,0,'C',1);
-	$pdf->Cell(60-$nbreite-$breite,$zelle,JText::_('TEAM'),1,0,'L',1);
+	//$pdf->Cell(60-$nbreite-$breite,$zelle,JText::_('TEAM'),1,0,'L',1);
+	$pdf->Cell($lmax+12-$breite,$zelle,JText::_('TEAM'),1,0,'L',1);
  
 	$pdf->Cell(7-$rbreite,$zelle,JText::_('TABELLE_GAMES_PLAYED'),1,0,'C',1);
 	$pdf->Cell(7-$rbreite,$zelle,JText::_('TABELLE_WINS'),1,0,'C',1);
 	$pdf->Cell(7-$rbreite,$zelle,JText::_('TABELLE_DRAW'),1,0,'C',1);
 	$pdf->Cell(7-$rbreite,$zelle,JText::_('TABELLE_LOST'),1,0,'C',1);
-	$pdf->Cell(8-$rbreite,$zelle,JText::_('MP'),1,0,'C',1);
+	if ($columnMP == 1) {
+		$pdf->Cell(8-$rbreite,$zelle,JText::_('MP'),1,0,'C',1);
+	}
 	if ( $liga[0]->liga_mt == 0) { 
 		$pdf->Cell(10-$breite,$zelle,JText::_('BP'),1,0,'C',1); 
 		if ($liga[0]->b_wertung > 0) {
@@ -145,16 +159,22 @@ for ($x=0; $x< ($liga[0]->teil)-$diff; $x++){
 	$pdf->Cell($leer,$zelle,' ',0,0,'L');
 	$pdf->Cell(7-$rbreite,$zelle,$x+1,1,0,'C',$fc);
 	$pdf->Cell(7-$rbreite,$zelle,$punkte[$x]->tln_nr,1,0,'C',$fc);
-	$pdf->Cell(50-$nbreite,$zelle,utf8_decode($punkte[$x]->name),1,0,'L',$fc);
-	if (isset($dwz[($punkte[$x]->tln_nr)])) $pdf->Cell(10-$breite,$zelle,round($dwz[($punkte[$x]->tln_nr)]),1,0,'C',$fc);
-	else $pdf->Cell(10-$breite,$zelle,'',1,0,'C',$fc);
+	//$pdf->Cell(50-$nbreite,$zelle,clm_core::$load->utf8decode($punkte[$x]->name),1,0,'L',$fc);
+	while (($lmax) < $pdf->GetStringWidth(clm_core::$load->utf8decode($punkte[$x]->name)))
+		$punkte[$x]->name = substr($punkte[$x]->name,0,-1);
+	$pdf->Cell($lmax+2,$zelle,clm_core::$load->utf8decode($punkte[$x]->name),1,0,'L',$fc);
+	//if (isset($dwz[($punkte[$x]->tln_nr)])) $pdf->Cell(10-$breite,$zelle,round($dwz[($punkte[$x]->tln_nr)]),1,0,'C',$fc);
+	//else $pdf->Cell(10-$breite,$zelle,'',1,0,'C',$fc);
+	$pdf->Cell(10-$breite,$zelle,$a_average_dwz_lineup[$punkte[$x]->tln_nr],1,0,'C',$fc);
 
 	$pdf->Cell(7-$rbreite,$zelle,$punkte[$x]->count_G,1,0,'C',$fc);
 	$pdf->Cell(7-$rbreite,$zelle,$punkte[$x]->count_S,1,0,'C',$fc);
 	$pdf->Cell(7-$rbreite,$zelle,$punkte[$x]->count_R,1,0,'C',$fc);
 	$pdf->Cell(7-$rbreite,$zelle,$punkte[$x]->count_V,1,0,'C',$fc);
-	if ($punkte[$x]->abzug > 0) $pdf->Cell(8-$rbreite,$zelle,$punkte[$x]->mp.'*',1,0,'C',$fc);
-	else $pdf->Cell(8-$rbreite,$zelle,$punkte[$x]->mp,1,0,'C',$fc);
+	if ($columnMP == 1) {
+		if ($punkte[$x]->abzug > 0) $pdf->Cell(8-$rbreite,$zelle,$punkte[$x]->mp.'*',1,0,'C',$fc);
+		else $pdf->Cell(8-$rbreite,$zelle,$punkte[$x]->mp,1,0,'C',$fc);
+	}
 	if ( $liga[0]->liga_mt == 0) {
 		if ($punkte[$x]->bpabzug > 0) $pdf->Cell(10-$rbreite,$zelle,$punkte[$x]->bp.'*',1,0,'C',$fc);
 		else $pdf->Cell(10-$breite,$zelle,$punkte[$x]->bp,1,0,'C',$fc); 
@@ -182,28 +202,34 @@ for ($x=0; $x< ($liga[0]->teil)-$diff; $x++){
 $pdf->Ln();
 $pdf->Ln();
 
+if (is_null($liga[0]->bemerkungen)) $liga[0]->bemerkungen = '';
 if ($liga[0]->bemerkungen <> "") {
 	$pdf->SetFont('Times','B',$font+2);
 	$pdf->Cell(10,$zelle,' ',0,0,'L');
-	$pdf->Cell(150,$zelle,' '.utf8_decode(JText::_('NOTICE')).' :',0,1,'B');
+	$pdf->Cell(150,$zelle,' '.clm_core::$load->utf8decode(JText::_('NOTICE_SL')).' :',0,1,'B');
 	$pdf->SetFont('Times','',$font);
 	$pdf->Cell(15,$zelle,' ',0,0,'L');
-	$pdf->MultiCell(150,$zelle,utf8_decode($liga[0]->bemerkungen),0,'L',0);
+	$pdf->MultiCell(150,$zelle,clm_core::$load->utf8decode($liga[0]->bemerkungen),0,'L',0);
 	$pdf->Ln();
 	}
 
+	if (is_null($liga[0]->sl)) $liga[0]->sl = '';
 	$pdf->SetFont('Times','B',$font+2);
 	$pdf->Cell(10,$zelle,' ',0,0,'L');
 	$pdf->Cell(150,$zelle,JText::_('CHIEF').' :',0,1,'L');
 	$pdf->SetFont('Times','',$font);
 	$pdf->Cell(15,$zelle,' ',0,0,'L');
-	$pdf->Cell(150,$zelle,utf8_decode($liga[0]->sl),0,1,'L');
+	$pdf->Cell(150,$zelle,clm_core::$load->utf8decode($liga[0]->sl),0,1,'L');
 	$pdf->Cell(15,$zelle,' ',0,0,'L');
-	$pdf->Cell(150,$zelle,$liga[0]->email,0,1,'L');
-$pdf->Ln();
+	if ($jid > 0 OR $show_sl_mail > 0) {
+		$pdf->Cell(150,$zelle,$liga[0]->email,0,1,'L');
+	} else {
+		$pdf->Cell(150,$zelle,'',0,1,'L');
+	}
+	$pdf->Ln();
 
 // Ausgabe
-$pdf->Output(JText::_('TABELLE').' '.utf8_decode($liga[0]->name).'.pdf','D');
+$pdf->Output(JText::_('TABELLE').' '.clm_core::$load->utf8decode($liga[0]->name).'.pdf','D');
 exit;
 ?>
 

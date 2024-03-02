@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2019 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -9,7 +9,6 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 
 /**
  * Klassenbibliothek CLMForm für verschiedene Eingabemasken in Formularen
@@ -37,13 +36,17 @@ class CLMForm {
 	}
 	
 	
-	public static function selectSeason ($name, $value = 0, $filter = FALSE) {
+	public static function selectSeason ($name, $value = 0, $filter = FALSE, $only = true) {
 	
 		$_db				= JFactory::getDBO();
 		
 		$saisonlist[]	= JHTML::_('select.option',  '0', CLMText::selectOpener(JText::_( 'SELECT_SEASON' )), 'id', 'name' );
-		
-		$query = 'SELECT id, name FROM #__clm_saison WHERE archiv = 0';
+		if ($only === true) 
+			$query = 'SELECT id, name FROM #__clm_saison WHERE archiv = 0';
+		elseif ($only > 0 AND $only < 1000)
+			$query = 'SELECT id, name FROM #__clm_saison WHERE id = '.$only;
+		else 
+			$query = 'SELECT id, name FROM #__clm_saison';
 		$_db->setQuery($query);
 		$saisonlist		= array_merge( $saisonlist, $_db->loadObjectList() );
 		
@@ -92,6 +95,7 @@ class CLMForm {
 		$tiebr[19] = JText::_('TIEBR_19');
 		$tiebr[25] = JText::_('TIEBR_25');
 		$tiebr[29] = JText::_('TIEBR_29');
+		$tiebr[30] = JText::_('TIEBR_30');
 		$tiebr[51] = JText::_('TIEBR_51');
 		foreach ($tiebr as $key => $val) {
 			$tiebrlist[]	= JHTML::_('select.option', $key, $val, 'id', 'name' );
@@ -124,7 +128,8 @@ class CLMForm {
 		if($userlist === false) {
 			echo "<br>cl: "; var_dump($userlist); die('clcl'); }
 		
-		$tllist[]	= JHTML::_('select.option',  '0', CLMText::selectOpener(JText::_( 'SELECT_DIRECTOR' )), 'jid', 'name' );
+		if ($name == 'torg') $tllist[]	= JHTML::_('select.option',  '0', CLMText::selectOpener(JText::_( 'SELECT_ORGANIZER' )), 'jid', 'name' );
+		else $tllist[]	= JHTML::_('select.option',  '0', CLMText::selectOpener(JText::_( 'SELECT_DIRECTOR' )), 'jid', 'name' );
 		$tllist		= array_merge( $tllist, $userlist);
 		
 		return JHTML::_('select.genericlist', $tllist, $name, 'class="inputbox" size="1"'.CLMText::stringOnchange($filter), 'jid', 'name', $value );
@@ -277,7 +282,7 @@ class CLMForm {
 
 
 	// neu
-	public static function selectVereinTournament ($name, $value = 0, $turnier, $filter = FALSE) {
+	public static function selectVereinTournament ($name, $value = 0, $turnier = 0, $filter = FALSE) {
 		
 			$sql = "SELECT a.zps, v.Vereinname as name FROM #__clm_turniere_tlnr as a "
 				." LEFT JOIN #__clm_dwz_vereine as v ON v.sid= a.sid AND v.ZPS = a.zps"
@@ -285,6 +290,9 @@ class CLMForm {
 				." GROUP BY v.Vereinname, a.zps";
 
 		$vereine = clm_core::$db->loadObjectList($sql);
+		foreach ($vereine as $verein) {
+			if (is_null($verein->name)) $verein->name = "";
+		}
 
 		$vlist[]	= JHTML::_('select.option',  '0', CLMText::selectOpener(JText::_( 'SELECT_CLUB' )), 'zps', 'name' );
 		$vlist		= array_merge( $vlist, $vereine);
@@ -362,6 +370,49 @@ class CLMForm {
 	
 		return JHTML::_('calendar', $value, $name, $id, $format, $attribs);
 	}	
+
+
+	/**
+	 * copy of Joomla 3.9  function state  in libraries/cms/html/grid.php  	line231ff
+	 *
+	 * Method to create a select list of states for filtering
+	 * By default the filter shows only published and unpublished items
+	 *
+	 * @param   string  $filterState  The initial filter state
+	 * @param   string  $published    The JText string for published
+	 * @param   string  $unpublished  The JText string for Unpublished
+	 * @param   string  $archived     The JText string for Archived
+	 * @param   string  $trashed      The JText string for Trashed
+	 *
+	 * @return  string
+	 *
+	 * @since   1.5
+	 */
+	public static function selectState($filterState = '*', $published = 'JPUBLISHED', $unpublished = 'JUNPUBLISHED', $archived = null, $trashed = null)
+	{
+		$state = array('' => '- ' . JText::_('JLIB_HTML_SELECT_STATE') . ' -', 'P' => JText::_($published), 'U' => JText::_($unpublished));
+
+		if ($archived)
+		{
+			$state['A'] = JText::_($archived);
+		}
+
+		if ($trashed)
+		{
+			$state['T'] = JText::_($trashed);
+		}
+
+		return JHtml::_(
+			'select.genericlist',
+			$state,
+			'filter_state',
+			array(
+				'list.attr' => 'class="inputbox" size="1" onchange="Joomla.submitform();"',
+				'list.select' => $filterState,
+				'option.key' => null,
+			)
+		);
+	}
 
 }
 ?>

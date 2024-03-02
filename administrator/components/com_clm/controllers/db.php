@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component
- * @Copyright (C) 2008 Thomas Schwietert & Andreas Dorn. All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -26,16 +26,16 @@ class CLMControllerDB extends JControllerLegacy {
 	function display($cachable = false, $urlparams = array()) {
 		parent::display();
 	}
-	function endsWith($haystack, $needle) {
+	public static function endsWith($haystack, $needle) {
 		return $needle === "" || substr($haystack, -strlen($needle)) === $needle;
 	}
 	public static function saison() {
 		$mainframe = JFactory::getApplication();
 		// Check for request forgeries
-		//JRequest::checkToken() or die( 'Invalid Token' );
+		defined('_JEXEC') or die( 'Invalid Token' );
 		$db = JFactory::getDBO();
-		$option = JRequest::getCmd('option');
-		$section = JRequest::getVar('section');
+		$option = clm_core::$load->request_string('option');
+		$section = clm_core::$load->request_string('section');
 		$sql = " SELECT id,name FROM #__clm_saison " . " WHERE archiv = 0 ORDER BY id ASC ";
 		$db->setQuery($sql);
 		$sid = $db->loadObjectList();
@@ -44,18 +44,18 @@ class CLMControllerDB extends JControllerLegacy {
 	public static function delete() {
 		$mainframe = JFactory::getApplication();
 		// Check for request forgeries
-		JRequest::checkToken() or die('Invalid Token');
-		$option = JRequest::getCmd('option');
-		$section = JRequest::getVar('section');
+		defined('_JEXEC') or die('Invalid Token');
+		$option = clm_core::$load->request_string('option');
+		$section = clm_core::$load->request_string('section');
 		$db = JFactory::getDBO();
 		$user = JFactory::getUser();
-		$datei = JRequest::getVar('sql_datei');
-		$export = JRequest::getVar('delete_export');
+		$datei = clm_core::$load->request_string('sql_datei');
+		$export = clm_core::$load->request_string('delete_export');
 		$filesDir = 'components' . DS . $option . DS . 'upload';
 		jimport('joomla.filesystem.file');
 		if (!$datei AND !$export) {
-			JError::raiseWarning(500, JText::_('DB_K_DATEI'));
-			$this->setRedirect('index.php?option=com_clm&view=db');
+			$mainframe->enqueueMessage(JText::_('DB_K_DATEI'),'warning');
+			$mainframe->redirect('index.php?option=com_clm&view=db');
 		}
 		if ($datei AND $datei != "all") {
 			JFile::delete($filesDir . DS . $datei);
@@ -76,23 +76,24 @@ class CLMControllerDB extends JControllerLegacy {
 			}
 		}
 		$msg = JText::_('DB_DEL_SUCCESS');
-		$mainframe->redirect('index.php?option=com_clm&view=db', $msg, "message");
+		$mainframe->enqueueMessage($msg,'message');
+		$mainframe->redirect('index.php?option=com_clm&view=db');
 	}
 	public static function upload() {
 		$mainframe = JFactory::getApplication();
 		// Check for request forgeries
-		JRequest::checkToken() or die('Invalid Token');
-		$option = JRequest::getCmd('option');
-		$section = JRequest::getVar('section');
-		$task = JRequest::getVar('task');
+		defined('_JEXEC') or die('Invalid Token');
+		$option = clm_core::$load->request_string('option');
+		$section = clm_core::$load->request_string('section');
+		$task = clm_core::$load->request_string('task');
 		$db = JFactory::getDBO();
 		$user = JFactory::getUser();
-		$file = JRequest::getVar('datei', '', 'files', 'array');
+		$file = clm_core::$load->request_file('datei'); //JRequest::getVar('datei', '', 'files', 'array');
 		// erlaubte Dateitypen
 		$allowed = array('text/plain', 'application/octet-stream');
 		if (!in_array($file['type'], $allowed) || !CLMControllerDB::endsWith($file['name'], ".clm")) {
-			JError::raiseWarning(500, JText::_('DB_F_DATEITYP'));
-			JError::raiseNotice(6000, JText::_('DB_K_DATEITYP'));
+			$mainframe->enqueueMessage(JText::_('DB_F_DATEITYP'),'warning');
+			$mainframe->enqueueMessage(JText::_('DB_K_DATEITYP'),'notice');
 			$mainframe->redirect('index.php?option=com_clm&view=db');
 		}
 		// Make the filename safe
@@ -113,19 +114,20 @@ class CLMControllerDB extends JControllerLegacy {
 		}
 		// Dateirecht 644 setzen !
 		if (!chmod($dest, 0644)) {
-			JError::raiseWarning(500, JText::_('DB_DATEIRECHTE'));
-			JError::raiseNotice(6000, JText::_('DB_FTP'));
+			$mainframe->enqueueMessage(JText::_('DB_DATEIRECHTE'),'warning');
+			$mainframe->enqueueMessage(JText::_('DB_FTP'),'notice');
 		}
 		// Log schreiben
 		$clmLog = new CLMLog();
 		$clmLog->aktion = "SQL upload";
 		$clmLog->params = array('cids' => $file['size']);
 		$clmLog->write();
-		$mainframe->redirect('index.php?option=com_clm&view=db', $msg, "message");
+		$mainframe->enqueueMessage($msg,'message');
+		$mainframe->redirect('index.php?option=com_clm&view=db');
 	}
 	public static function files() {
 		$mainframe = JFactory::getApplication();
-		$option = JRequest::getCmd('option');
+		$option = clm_core::$load->request_string('option');
 		jimport('joomla.filesystem.folder');
 		jimport('joomla.filesystem.file');
 		$filesDir = 'components' . DS . $option . DS . 'upload';
@@ -133,8 +135,8 @@ class CLMControllerDB extends JControllerLegacy {
 		$count = count($files);
 		$sql = array();
 		for ($x = 0;$x < $count;$x++) {
-			if (JFile::getName($files[$x]) != "index.html") {
-				$sql[] = JFile::getName($files[$x]);
+			if (basename($files[$x]) != "index.html") {
+				$sql[] = basename($files[$x]);
 			}
 		}
 		return $sql;
@@ -142,24 +144,23 @@ class CLMControllerDB extends JControllerLegacy {
 	function export() {
 		$mainframe = JFactory::getApplication();
 		// Check for request forgeries
-		JRequest::checkToken() or die('Invalid Token');
+		defined('_JEXEC') or die('Invalid Token');
 		$db = JFactory::getDBO();
-		$option = JRequest::getCmd('option');
-		$section = JRequest::getVar('section');
-		$clm_cuser = JRequest::getVar('clm_user_exp');
-		$clm_juser = JRequest::getVar('clm_joomla_exp');
-		$clm_sql = JRequest::getVar('clm_sql');
-		$liga = JRequest::getVar('liga_export');
-		$info = JRequest::getVar('bem');
+		$option = clm_core::$load->request_string('option');
+		$section = clm_core::$load->request_string('section');
+		$clm_cuser = clm_core::$load->request_string('clm_user_exp');
+		$clm_juser = clm_core::$load->request_string('clm_joomla_exp');
+		$clm_sql = clm_core::$load->request_string('clm_sql');
+		$liga = clm_core::$load->request_string('liga_export');
+		$info = clm_core::$load->request_string('bem');
 		if ($liga == "all") {
-			JError::raiseWarning(500, JText::_('DB_LOESCH'));
+			$mainframe->enqueueMessage(JText::_('DB_LOESCH'),'warning');
 			$mainframe->redirect( 'index.php?option='. $option.'&section='.$section );
 			//$this->setRedirect('index.php?option=com_clm&view=db');
 		}
 		if ($liga == "0") {
-			JError::raiseWarning(500, JText::_('DB_LIGA_EXPORT'));
+			$mainframe->enqueueMessage(JText::_('DB_LIGA_EXPORT'),'warning');
 			$mainframe->redirect( 'index.php?option='. $option.'&section='.$section );
-			//$this->setRedirect('index.php?option=com_clm&view=db');
 		}
 		// Konstante definieren für User-jid bei SQL Export
 		// Kontrolle von vorhandenen Usern ist bei SQL Import nicht möglich, daher diese Maßnahme !!
@@ -192,6 +193,7 @@ class CLMControllerDB extends JControllerLegacy {
 		// Slashes aus Namen filtern
 		$datei_name = preg_replace("[/]", "_", $liga_name[0]->name);
 		$file = $datei_name . '__' . $var . '__S' . $liga_name[0]->sid . '__L' . $liga . '__' . $datum . '.' . $endung;
+		$file 	= clm_core::$load->file_name($file);
 		$path = JPath::clean(JPATH_ADMINISTRATOR . DS . 'components' . DS . $option . DS . 'upload');
 		$write = $path . DS . $file;
 		$_surch = array("\r\n", "\r", "\n");
@@ -205,9 +207,12 @@ class CLMControllerDB extends JControllerLegacy {
 		$db->setQuery($sql);
 		$ersteller = $db->loadResult();
 		// Versionsdaten aus XML holen
-		$Dir = JPATH_ADMINISTRATOR . DS . 'components' . DS . 'com_clm';
-		$data = JApplicationHelper::parseXMLInstallFile($Dir . DS . 'clm.xml');
-		$comment = utf8_decode("-- Erstellt mit dem ChessLeagueManager Version " . $data['version']
+		//$Dir = JPATH_ADMINISTRATOR . DS . 'components' . DS . 'com_clm';
+		//$data = JApplicationHelper::parseXMLInstallFile($Dir . DS . 'clm.xml');
+		$config = clm_core::$db->config();
+		$data['version'] = clm_core::$load->version();
+		$data['version'] = $data['version'][0];
+		$comment = clm_core::$load->utf8decode("-- Erstellt mit dem ChessLeagueManager Version " . $data['version']
 			. " \n-- Der CLM ist freie, kostenlose Software veröffentlicht unter der GNU/GPL Lizenz !" . " \n-- Projektseite : https://chessleaguemanager.de" 
 			. " \n-- Autoren      : Andreas Dorn (webmaster@sbbl.org) und Thomas Schwietert (fishpoke@fishpoke.de)" . " \n\n-- *Datum     * " . $datum 
 			. " \n-- *Ersteller * " . $ersteller . " \n-- *Herkunft  * " . JURI::root() . " \n-- *Datei     * " . $variante . " \n-- *Info      * " . $info . " \n\n");
@@ -220,31 +225,31 @@ class CLMControllerDB extends JControllerLegacy {
 			$ligadaten .= ", `sieg_bed`, `runden_modus`, `man_sieg`, `man_remis`, `man_nieder`, `man_antritt`, `sieg`, `remis`, `nieder`, `antritt`";
 			$ligadaten .= ", `order`, `rnd`, `published`, `bemerkungen`, `bem_int`, `checked_out_time`, `ordering`, `b_wertung`, `liga_mt`";
 			$ligadaten .= ", `tiebr1`, `tiebr2`, `tiebr3`, `ersatz_regel`, `anzeige_ma`, `params`) VALUES ";
-			$ligadaten = $ligadaten . "\n('" . $liga_name[0]->id . "','" . utf8_decode($liga_name[0]->name) . "','" . $liga_name[0]->sid . "','" . $liga_name[0]->teil . "','" . $liga_name[0]->stamm . "','" . $liga_name[0]->ersatz . "','" . $liga_name[0]->rang . "','" . JID . "','" . $liga_name[0]->runden . "','" . $liga_name[0]->durchgang . "','" . $liga_name[0]->heim . "','" . $liga_name[0]->mail . "','" . $liga_name[0]->sl_mail;
+			$ligadaten = $ligadaten . "\n('" . $liga_name[0]->id . "','" . clm_core::$load->utf8decode($liga_name[0]->name) . "','" . $liga_name[0]->sid . "','" . $liga_name[0]->teil . "','" . $liga_name[0]->stamm . "','" . $liga_name[0]->ersatz . "','" . $liga_name[0]->rang . "','" . JID . "','" . $liga_name[0]->runden . "','" . $liga_name[0]->durchgang . "','" . $liga_name[0]->heim . "','" . $liga_name[0]->mail . "','" . $liga_name[0]->sl_mail;
 			$ligadaten .= "','" . $liga_name[0]->sieg_bed . "','" . $liga_name[0]->runden_modus . "','" . $liga_name[0]->man_sieg . $liga_name[0]->man_remis . "','" . $liga_name[0]->man_nieder . "','" . $liga_name[0]->man_antritt . $liga_name[0]->sieg . "','" . $liga_name[0]->remis . "','" . $liga_name[0]->nieder . $liga_name[0]->antritt;
 			$ligadaten .= "','" . $liga_name[0]->order . "','" . $liga_name[0]->rnd . "','" . $liga_name[0]->published . "','";
 			$neu = str_replace($replace, ' ', $liga_name[0]->bemerkungen);
 			$neu = str_replace($_surch, '\r\n', $neu);
-			$ligadaten = $ligadaten . utf8_decode($neu) . "'";
+			$ligadaten = $ligadaten . clm_core::$load->utf8decode($neu) . "'";
 			$neu = str_replace($replace, ' ', $liga_name[0]->bem_int);
 			$neu = str_replace($_surch, '\r\n', $neu);
-			$ligadaten .= ",'" . utf8_decode($neu) . "','1970-01-01 00:00:00','" . $liga_name[0]->ordering . "','" . $liga_name[0]->b_wertung . "','" . $liga_name[0]->liga_mt;
+			$ligadaten .= ",'" . clm_core::$load->utf8decode($neu) . "','1970-01-01 00:00:00','" . $liga_name[0]->ordering . "','" . $liga_name[0]->b_wertung . "','" . $liga_name[0]->liga_mt;
 			$ligadaten .= "','" . $liga_name[0]->tiebr1 . "','" . $liga_name[0]->tiebr2 . "','" . $liga_name[0]->tiebr3 . "','" . $liga_name[0]->ersatz_regel . "','" . $liga_name[0]->anzeige_ma . "','" . $liga_name[0]->params . "');";
 		} else {
 			if ($clm_cuser != "1") {
 				$liga_name[0]->sl = JID;
 			}
-			$ligadaten = "#1#" . "\n('" . utf8_decode($liga_name[0]->name) . "','" . $liga_name[0]->sid . "','" . $liga_name[0]->teil . "','" . $liga_name[0]->stamm . "','" . $liga_name[0]->ersatz . "','" . $liga_name[0]->rang . "','" . $liga_name[0]->sl . "','" . $liga_name[0]->runden . "','" . $liga_name[0]->durchgang . "','" . $liga_name[0]->heim . "','" . $liga_name[0]->mail . "','" . $liga_name[0]->sl_mail;
+			$ligadaten = "#1#" . "\n('" . clm_core::$load->utf8decode($liga_name[0]->name) . "','" . $liga_name[0]->sid . "','" . $liga_name[0]->teil . "','" . $liga_name[0]->stamm . "','" . $liga_name[0]->ersatz . "','" . $liga_name[0]->rang . "','" . $liga_name[0]->sl . "','" . $liga_name[0]->runden . "','" . $liga_name[0]->durchgang . "','" . $liga_name[0]->heim . "','" . $liga_name[0]->mail . "','" . $liga_name[0]->sl_mail;
 			$ligadaten .= "','" . $liga_name[0]->sieg_bed . "','" . $liga_name[0]->runden_modus . "','" . $liga_name[0]->man_sieg . "','" . $liga_name[0]->man_remis . "','" . $liga_name[0]->man_nieder . "','" . $liga_name[0]->man_antritt . "','" . $liga_name[0]->sieg . "','" . $liga_name[0]->remis . "','" . $liga_name[0]->nieder . "','" . $liga_name[0]->antritt;
 			$ligadaten .= "','" . $liga_name[0]->order . "','" . $liga_name[0]->rnd . "','" . $liga_name[0]->published . "','";
 			$neu = str_replace($replace, ' ', $liga_name[0]->bemerkungen);
 			$neu = str_replace($_surch, '\r\n', $neu);
 			$neu = str_replace(';', ':', $neu);
-			$ligadaten = $ligadaten . utf8_decode($neu) . "'";
+			$ligadaten = $ligadaten . clm_core::$load->utf8decode($neu) . "'";
 			$neu = str_replace($replace, ' ', $liga_name[0]->bem_int);
 			$neu = str_replace($_surch, '\r\n', $neu);
 			$neu = str_replace(';', ':', $neu);
-			$ligadaten .= ",'" . utf8_decode($neu) . "','1970-01-01 00:00:00','" . $liga_name[0]->ordering . "','" . $liga_name[0]->b_wertung . "','" . $liga_name[0]->liga_mt;
+			$ligadaten .= ",'" . clm_core::$load->utf8decode($neu) . "','1970-01-01 00:00:00','" . $liga_name[0]->ordering . "','" . $liga_name[0]->b_wertung . "','" . $liga_name[0]->liga_mt;
 			$ligadaten .= "','" . $liga_name[0]->tiebr1 . "','" . $liga_name[0]->tiebr2 . "','" . $liga_name[0]->tiebr3 . "','" . $liga_name[0]->ersatz_regel . "','" . $liga_name[0]->anzeige_ma . "','" . $liga_name[0]->params . "');";
 		}
 	// DWZ Daten Vereine
@@ -255,6 +260,7 @@ class CLMControllerDB extends JControllerLegacy {
 		." GROUP BY a.zps "
 		." ORDER BY a.zps ASC "
 		;
+		$db->setQuery($sql);
 		$ver_dwz = $db->loadObjectList();
 		if (count($ver_dwz) > 0) {
 			if ($clm_sql == "1") {
@@ -264,15 +270,15 @@ class CLMControllerDB extends JControllerLegacy {
 					if ($x + 1 == count($ver_dwz)) {
 						$end = ";";
 					}
-					$dwz_verein = $dwz_verein."\n('".$ver_dwz[$x]->sid."','".$ver_dwz[$x]->ZPS."','".$ver_dwz[$x]->LV."','".utf8_decode($ver_dwz[$x]->Verband)."','"
-			.utf8_decode($ver_dwz[$x]->Vereinname)."')".$end
+					$dwz_verein = $dwz_verein."\n('".$ver_dwz[$x]->sid."','".$ver_dwz[$x]->ZPS."','".$ver_dwz[$x]->LV."','".clm_core::$load->utf8decode($ver_dwz[$x]->Verband)."','"
+			.clm_core::$load->utf8decode($ver_dwz[$x]->Vereinname)."')".$end
 			;
 				}
 			} else {
 				$dwz_verein = "\n\n#" . count($ver_dwz) . "#";
 				for ($x = 0;$x < count($ver_dwz);$x++) {
-					$dwz_verein = $dwz_verein."\n('".$ver_dwz[$x]->sid."','".$ver_dwz[$x]->ZPS."','".$ver_dwz[$x]->LV."','".utf8_decode($ver_dwz[$x]->Verband)."','"
-			.utf8_decode($ver_dwz[$x]->Vereinname)."');"
+					$dwz_verein = $dwz_verein."\n('".$ver_dwz[$x]->sid."','".$ver_dwz[$x]->ZPS."','".$ver_dwz[$x]->LV."','".clm_core::$load->utf8decode($ver_dwz[$x]->Verband)."','"
+			.clm_core::$load->utf8decode($ver_dwz[$x]->Vereinname)."');"
 			;
 				}
 			}
@@ -283,7 +289,9 @@ class CLMControllerDB extends JControllerLegacy {
 		$man = $db->loadObjectList();
 		if (count($man) > 0) {
 			if ($clm_sql == "1") {
-				$mannschaft = "\n\nINSERT INTO `#__clm_mannschaften` (`sid`, `name`, `liga`, `zps`, `liste`, `edit_liste`, `man_nr`, `tln_nr`, `mf`, `datum`, `edit_datum`, `lokal`, `bemerkungen`, `bem_int`,`published`, `ordering`) VALUES ";
+//				$mannschaft = "\n\nINSERT INTO `#__clm_mannschaften` (`sid`, `name`, `liga`, `zps`, `liste`, `edit_liste`, `man_nr`, `tln_nr`, `mf`, `datum`, `edit_datum`, `lokal`, `bemerkungen`, `bem_int`,`published`, `ordering`) VALUES ";
+				$mannschaft = "\n\nINSERT INTO `#__clm_mannschaften` (`sid`, `name`, `liga`, `zps`, `liste`, `edit_liste`, `man_nr`, `tln_nr`, `mf`, `sg_zps`, `datum`, `edit_datum`, "; 
+				$mannschaft .= "`lokal`, `bemerkungen`, `bem_int`,`published`, `ordering`, `rankingpos`,`abzug`, `bpabzug`) VALUES ";
 				$end = ",";
 				for ($x = 0;$x < count($man);$x++) {
 					if ($x + 1 == count($man)) {
@@ -292,16 +300,18 @@ class CLMControllerDB extends JControllerLegacy {
 					if ($clm_cuser != "1") {
 						$man[$x]->mf = JID;
 					}
-					$mannschaft = $mannschaft . "\n('" . $man[$x]->sid . "','" . utf8_decode($man[$x]->name) . "','" . $man[$x]->liga . "','" . $man[$x]->zps . "','" . $man[$x]->liste . "','" . JID . "','" . $man[$x]->man_nr . "','" . $man[$x]->tln_nr . "','" . JID . "','" . $man[$x]->datum . "','" . $man[$x]->edit_datum . "'";
+//					$mannschaft .= "\n('" . $man[$x]->sid . "','" . clm_core::$load->utf8decode($man[$x]->name) . "','" . $man[$x]->liga . "','" . $man[$x]->zps . "','" . $man[$x]->liste . "','" . JID . "','" . $man[$x]->man_nr . "','" . $man[$x]->tln_nr . "','" . JID . "','" . $man[$x]->datum . "','" . $man[$x]->edit_datum . "'";
+					$mannschaft .= "\n('" . $man[$x]->sid . "','" . clm_core::$load->utf8decode($man[$x]->name) . "','" . $man[$x]->liga . "','" . $man[$x]->zps . "','" . $man[$x]->liste . "','" . JID; 
+					$mannschaft .= "','" . $man[$x]->man_nr . "','" . $man[$x]->tln_nr . "','" . JID . "','" . $man[$x]->sg_zps . "','" . $man[$x]->datum . "','" . $man[$x]->edit_datum . "'";
 					$neu = str_replace($replace, ' ', $man[$x]->lokal);
 					$neu = str_replace($_surch, '\r\n', $neu);
-					$mannschaft = $mannschaft . ",'" . utf8_decode($neu) . "'";
+					$mannschaft = $mannschaft . ",'" . clm_core::$load->utf8decode($neu) . "'";
 					$neu = str_replace($replace, ' ', $man[$x]->bemerkungen);
 					$neu = str_replace($_surch, '\r\n', $neu);
-					$mannschaft = $mannschaft . ",'" . utf8_decode($neu) . "'";
+					$mannschaft = $mannschaft . ",'" . clm_core::$load->utf8decode($neu) . "'";
 					$neu = str_replace($replace, ' ', $man[$x]->bem_int);
 					$neu = str_replace($_surch, '\r\n', $neu);
-					$mannschaft = $mannschaft . ",'" . utf8_decode($neu) . "','" . $man[$x]->published . "','" . $man[$x]->ordering . "')" . $end;
+					$mannschaft = $mannschaft . ",'" . clm_core::$load->utf8decode($neu) . "','" . $man[$x]->published . "','" . $man[$x]->ordering . "','" . $man[$x]->rankingpos . "','" . $man[$x]->abzug . "','" . $man[$x]->bpabzug . "')" . $end;
 				}
 			} else {
 				$mannschaft = "\n\n#" . count($man) . "#";
@@ -309,19 +319,19 @@ class CLMControllerDB extends JControllerLegacy {
 					if ($clm_cuser != "1") {
 						$man[$x]->mf = JID;
 					}
-					$mannschaft = $mannschaft . "\n('" . $man[$x]->sid . "','" . utf8_decode($man[$x]->name) . "','" . $man[$x]->liga . "','" . $man[$x]->zps . "','" . $man[$x]->liste . "','" . $man[$x]->edit_liste . "','" . $man[$x]->man_nr . "','" . $man[$x]->tln_nr . "','" . $man[$x]->mf . "','" . $man[$x]->datum . "','" . $man[$x]->edit_datum . "'";
+					$mannschaft .= "\n('" . $man[$x]->sid . "','" . clm_core::$load->utf8decode($man[$x]->name) . "','" . $man[$x]->liga . "','" . $man[$x]->zps . "','" . $man[$x]->liste . "','" . $man[$x]->edit_liste . "','" . $man[$x]->man_nr . "','" . $man[$x]->tln_nr . "','" . $man[$x]->mf . "','" . $man[$x]->sg_zps . "','" . $man[$x]->datum . "','" . $man[$x]->edit_datum . "'";
 					$neu = str_replace($replace, ' ', $man[$x]->lokal);
 					$neu = str_replace($_surch, '\r\n', $neu);
 					$neu = str_replace(';', ':', $neu);
-					$mannschaft = $mannschaft . ",'" . utf8_decode($neu) . "'";
+					$mannschaft = $mannschaft . ",'" . clm_core::$load->utf8decode($neu) . "'";
 					$neu = str_replace($replace, ' ', $man[$x]->bemerkungen);
 					$neu = str_replace($_surch, '\r\n', $neu);
 					$neu = str_replace(';', ':', $neu);
-					$mannschaft = $mannschaft . ",'" . utf8_decode($neu) . "'";
+					$mannschaft = $mannschaft . ",'" . clm_core::$load->utf8decode($neu) . "'";
 					$neu = str_replace($replace, ' ', $man[$x]->bem_int);
 					$neu = str_replace($_surch, '\r\n', $neu);
-					$mannschaft = $mannschaft . ",'" . utf8_decode($neu) . "','" . $man[$x]->published . "','" . $man[$x]->ordering . "');";
 					$neu = str_replace(';', ':', $neu);
+					$mannschaft .= ",'" . clm_core::$load->utf8decode($neu) . "','" . $man[$x]->published . "','" . $man[$x]->ordering . "','" . $man[$x]->rankingpos . "','" . $man[$x]->abzug . "','" . $man[$x]->bpabzug . "');";
 				}
 			}
 		}
@@ -337,12 +347,12 @@ class CLMControllerDB extends JControllerLegacy {
 					if ($x + 1 == count($dwz_spl)) {
 						$end = ";";
 					}
-					$spl_dwz = $spl_dwz . "\n('" . $dwz_spl[$x]->sid . "','" . $dwz_spl[$x]->PKZ . "','" . $dwz_spl[$x]->ZPS . "','" . $dwz_spl[$x]->Mgl_Nr . "','" . $dwz_spl[$x]->Status . "','" . utf8_decode($dwz_spl[$x]->Spielername) . "','" . utf8_decode($dwz_spl[$x]->Spielername_G) . "','" . $dwz_spl[$x]->Geschlecht . "','" . $dwz_spl[$x]->Spielberechtigung . "','" . $dwz_spl[$x]->Geburtsjahr . "','" . $dwz_spl[$x]->Letzte_Auswertung . "','" . $dwz_spl[$x]->DWZ . "','" . $dwz_spl[$x]->DWZ_Index . "','" . $dwz_spl[$x]->FIDE_Elo . "','" . $dwz_spl[$x]->FIDE_Titel . "','" . $dwz_spl[$x]->FIDE_ID . "','" . $dwz_spl[$x]->FIDE_Land . "')" . $end;
+					$spl_dwz = $spl_dwz . "\n('" . $dwz_spl[$x]->sid . "','" . $dwz_spl[$x]->PKZ . "','" . $dwz_spl[$x]->ZPS . "','" . $dwz_spl[$x]->Mgl_Nr . "','" . $dwz_spl[$x]->Status . "','" . clm_core::$load->utf8decode($dwz_spl[$x]->Spielername) . "','" . clm_core::$load->utf8decode($dwz_spl[$x]->Spielername_G) . "','" . $dwz_spl[$x]->Geschlecht . "','" . $dwz_spl[$x]->Spielberechtigung . "','" . $dwz_spl[$x]->Geburtsjahr . "','" . $dwz_spl[$x]->Letzte_Auswertung . "','" . $dwz_spl[$x]->DWZ . "','" . $dwz_spl[$x]->DWZ_Index . "','" . $dwz_spl[$x]->FIDE_Elo . "','" . $dwz_spl[$x]->FIDE_Titel . "','" . $dwz_spl[$x]->FIDE_ID . "','" . $dwz_spl[$x]->FIDE_Land . "')" . $end;
 				}
 			} else {
 				$spl_dwz = "\n\n#" . count($dwz_spl) . "#";
 				for ($x = 0;$x < count($dwz_spl);$x++) {
-					$spl_dwz = $spl_dwz . "\n('" . $dwz_spl[$x]->sid . "','" . $dwz_spl[$x]->PKZ . "','" . $dwz_spl[$x]->ZPS . "','" . $dwz_spl[$x]->Mgl_Nr . "','" . $dwz_spl[$x]->Status . "','" . utf8_decode($dwz_spl[$x]->Spielername) . "','" . utf8_decode($dwz_spl[$x]->Spielername_G) . "','" . $dwz_spl[$x]->Geschlecht . "','" . $dwz_spl[$x]->Spielberechtigung . "','" . $dwz_spl[$x]->Geburtsjahr . "','" . $dwz_spl[$x]->Letzte_Auswertung . "','" . $dwz_spl[$x]->DWZ . "','" . $dwz_spl[$x]->DWZ_Index . "','" . $dwz_spl[$x]->FIDE_Elo . "','" . $dwz_spl[$x]->FIDE_Titel . "','" . $dwz_spl[$x]->FIDE_ID . "','" . $dwz_spl[$x]->FIDE_Land . "');";
+					$spl_dwz = $spl_dwz . "\n('" . $dwz_spl[$x]->sid . "','" . $dwz_spl[$x]->PKZ . "','" . $dwz_spl[$x]->ZPS . "','" . $dwz_spl[$x]->Mgl_Nr . "','" . $dwz_spl[$x]->Status . "','" . clm_core::$load->utf8decode($dwz_spl[$x]->Spielername) . "','" . clm_core::$load->utf8decode($dwz_spl[$x]->Spielername_G) . "','" . $dwz_spl[$x]->Geschlecht . "','" . $dwz_spl[$x]->Spielberechtigung . "','" . $dwz_spl[$x]->Geburtsjahr . "','" . $dwz_spl[$x]->Letzte_Auswertung . "','" . $dwz_spl[$x]->DWZ . "','" . $dwz_spl[$x]->DWZ_Index . "','" . $dwz_spl[$x]->FIDE_Elo . "','" . $dwz_spl[$x]->FIDE_Titel . "','" . $dwz_spl[$x]->FIDE_ID . "','" . $dwz_spl[$x]->FIDE_Land . "');";
 				}
 			}
 		}
@@ -352,18 +362,25 @@ class CLMControllerDB extends JControllerLegacy {
 		$ml = $db->loadObjectList();
 		if (count($ml) > 0) {
 			if ($clm_sql == "1") {
-				$liste = "\n\nINSERT INTO `#__clm_meldeliste_spieler` (`sid`, `lid`, `mnr`, `snr`, `mgl_nr`, `zps`, `status`, `ordering`, `DWZ`, `I0`, `Punkte`, `Partien`, `We`, `Leistung`, `EFaktor`, `Niveau`,`sum_saison`) VALUES ";
+				$liste = "\n\nINSERT INTO `#__clm_meldeliste_spieler` (`sid`, `lid`, `mnr`, `snr`, `mgl_nr`, `zps`, `status`, `ordering`, `start_dwz`, `start_I0`, `FIDEelo`,";
+				$liste .= " `DWZ`, `I0`, `Punkte`, `Partien`, `We`, `Leistung`, `EFaktor`, `Niveau`,`sum_saison`) VALUES ";
 				$end = ",";
 				for ($x = 0;$x < count($ml);$x++) {
 					if ($x + 1 == count($ml)) {
 						$end = ";";
 					}
-					$liste = $liste . "\n('" . $ml[$x]->sid . "','" . $ml[$x]->lid . "','" . $ml[$x]->mnr . "','" . $ml[$x]->snr . "','" . $ml[$x]->mgl_nr . "','" . $ml[$x]->zps . "','" . $ml[$x]->status . "','" . $ml[$x]->ordering . "','" . $ml[$x]->DWZ . "','" . $ml[$x]->I0 . "','" . $ml[$x]->Punkte . "','" . $ml[$x]->Partien . "','" . $ml[$x]->We . "','" . $ml[$x]->Leistung . "','" . $ml[$x]->EFaktor . "','" . $ml[$x]->Niveau . "','" . $ml[$x]->sum_saison . "')" . $end;
+					$liste .= "\n('" . $ml[$x]->sid . "','" . $ml[$x]->lid . "','" . $ml[$x]->mnr . "','" . $ml[$x]->snr . "','" . $ml[$x]->mgl_nr;
+					$liste .= "','" . $ml[$x]->zps . "','" . $ml[$x]->status . "','" . $ml[$x]->ordering . "','" . $ml[$x]->start_dwz . "','" . $ml[$x]->start_I0 . "','" . $ml[$x]->FIDEelo;
+					$liste .= "','" . $ml[$x]->DWZ . "','" . $ml[$x]->I0 . "','" . $ml[$x]->Punkte . "','" . $ml[$x]->Partien . "','" . $ml[$x]->We . "','" . $ml[$x]->Leistung;
+					$liste .= "','" . $ml[$x]->EFaktor . "','" . $ml[$x]->Niveau . "','" . $ml[$x]->sum_saison . "')" . $end;
 				}
 			} else {
 				$liste = "\n\n#" . count($ml) . "#";
 				for ($x = 0;$x < count($ml);$x++) {
-					$liste = $liste . "\n('" . $ml[$x]->sid . "','" . $ml[$x]->lid . "','" . $ml[$x]->mnr . "','" . $ml[$x]->snr . "','" . $ml[$x]->mgl_nr . "','" . $ml[$x]->zps . "','" . $ml[$x]->status . "','" . $ml[$x]->ordering . "','" . $ml[$x]->DWZ . "','" . $ml[$x]->I0 . "','" . $ml[$x]->Punkte . "','" . $ml[$x]->Partien . "','" . $ml[$x]->We . "','" . $ml[$x]->Leistung . "','" . $ml[$x]->EFaktor . "','" . $ml[$x]->Niveau . "','" . $ml[$x]->sum_saison . "');";
+					$liste .= "\n('" . $ml[$x]->sid . "','" . $ml[$x]->lid . "','" . $ml[$x]->mnr . "','" . $ml[$x]->snr . "','" . $ml[$x]->mgl_nr;
+					$liste .= "','" . $ml[$x]->zps . "','" . $ml[$x]->status . "','" . $ml[$x]->ordering . "','" . $ml[$x]->start_dwz . "','" . $ml[$x]->start_I0 . "','" . $ml[$x]->FIDEelo;
+					$liste .= "','" . $ml[$x]->DWZ . "','" . $ml[$x]->I0 . "','" . $ml[$x]->Punkte . "','" . $ml[$x]->Partien . "','" . $ml[$x]->We . "','" . $ml[$x]->Leistung;
+					$liste .= "','" . $ml[$x]->EFaktor . "','" . $ml[$x]->Niveau . "','" . $ml[$x]->sum_saison . "');";
 				}
 			}
 		}
@@ -393,19 +410,19 @@ class CLMControllerDB extends JControllerLegacy {
 		$db->setQuery($sql);
 		$rang_name = $db->loadObjectList();
 		if ($clm_sql == "1" AND count($rang_name) > 0) {
-			$name_rang = "\n\nINSERT INTO `#__clm_rangliste_name` (`Gruppe`, `Meldeschluss`, `geschlecht`, `alter_grenze`, `alter`, `sid`, `user`, `bemerkungen`, `bem_int`, `ordering`, `published` ) VALUES ";
+			$name_rang = "\n\nINSERT INTO `#__clm_rangliste_name` (`Gruppe`, `Meldeschluss`, `geschlecht`, `alter_grenze`, `alter`, `status`, `sid`, `user`, `bemerkungen`, `bem_int`, `ordering`, `published` ) VALUES ";
 			$end = ",";
 			for ($x = 0;$x < count($rang_name);$x++) {
 				if ($x + 1 == count($rang_name)) {
 					$end = ";";
 				}
-				$name_rang = $name_rang . "\n('" . $rang_name[$x]->Gruppe . "','" . $rang_name[$x]->Meldeschluss . "','" . $rang_name[$x]->geschlecht . "','" . $rang_name[$x]->alter_grenze . "','" . $rang_name[$x]->alter . "','" . $rang_name[$x]->sid . "','" . $rang_name[$x]->user . "','" . $rang_name[$x]->bemerkungen . "','" . $rang_name[$x]->bem_int . "','" . $rang_name[$x]->ordering . "','" . $rang_name[$x]->published . "')" . $end;
+				$name_rang = $name_rang . "\n('" . $rang_name[$x]->Gruppe . "','" . $rang_name[$x]->Meldeschluss . "','" . $rang_name[$x]->geschlecht . "','" . $rang_name[$x]->alter_grenze . "','" . $rang_name[$x]->alter . "','". $rang_name[$x]->status . "','" . $rang_name[$x]->sid . "','" . $rang_name[$x]->user . "','" . $rang_name[$x]->bemerkungen . "','" . $rang_name[$x]->bem_int . "','" . $rang_name[$x]->ordering . "','" . $rang_name[$x]->published . "')" . $end;
 			}
 		}
 		if ($clm_sql != "1") {
 			$name_rang = "\n\n#" . count($rang_name) . "#";
 			for ($x = 0;$x < count($rang_name);$x++) {
-				$name_rang = $name_rang . "\n('" . $rang_name[$x]->Gruppe . "','" . $rang_name[$x]->Meldeschluss . "','" . $rang_name[$x]->geschlecht . "','" . $rang_name[$x]->alter_grenze . "','" . $rang_name[$x]->alter . "','" . $rang_name[$x]->sid . "','" . $rang_name[$x]->user . "','" . $rang_name[$x]->bemerkungen . "','" . $rang_name[$x]->bem_int . "','" . $rang_name[$x]->ordering . "','" . $rang_name[$x]->published . "');";
+				$name_rang = $name_rang . "\n('" . $rang_name[$x]->Gruppe . "','" . $rang_name[$x]->Meldeschluss . "','" . $rang_name[$x]->geschlecht . "','" . $rang_name[$x]->alter_grenze . "','" . $rang_name[$x]->alter . "','". $rang_name[$x]->status . "','" . $rang_name[$x]->sid . "','" . $rang_name[$x]->user . "','" . $rang_name[$x]->bemerkungen . "','" . $rang_name[$x]->bem_int . "','" . $rang_name[$x]->ordering . "','" . $rang_name[$x]->published . "');";
 			}
 		}
 		// Rangliste Spieler
@@ -535,7 +552,7 @@ class CLMControllerDB extends JControllerLegacy {
 		$sql = " SELECT * FROM #__clm_rnd_spl " . " WHERE lid = " . $liga . " ORDER BY dg ASC, runde ASC , paar ASC, brett ASC ";
 		$db->setQuery($sql);
 		$srnd = $db->loadObjectList();
-		if (count($srnd) > 0) {
+		if (!is_null($srnd) AND count($srnd) > 0) {
 			if ($clm_sql == "1") {
 				$spl_rnd = "\n\nINSERT INTO `#__clm_rnd_spl` (`sid`, `lid`, `runde`, `paar`, `dg`, `tln_nr`, `brett`, `heim`, `weiss`, `spieler`, `zps`, `gegner`, `gzps`, `ergebnis`, `kampflos`, `punkte`, `gemeldet`, `dwz_edit`, `dwz_editor`) VALUES ";
 				$end = ",";
@@ -589,6 +606,11 @@ class CLMControllerDB extends JControllerLegacy {
 					$spl_rnd = $spl_rnd . "\n('" . $srnd[$x]->sid . "','" . $srnd[$x]->lid . "','" . $srnd[$x]->runde . "','" . $srnd[$x]->paar . "','" . $srnd[$x]->dg . "','" . $srnd[$x]->tln_nr . "','" . $srnd[$x]->brett . "','" . $srnd[$x]->heim . "','" . $srnd[$x]->weiss . "','" . $srnd[$x]->spieler . "','" . $srnd[$x]->zps . "','" . $srnd[$x]->gegner . "','" . $srnd[$x]->gzps . "','" . $srnd[$x]->ergebnis . "','" . $srnd[$x]->kampflos . "','" . $srnd[$x]->punkte . "','" . $gemeldet . "','" . $dwz_edit . "','" . $dwz_editor . "');";
 				}
 			}
+		} else {
+			if ($clm_sql != "1") {
+				$spl_rnd = "\n\n#0#";
+				$spl_rnd = $spl_rnd . "\n  ";
+			}
 		}
 		// Rundentermine
 		$sql = " SELECT * FROM #__clm_runden_termine " . " WHERE liga = " . $liga . " ORDER BY nr ASC ";
@@ -615,10 +637,10 @@ class CLMControllerDB extends JControllerLegacy {
 					$ter_rnd = $ter_rnd . "\n('" . $trnd[$x]->sid . "','" . $trnd[$x]->name . "','" . $trnd[$x]->liga . "','" . $trnd[$x]->nr . "','" . $trnd[$x]->datum . "','" . $trnd[$x]->meldung . "','" . $trnd[$x]->sl_ok . "','" . $trnd[$x]->published . "'";
 					$neu = str_replace($replace, ' ', $trnd[$x]->bemerkungen);
 					$neu = str_replace($_surch, '\r\n', $neu);
-					$ter_rnd = $ter_rnd . ",'" . utf8_decode($neu) . "'";
+					$ter_rnd = $ter_rnd . ",'" . clm_core::$load->utf8decode($neu) . "'";
 					$neu = str_replace($replace, ' ', $trnd[$x]->bem_int);
 					$neu = str_replace($_surch, '\r\n', $neu);
-					$ter_rnd = $ter_rnd . ",'" . utf8_decode($neu) . "','" . $gemeldet . "','" . $editor . "','" . $trnd[$x]->zeit . "','" . $trnd[$x]->edit_zeit . "','" . $trnd[$x]->ordering . "')" . $end;
+					$ter_rnd = $ter_rnd . ",'" . clm_core::$load->utf8decode($neu) . "','" . $gemeldet . "','" . $editor . "','" . $trnd[$x]->zeit . "','" . $trnd[$x]->edit_zeit . "','" . $trnd[$x]->ordering . "')" . $end;
 				}
 			} else {
 				$ter_rnd = "\n\n#" . count($trnd) . "#";
@@ -645,11 +667,11 @@ class CLMControllerDB extends JControllerLegacy {
 					$neu = str_replace($replace, ' ', $trnd[$x]->bemerkungen);
 					$neu = str_replace($_surch, '\r\n', $neu);
 					$neu = str_replace(';', ':', $neu);										
-					$ter_rnd = $ter_rnd . ",'" . utf8_decode($neu) . "'";
+					$ter_rnd = $ter_rnd . ",'" . clm_core::$load->utf8decode($neu) . "'";
 					$neu = str_replace($replace, ' ', $trnd[$x]->bem_int);
 					$neu = str_replace($_surch, '\r\n', $neu);
 					$neu = str_replace(';', ':', $neu);										
-					$ter_rnd = $ter_rnd . ",'" . utf8_decode($neu) . "','" . $gemeldet . "','" . $editor . "','" . $trnd[$x]->zeit . "','" . $trnd[$x]->edit_zeit . "','" . $trnd[$x]->ordering . "');";
+					$ter_rnd = $ter_rnd . ",'" . clm_core::$load->utf8decode($neu) . "','" . $gemeldet . "','" . $editor . "','" . $trnd[$x]->zeit . "','" . $trnd[$x]->edit_zeit . "','" . $trnd[$x]->ordering . "');";
 				}
 			}
 		}
@@ -682,15 +704,15 @@ class CLMControllerDB extends JControllerLegacy {
 			$db->setQuery($sql);
 			$clm = $db->loadObjectList();
 			for ($x = 0;$x < count($juser_jid);$x++) {
-				$clm_user = $clm_user . "\n('" . $clm[$x]->sid . "','" . $clm[$x]->jid . "','" . utf8_decode($clm[$x]->name) . "','" . utf8_decode($clm[$x]->username) . "','" . $clm[$x]->aktive . "','" . utf8_decode($clm[$x]->email) . "','" . $clm[$x]->usertype . "','" . utf8_decode($clm[$x]->tel_fest) . "','" . utf8_decode($clm[$x]->tel_mobil) . "','" . $clm[$x]->user_clm . "','" . $clm[$x]->zps . "','" . $clm[$x]->published . "'";
+				$clm_user = $clm_user . "\n('" . $clm[$x]->sid . "','" . $clm[$x]->jid . "','" . clm_core::$load->utf8decode($clm[$x]->name) . "','" . clm_core::$load->utf8decode($clm[$x]->username) . "','" . $clm[$x]->aktive . "','" . clm_core::$load->utf8decode($clm[$x]->email) . "','" . $clm[$x]->usertype . "','" . clm_core::$load->utf8decode($clm[$x]->tel_fest) . "','" . clm_core::$load->utf8decode($clm[$x]->tel_mobil) . "','" . $clm[$x]->user_clm . "','" . $clm[$x]->zps . "','" . $clm[$x]->published . "'";
 				$neu = str_replace($replace, ' ', $clm[$x]->bemerkungen);
 				$neu = str_replace($_surch, '\r\n', $neu);
 				$neu = str_replace(';', ':', $neu);
-				$clm_user = $clm_user . ",'" . utf8_decode($neu) . "'";
+				$clm_user = $clm_user . ",'" . clm_core::$load->utf8decode($neu) . "'";
 				$neu = str_replace($replace, ' ', $clm[$x]->bem_int);
 				$neu = str_replace($_surch, '\r\n', $neu);
 				$neu = str_replace(';', ':', $neu);
-				$clm_user = $clm_user . ",'" . utf8_decode($neu) . "');";
+				$clm_user = $clm_user . ",'" . clm_core::$load->utf8decode($neu) . "');";
 			}
 			$clm_user = "\n\n#" . count($juser_jid) . "#" . $clm_user;
 		}
@@ -700,12 +722,12 @@ class CLMControllerDB extends JControllerLegacy {
 			$db->setQuery($sql);
 			$clm = $db->loadObjectList();
 			for ($x = 0;$x < count($clm);$x++) {
-				$juser = $juser . "\n('" . utf8_decode($clm[$x]->name . "','" . $clm[$x]->username . "','" . $clm[$x]->email . "','" . $clm[$x]->password . "','" . $clm[$x]->usertype . "','" . $clm[$x]->block . "','" . $clm[$x]->sendEmail . "','" . $clm[$x]->gid . "','" . $clm[$x]->registerDate . "','" . $clm[$x]->lastvisitDate . "','" . $clm[$x]->activation . "','");
+				$juser = $juser . "\n('" . clm_core::$load->utf8decode($clm[$x]->name . "','" . $clm[$x]->username . "','" . $clm[$x]->email . "','" . $clm[$x]->password . "','" . $clm[$x]->usertype . "','" . $clm[$x]->block . "','" . $clm[$x]->sendEmail . "','" . $clm[$x]->gid . "','" . $clm[$x]->registerDate . "','" . $clm[$x]->lastvisitDate . "','" . $clm[$x]->activation . "','");
 				// evtl. Standardparameter verwenden -> Sicherheit !!
 				$neu = str_replace($replace, ' ', $clm[$x]->params);
 				$neu = str_replace($_surch, '\r\n', $neu);
 				$neu = str_replace(';', ':', $neu);
-				$juser = $juser . utf8_decode($neu) . "');";
+				$juser = $juser . clm_core::$load->utf8decode($neu) . "');";
 			}
 			$juser = "\n\n#" . count($clm) . "#" . $juser;
 		}
@@ -719,22 +741,23 @@ class CLMControllerDB extends JControllerLegacy {
 		// Datei schreiben ggf. Fehlermeldung absetzen
 		jimport('joomla.filesystem.file');
 		if (!JFile::write($write, $buffer)) {
-			JError::raiseWarning(500, JText::_('DB_FEHLER_SCHREIB'));
+			$mainframe->enqueueMessage(JText::_('DB_FEHLER_SCHREIB'),'warning');
 		}
 		if ($clm_sql == "1") {
 			$msg = JText::_('DB_SQL');
 		} else {
 			$msg = JText::_('DB_CLM');
 		}
-		$mainframe->redirect('index.php?option=com_clm&view=db', $msg, "message");
+		$mainframe->enqueueMessage($msg,'message');
+		$mainframe->redirect('index.php?option=com_clm&view=db');
 	}
 	public static function liga() {
 		$mainframe = JFactory::getApplication();
 		// Check for request forgeries
-		//JRequest::checkToken() or die( 'Invalid Token' );
+		defined('_JEXEC') or die( 'Invalid Token' );
 		$db = JFactory::getDBO();
-		$option = JRequest::getCmd('option');
-		$section = JRequest::getVar('section');
+		$option = clm_core::$load->request_string('option');
+		$section = clm_core::$load->request_string('section');
 		$sql = " SELECT id FROM #__clm_saison " . " WHERE published  = 1 AND archiv = 0";
 		$db->setQuery($sql);
 		$sid = $db->loadObjectList();
@@ -746,17 +769,16 @@ class CLMControllerDB extends JControllerLegacy {
 	public static function import() {
 		$mainframe = JFactory::getApplication();
 		// Check for request forgeries
-		JRequest::checkToken() or die('Invalid Token');
+		defined('_JEXEC') or die('Invalid Token');
 		$db = JFactory::getDBO();
-		$option = JRequest::getCmd('option');
-		$section = JRequest::getVar('section');
-		$datei = JRequest::getVar('import');
-		$saison = JRequest::getVar('saison_import');
-		$liga = JRequest::getVar('liga_import');
-		$clm_user = JRequest::getVar('imp_user');
-		$pub_user = JRequest::getVar('imp_pub');
-		//$clm_joomla	= JRequest::getVar('imp_joomla');
-		$override = JRequest::getVar('override');
+		$option = clm_core::$load->request_string('option');
+		$section = clm_core::$load->request_string('section');
+		$datei = clm_core::$load->request_string('import');
+		$saison = clm_core::$load->request_string('saison_import');
+		$liga = clm_core::$load->request_string('liga_import');
+		$clm_user = clm_core::$load->request_string('imp_user');
+		$pub_user = clm_core::$load->request_string('imp_pub');
+		$override = clm_core::$load->request_string('override');
 		if ($pub_user == "1") {
 			$publish = 0;
 			$block = 1;
@@ -765,23 +787,22 @@ class CLMControllerDB extends JControllerLegacy {
 			$block = 0;
 		}
 		if (!$datei) {
-			JError::raiseWarning(500, JText::_('DB_NO_DATEI_IMPORT'));
-			//$mainframe->redirect( 'index.php?option='. $option.'&section='.$section );
-			$this->setRedirect('index.php?option=com_clm&view=db');
+			$mainframe->enqueueMessage(JText::_('DB_NO_DATEI_IMPORT'),'warning');
+			$mainframe->redirect('index.php?option=com_clm&view=db');
 		}
 		if (!$saison) {
-			JError::raiseWarning(500, JText::_('DB_NO_SAISON_IMPORT'));
-			//$mainframe->redirect( 'index.php?option='. $option.'&section='.$section );
-			$this->setRedirect('index.php?option=com_clm&view=db');
+			$mainframe->enqueueMessage(JText::_('DB_NO_SAISON_IMPORT'),'warning');
+			$mainframe->redirect('index.php?option=com_clm&view=db');
 		}
 		if (!$liga) {
-			JError::raiseWarning(500, JText::_('DB_NO_LIGA_IMPORT'));
-			//$mainframe->redirect( 'index.php?option='. $option.'&section='.$section );
-			$this->setRedirect('index.php?option=com_clm&view=db');
+			$mainframe->enqueueMessage(JText::_('DB_NO_LIGA_IMPORT'),'warning');
+			$mainframe->redirect('index.php?option=com_clm&view=db');
 		}
 		jimport('joomla.filesystem.file');
 		$path = JPath::clean(JPATH_ADMINISTRATOR . DS . 'components' . DS . $option . DS . 'upload');
-		$content = JFile::read($path . DS . $datei);
+		//$content = JFile::read($path . DS . $datei);
+		$content = file_get_contents($path . DS . $datei);
+		$content = html_entity_decode($content);
 		// Inhalt in Teile zerlegen
 		$part = explode("#", $content);
 		// Zählmarken holen. Bspl.: $part[1] ist Zählmarke der Liga, dann ist $part[2] der Datenteil usw.
@@ -816,65 +837,81 @@ class CLMControllerDB extends JControllerLegacy {
 			// Sicherheitscheck ob Datei manipuliert wurde
 			$fehler = 0;
 			if ($cnt_man + 1 > count($man_daten)) {
-				JError::raiseWarning(500, JText::_('DB_ANZAHL_KLEIN'));
+				$mainframe->enqueueMessage(JText::_('DB_ANZAHL_KLEIN'),'warning');
 				$fehler++;
 			}
 			if ($cnt_man + 1 < count($man_daten)) {
-				JError::raiseWarning(500, JText::_('DB_ANZAHL_GROSS'));
+				$mainframe->enqueueMessage(JText::_('DB_ANZAHL_GROSS'),'warning');
 				$fehler++;
 			}
 			if ($cnt_man != $liga_daten[2] OR count($man_daten) - 1 != $liga_daten[2]) {
-				JError::raiseWarning(500, JText::_('DB_ANZAHL_FALSCH'));
+				$mainframe->enqueueMessage(JText::_('DB_ANZAHL_FALSCH'),'warning');
 				$fehler++;
 			}
 			if ($cnt_spl + 1 > count($melde_daten)) {
-				JError::raiseWarning(500, JText::_('DB_ANZAHL_SP_KLEIN'));
+				$mainframe->enqueueMessage(JText::_('DB_ANZAHL_SP_KLEIN'),'warning');
 				$fehler++;
 			}
 			if ($cnt_spl + 1 < count($melde_daten)) {
-				JError::raiseWarning(500, JText::_('DB_ANZAHL_SP_GROSS'));
+				$mainframe->enqueueMessage(JText::_('DB_ANZAHL_SP_GROSS'),'warning');
 				$fehler++;
 			}
 			if ($cnt_rnd_man + 1 > count($man_rnd_daten)) {
-				JError::raiseWarning(500, JText::_('DB_ANZAHL_MR_KLEIN'));
+				$mainframe->enqueueMessage(JText::_('DB_ANZAHL_MR_KLEIN'),'warning');
 				$fehler++;
 			}
 			if ($cnt_rnd_man + 1 < count($man_rnd_daten)) {
-				JError::raiseWarning(500, JText::_('DB_ANZAHL_MR_GROSS'));
+				$mainframe->enqueueMessage(JText::_('DB_ANZAHL_MR_GROSS'),'warning');
 				$fehler++;
 			}
-			if (($cnt_rnd_man != ($liga_daten[2] * $liga_daten[7] * $liga_daten[8])) OR (count($man_rnd_daten) - 1 != ($liga_daten[2] * $liga_daten[7] * $liga_daten[8]))) {
-				JError::raiseWarning(500, JText::_('DB_ANZAHL_MR_FALSCH'));
-				$fehler++;
+			$runden_modus = $liga_daten[13];
+			if ($runden_modus == 4 OR $runden_modus == 5) {
+				$rnd_anz = 0;
+				for ($i = 1;$i < ($liga_daten[7]+1);$i++) {
+					$rnd_anz += pow(2,$i);
+				}
+				if ($runden_modus == 5) $rnd_anz += 2;
+//				if (($cnt_rnd_man != $rnd_anz) OR (count($man_rnd_daten) - 1 != $rnd_anz)) {
+				if (($cnt_rnd_man != (0.5 * $rnd_anz)) OR (count($man_rnd_daten) - 1 != (0.5 * $rnd_anz))) {
+					$mainframe->enqueueMessage(JText::_('DB_ANZAHL_MR_FALSCH'),'warning');
+					$fehler++;
+				}
+			} else {
+				if (($cnt_rnd_man != ($liga_daten[2] * $liga_daten[7] * $liga_daten[8])) OR (count($man_rnd_daten) - 1 != ($liga_daten[2] * $liga_daten[7] * $liga_daten[8]))) {
+					$mainframe->enqueueMessage(JText::_('DB_ANZAHL_MR_FALSCH'),'warning');
+					$fehler++;
+				}
 			}
 			if ($cnt_rnd_spl + 1 > count($spl_rnd_daten)) {
-				JError::raiseWarning(500, JText::_('DB_ANZAHL_SR_KLEIN'));
+				$mainframe->enqueueMessage(JText::_('DB_ANZAHL_SR_KLEIN'),'warning');
 				$fehler++;
 			}
 			if ($cnt_rnd_spl + 1 < count($spl_rnd_daten)) {
-				JError::raiseWarning(500, JText::_('DB_ANZAHL_SR_GROSS'));
+				$mainframe->enqueueMessage(JText::_('DB_ANZAHL_SR_GROSS'),'warning');
 				$fehler++;
 			}
 			if ($cnt_rnd_ter + 1 > count($rnd_ter_daten)) {
-				JError::raiseWarning(500, JText::_('DB_ANZAHL_RU_KLEIN'));
+				$mainframe->enqueueMessage(JText::_('DB_ANZAHL_RU_KLEIN'),'warning');
 				$fehler++;
 			}
 			if ($cnt_rnd_ter + 1 < count($rnd_ter_daten)) {
-				JError::raiseWarning(500, JText::_('DB_ANZAHL_RU_GROSS'));
+				$mainframe->enqueueMessage(JText::_('DB_ANZAHL_RU_GROSS'),'warning');
 				$fehler++;
 			}
 			if ($cnt_user > (1 + $liga_daten[2])) {
-				JError::raiseWarning(500, JText::_('DB_CLM_NUTZER'));
+				$mainframe->enqueueMessage(JText::_('DB_CLM_NUTZER'),'warning');
 				$fehler++;
 			}
 			if ($cnt_juser > (1 + $liga_daten[2])) {
-				JError::raiseWarning(500, JText::_('DB_JOOMLA_NUTZER'));
+				$mainframe->enqueueMessage(JText::_('DB_JOOMLA_NUTZER'),'warning');
 				$fehler++;
 			}
 			if ($fehler > 0) {
-				JError::raiseNotice(6000, JText::_('DB_IMPORT'));
-				$mainframe->redirect( 'index.php?option='. $option.'&section='.$section );
-				//$this->setRedirect('index.php?option=com_clm&view=db');
+//				$mainframe->enqueueMessage(JText::_('DB_IMPORT'),'notice');
+//				$mainframe->redirect( 'index.php?option='. $option.'&section='.$section );
+				$msg = JText::_('DB_IMPORT') . ' ' . $datei . ' <b>nicht</b> ' . JText::_('DB_ERFOLGREICH');
+				$mainframe->enqueueMessage($msg,'error');
+				$mainframe->redirect('index.php?option=com_clm&view=db');
 			}
 		}
 		// User anlegen
@@ -888,7 +925,7 @@ class CLMControllerDB extends JControllerLegacy {
 			// Schleife zum erstellen der CLM User
 			for ($x = 0;$x < $cnt_user;$x++) {
 				$user = explode("','", $clm_dat[$x]);
-				$email = utf8_encode($user[5]);
+				$email = clm_core::$load->utf8encode($user[5]);
 				// User schon vorhanden ?
 				$sql = " SELECT id,jid FROM #__clm_user " . " WHERE email = '$email' " . " AND sid =" . $saison;
 				$db->setQuery($sql);
@@ -898,18 +935,18 @@ class CLMControllerDB extends JControllerLegacy {
 					$row = JTable::getInstance('users', 'TableCLM');
 					$row->sid = $saison;
 					$row->jid = $user[1];
-					$row->name = utf8_encode($user[2]);
-					$row->username = utf8_encode($user[3]);
+					$row->name = clm_core::$load->utf8encode($user[2]);
+					$row->username = clm_core::$load->utf8encode($user[3]);
 					$row->aktive = $user[4];
 					$row->email = $email;
-					$row->usertype = utf8_encode($user[6]);
-					$row->tel_fest = utf8_encode($user[7]);
-					$row->tel_mobil = utf8_encode($user[8]);
-					$row->user_clm = utf8_encode($user[9]);
+					$row->usertype = clm_core::$load->utf8encode($user[6]);
+					$row->tel_fest = clm_core::$load->utf8encode($user[7]);
+					$row->tel_mobil = clm_core::$load->utf8encode($user[8]);
+					$row->user_clm = clm_core::$load->utf8encode($user[9]);
 					$row->zps = $user[10];
 					$row->published = $publish; //$user[11];
-					$row->bemerkungen = utf8_encode($user[12]);
-					$row->bem_int = utf8_encode(substr($user[13], 0, -2));
+					$row->bemerkungen = clm_core::$load->utf8encode($user[12]);
+					$row->bem_int = clm_core::$load->utf8encode(substr($user[13], 0, -2));
 					// CLM User erstellen
 					$row->store();
 					// Informationen für Joomla User in Arrays schreiben
@@ -937,7 +974,7 @@ class CLMControllerDB extends JControllerLegacy {
 				// Schleife zum erstellen der Joomla User aus vorhandenen Daten
 				for ($x = 0;$x < $cnt_juser;$x++) {
 					$user = explode("','", $jos_dat[$x]);
-					$email = utf8_encode($user[2]);
+					$email = clm_core::$load->utf8encode($user[2]);
 					$emails[] = $email;
 					// in Joomla DB nach User suchen
 					$sql = " SELECT id FROM #__users " . " WHERE email = '$email' ";
@@ -946,10 +983,10 @@ class CLMControllerDB extends JControllerLegacy {
 					// Joomla User existiert nicht -> anlegen
 					if (!$jos_exist) {
 						$jos_user = JTable::getInstance('jos_users', 'TableCLM');
-						$jos_user->name = utf8_encode(substr($user[0], 3));
-						$jos_user->username = utf8_encode($user[1]);
+						$jos_user->name = clm_core::$load->utf8encode(substr($user[0], 3));
+						$jos_user->username = clm_core::$load->utf8encode($user[1]);
 						$jos_user->email = $email;
-						$jos_user->password = utf8_encode($user[3]);
+						$jos_user->password = clm_core::$load->utf8encode($user[3]);
 						//$jos_user->password	= "";
 						$jos_user->usertype = $user[4];
 						$jos_user->block = $block; //$user[5];
@@ -958,7 +995,7 @@ class CLMControllerDB extends JControllerLegacy {
 						$jos_user->registerDate = $user[8];
 						$jos_user->lastvisitDate = $user[9];
 						$jos_user->activation = $user[10];
-						$jos_user->params = utf8_encode('admin_language=de-DE\nlanguage=de-DE\neditor=none\nhelpsite=\ntimezone=0\n\n');
+						$jos_user->params = clm_core::$load->utf8encode('admin_language=de-DE\nlanguage=de-DE\neditor=none\nhelpsite=\ntimezone=0\n\n');
 						// User erstellen
 						$jos_user->store();
 						// In Tabelle core_acl_aro schreiben
@@ -986,17 +1023,17 @@ class CLMControllerDB extends JControllerLegacy {
 			if ($cnt_user > $cnt_juser) {
 				//if($clm_juser =="1"){
 				if ($cnt_juser != "0") {
-					JError::raiseWarning(500, JText::_('DB_USER'));
-					JError::raiseNotice(6000, JText::_('DB_DUMMY)'));
+					$mainframe->enqueueMessage(JText::_('DB_USER'),'warning');
+					$mainframe->enqueueMessage(JText::_('DB_DUMMY'),'notice');
 				} else {
-					JError::raiseWarning(500, JText::_('DB_USER_WENIG'));
-					JError::raiseNotice(6000, JText::_('DB_NUTZER'));
+					$mainframe->enqueueMessage(JText::_('DB_USER_WENIG'),'warning');
+					$mainframe->enqueueMessage(JText::_('DB_NUTZER'),'notice');
 				}
 				//}
 				// Schleife zum erstellen der Joomla User aus vorhandenen CLM Daten
 				for ($x = 0;$x < $cnt_user;$x++) {
 					$user = explode("','", $clm_dat[$x]);
-					$email = utf8_encode($user[5]);
+					$email = clm_core::$load->utf8encode($user[5]);
 					$emails[] = $email;
 					// in Joomla DB nach User suchen
 					$sql = " SELECT id FROM #__users " . " WHERE email = '$email' ";
@@ -1005,14 +1042,14 @@ class CLMControllerDB extends JControllerLegacy {
 					// Joomla User existiert nicht -> anlegen
 					if (!$jos_exist) {
 						$jos_user = JTable::getInstance('jos_users', 'TableCLM');
-						$jos_user->name = utf8_encode($user[2]);
-						$jos_user->username = utf8_encode($user[3]);
+						$jos_user->name = clm_core::$load->utf8encode($user[2]);
+						$jos_user->username = clm_core::$load->utf8encode($user[3]);
 						$jos_user->email = $email;
 						$jos_user->usertype = $email_reg[$email];
 						$jos_user->block = $block; //$user[11];
 						$jos_user->sendEmail = '0';
 						$jos_user->gid = $email_gid[$email];
-						$jos_user->params = utf8_encode('admin_language=de-DE\nlanguage=de-DE\neditor=none\nhelpsite=\ntimezone=0\n\n');
+						$jos_user->params = clm_core::$load->utf8encode('admin_language=de-DE\nlanguage=de-DE\neditor=none\nhelpsite=\ntimezone=0\n\n');
 						// User erstellen
 						$jos_user->store();
 						// In Tabelle core_acl_aro schreiben
@@ -1043,11 +1080,13 @@ class CLMControllerDB extends JControllerLegacy {
 				$jid_new['NULL'] = 'NULL';
 				foreach ($emails as $emails) {
 					$query = "UPDATE #__clm_user " . " SET jid = " . $email_josid[$emails] . " , published = " . $publish . " WHERE email = '" . $emails . "'" . " AND sid =" . $saison . " AND user_clm < 80 ";
-					$db->setQuery($query);
-					$db->query();
+					//$db->setQuery($query);
+					//$db->query();
+					clm_core::$db->query($query);	
 					$query = "UPDATE #__users " . " SET block =" . $block . " WHERE email = '" . $emails . "'" . " AND gid < 24 ";
-					$db->setQuery($query);
-					$db->query();
+					//$db->setQuery($query);
+					//$db->query();
+					clm_core::$db->query($query);	
 					$jid_new[$email_altjid[$emails]] = $email_josid[$emails];
 				}
 			}
@@ -1087,7 +1126,8 @@ class CLMControllerDB extends JControllerLegacy {
 		if ($liga != "new") {
 			$row->load($liga);
 		}
-		$row->name = utf8_encode(substr($liga_daten[0], 3));
+		$row->name = clm_core::$load->utf8encode(substr($liga_daten[0], 3));
+		if (substr($row->name,0,1) == "'") $row->name = substr($row->name, 1);
 		$row->sid = $saison;
 		$row->teil = $liga_daten[2];
 		$row->stamm = $liga_daten[3];
@@ -1118,14 +1158,14 @@ class CLMControllerDB extends JControllerLegacy {
 		$row->order = $liga_daten[22];
 		$row->rnd = $liga_daten[23];
 		$row->published = $liga_daten[24];
-		$bem = utf8_encode($liga_daten[25]);
+		$bem = clm_core::$load->utf8encode($liga_daten[25]);
 		$neu = str_replace('\r\n', "\n", $bem);
 		$row->bemerkungen = $neu;
-		$bem = utf8_encode($liga_daten[26]);
+		$bem = clm_core::$load->utf8encode($liga_daten[26]);
 		$neu = str_replace('\r\n', "\n", $bem);
 		$row->bem_int = $neu;
 		$row->checked_out_time = $liga_daten[27];
-		$row->ordering = substr($liga_daten[28], 0, -4);
+		$row->ordering = 0;  //substr($liga_daten[28], 0, -4);
 		$row->b_wertung = $liga_daten[29];
 		$row->liga_mt = $liga_daten[30];
 		$row->tiebr1 = $liga_daten[31];
@@ -1135,7 +1175,8 @@ class CLMControllerDB extends JControllerLegacy {
 		$row->anzeige_ma = $liga_daten[35];
 		$row->params = $liga_daten[36];
  		if (!$row->store()) {
-			return JError::raiseWarning(500, $row->getError());
+			$mainframe->enqueueMessage($row->getError(),'warning');
+			return;
 		}
 		// Neue Liga ID holen
 		$lid = $row->id;
@@ -1144,8 +1185,8 @@ class CLMControllerDB extends JControllerLegacy {
 			$verein = explode("','", $ver_dwz[$x]);
 			$zps = $verein[1];
 			$lv = $verein[2];
-			$verb = utf8_encode($verein[3]);
-			$name = utf8_encode(substr($verein[4], 0, -2));
+			$verb = clm_core::$load->utf8encode($verein[3]);
+			$name = clm_core::$load->utf8encode(substr($verein[4], 0, -2));
 			$sql = " SELECT ZPS FROM #__clm_dwz_vereine " . " WHERE sid = " . $saison . " AND ZPS ='$zps'";
 			$db->setQuery($sql);
 			$dwz_exist = $db->loadObjectList();
@@ -1154,22 +1195,24 @@ class CLMControllerDB extends JControllerLegacy {
 				$sql = " INSERT INTO #__clm_dwz_vereine (`sid`,`ZPS`, `LV`,`Verband`,`Vereinname`) VALUES"
 			." ('$saison','$zps','$lv','$verb','$name')"
 			;
-				$db->setQuery($sql);
-				$db->query();
+				//$db->setQuery($sql);
+				//$db->query();
+				clm_core::$db->query($sql);	
 			}
 		}
 		// Mannschaften anlegen
 		// Neue Liga -> alte Daten löschen
 		if ($liga != "new") {
 			$sql = " DELETE FROM #__clm_mannschaften WHERE liga = $liga AND sid = $saison";
-			$db->setQuery($sql);
-			$db->query();
+			//$db->setQuery($sql);
+			//$db->query();
+			clm_core::$db->query($sql);	
 		}
 		for ($x = 0;$x < $cnt_man;$x++) {
-			$man_einzel = explode("','", $man_daten[$x]);
+			$man_einzel = explode("','", substr($man_daten[$x],0,-2));
 			$row = JTable::getInstance('mannschaften', 'TableCLM');
 			$row->sid = $saison;
-			$row->name = utf8_encode($man_einzel[1]);
+			$row->name = clm_core::$load->utf8encode($man_einzel[1]);
 			if ($liga == "new") {
 				$row->liga = $lid;
 			} else {
@@ -1185,21 +1228,26 @@ class CLMControllerDB extends JControllerLegacy {
 			} else {
 				$row->mf = $jid_new[(int)$man_einzel[8]];
 			}
-			$row->datum = $man_einzel[9];
-			$row->edit_datum = $man_einzel[10];
-			$bem = utf8_encode($man_einzel[11]);
+			$row->sg_zps = $man_einzel[9];
+			$row->datum = $man_einzel[10];
+			$row->edit_datum = $man_einzel[11];
+			$bem = clm_core::$load->utf8encode($man_einzel[12]);
 			$neu = str_replace('\r\n', "\n", $bem);
 			$row->lokal = $neu;
-			$bem = utf8_encode($man_einzel[12]);
+			$bem = clm_core::$load->utf8encode($man_einzel[13]);
 			$neu = str_replace('\r\n', "\n", $bem);
 			$row->bemerkungen = $neu;
-			$bem = utf8_encode($man_einzel[13]);
+			$bem = clm_core::$load->utf8encode($man_einzel[14]);
 			$neu = str_replace('\r\n', "\n", $bem);
 			$row->bem_int = $neu;
-			$row->published = $man_einzel[14];
-			$row->ordering = substr($man_einzel[15], 0, -1);
+			$row->published = $man_einzel[15];
+			$row->ordering = 0; //substr($man_einzel[16], 0, -1);
+			$row->rankingpos = $man_einzel[17];
+			$row->abzug = $man_einzel[18];
+			$row->bpabzug = $man_einzel[19];
 			if (!$row->store()) {
-				return JError::raiseWarning(500, $row->getError());
+				$mainframe->enqueueMessage($row->getError(),'warning');
+				return;
 			}
 		}
 		// ggf. Spieler anlegen
@@ -1214,33 +1262,40 @@ class CLMControllerDB extends JControllerLegacy {
 			if (!$dwz_exist OR $dwz_exist[0]->ZPS = "") {
 				$pkz = $spieler[1];
 				$status = $spieler[4];
-				$name = utf8_encode($spieler[5]);
+				$name = clm_core::$load->utf8encode($spieler[5]);
 				$name_g = $spieler[6];
 				$gesch = $spieler[7];
 				$berech = $spieler[8];
 				$geb_j = $spieler[9];
 				$ausw = $spieler[10];
+				if ($ausw == '') $ausw = 0;
 				$dwz = $spieler[11];
+				if ($dwz == '') $dwz = 0;
 				$dwz_i = $spieler[12];
+				if ($dwz_i == '') $dwz_i = 0;
 				$elo = $spieler[13];
+				if ($elo == '') $elo = 0;
 				$titel = $spieler[14];
 				$f_id = $spieler[15];
-				$f_land = utf8_encode(substr($spieler[16], 0, -2));
+				if ($f_id == '') $f_id = 0;
+				$f_land = clm_core::$load->utf8encode(substr($spieler[16], 0, -2));
 				$sql = " INSERT INTO `#__clm_dwz_spieler` ( `sid`, `PKZ`, `ZPS`, `Mgl_Nr`, `Status`, `Spielername`, `Spielername_G`, `Geschlecht`, `Spielberechtigung`, `Geburtsjahr`, `Letzte_Auswertung`, `DWZ`, `DWZ_Index`, `FIDE_Elo`, `FIDE_Titel`, `FIDE_ID`, `FIDE_Land`) VALUES " . " ('$saison','$pkz','$zps','$mgl','$status','$name','$name_g','$gesch','$berech','$geb_j','$ausw','$dwz','$dwz_i','$elo','$titel','$f_id','$f_land')";
-				$db->setQuery($sql);
-				$db->query();
+				//$db->setQuery($sql);
+				//$db->query();
+				clm_core::$db->query($sql);	
 			}
 		}
 		// Meldelisten anlegen
 		// Neue Liga -> alte Daten löschen
 		if ($liga != "new") {
 			$sql = " DELETE FROM #__clm_meldeliste_spieler WHERE lid = $liga AND sid = $saison";
-			$db->setQuery($sql);
-			$db->query();
+			//$db->setQuery($sql);
+			//$db->query();
+			clm_core::$db->query($sql);	
 		}
 		for ($x = 0;$x < $cnt_spl;$x++) {
-			$spl_einzel = explode("','", $melde_daten[$x]);
-			/* Aus einem unbekannten Grund will es so nicht funktionieren -> später prüfen
+			$spl_einzel = explode("','", substr($melde_daten[$x],0,-2));
+
 			$row 		= JTable::getInstance( 'meldelisten', 'TableCLM' );
 			$row->sid		= $saison;
 			if ($liga =="new") {	$row->lid = $lid; }
@@ -1251,33 +1306,31 @@ class CLMControllerDB extends JControllerLegacy {
 			$row->zps		= $spl_einzel[5];
 			$row->status		= $spl_einzel[6];
 			$row->ordering		= $spl_einzel[7];
-			$row->DWZ		= $spl_einzel[8];
-			$row->I0		= $spl_einzel[9];
-			$row->Punkte		= $spl_einzel[10];
-			$row->Partien		= $spl_einzel[11];
-			$row->We		= $spl_einzel[12];
-			$row->Leistung		= $spl_einzel[13];
-			$row->EFaktor		= $spl_einzel[14];
-			$row->Niveau		= $spl_einzel[15];
-			$row->sum_saison	= substr($spl_einzel[16], 0, -2);
+			$row->start_dwz		= $spl_einzel[8];
+			$row->start_I0		= $spl_einzel[9];
+			$row->FIDEelo		= $spl_einzel[10];
+			$row->DWZ		= $spl_einzel[11];
+			$row->I0		= $spl_einzel[12];
+			$row->Punkte		= $spl_einzel[13];
+			$row->Partien		= $spl_einzel[14];
+			$row->We		= $spl_einzel[15];
+			$row->Leistung		= $spl_einzel[16];
+			$row->EFaktor		= $spl_einzel[17];
+			$row->Niveau		= $spl_einzel[18];
+			$row->sum_saison	= $spl_einzel[19];
 			
-			if (!$row->store()) { return JError::raiseWarning( 500,$row->getError() );}
-			*/
-			if ($liga == "new") {
-				$mlid = $lid;
-			} else {
-				$mlid = $liga;
+			if (!$row->store()) {
+				$mainframe->enqueueMessage($row->getError(),'warning');
+				return;
 			}
-			$sum_saison = substr($spl_einzel[16], 0, -2);
-			$query = "INSERT INTO #__clm_meldeliste_spieler " . " ( `sid`, `lid`, `mnr`, `snr`, `mgl_nr`, `zps`, `status`, `ordering`, `DWZ`, `I0`, `Punkte`, `Partien`, `We`, `Leistung`, `EFaktor`, `Niveau`, `sum_saison`) " . " VALUES ('$saison','$mlid','$spl_einzel[2]','$spl_einzel[3]','$spl_einzel[4]','$spl_einzel[5]','$spl_einzel[6]','$spl_einzel[7]','$spl_einzel[8]','$spl_einzel[9]','$spl_einzel[10]','$spl_einzel[11]','$spl_einzel[12]','$spl_einzel[13]','$spl_einzel[14]','$spl_einzel[15]','$sum_saison') ";
-			$db->setQuery($query);
-			$db->query();
 		}
+
 		// Mannschaftsrunden anlegen
 		if ($liga != "new") {
 			$sql = " DELETE FROM #__clm_rnd_man WHERE lid = $liga AND sid = $saison ";
-			$db->setQuery($sql);
-			$db->query();
+			//$db->setQuery($sql);
+			//$db->query();
+			clm_core::$db->query($sql);	
 		}
 		for ($x = 0;$x < $cnt_rnd_man;$x++) {
 			$man_rnd = explode("','", $man_rnd_daten[$x]);
@@ -1294,10 +1347,14 @@ class CLMControllerDB extends JControllerLegacy {
 			$row->heim = $man_rnd[5];
 			$row->tln_nr = $man_rnd[6];
 			$row->gegner = $man_rnd[7];
-			$row->brettpunkte = $man_rnd[8];
-			$row->manpunkte = $man_rnd[9];
-			$row->bp_sum = $man_rnd[10];
-			$row->mp_sum = $man_rnd[11];
+			if ($man_rnd[8] == 'NULL') $row->brettpunkte = NULL;
+			else $row->brettpunkte = $man_rnd[8];
+			if ($man_rnd[9] == 'NULL') $row->manpunkte = NULL;
+			else $row->manpunkte = $man_rnd[9];
+			if ($man_rnd[10] == 'NULL') $row->bp_sum = NULL;
+			else $row->bp_sum = $man_rnd[10];
+			if ($man_rnd[11] == 'NULL') $row->mp_sum = NULL;
+			else $row->mp_sum = $man_rnd[11];
 			if ($man_rnd[12] != "NULL" AND $jid_new[$man_rnd[12]] != "") {
 				$row->gemeldet = $jid_new[$man_rnd[12]];
 				if ($import > 1) {
@@ -1338,16 +1395,18 @@ class CLMControllerDB extends JControllerLegacy {
 			$row->edit_zeit = $man_rnd[16];
 			$row->dwz_zeit = $man_rnd[17];
 			$row->published = $man_rnd[18];
-			$row->ordering = substr($man_rnd[19], 0, -1);
+			$row->ordering = substr($man_rnd[19], 0, -2);
 			if (!$row->store()) {
-				return JError::raiseWarning(500, $row->getError());
+				$mainframe->enqueueMessage($row->getError(),'warning');
+				return;
 			}
 		}
 		// Spielerrunden anlegen
 		if ($liga != "new") {
 			$sql = " DELETE FROM #__clm_rnd_spl WHERE lid = $liga AND sid = $saison ";
-			$db->setQuery($sql);
-			$db->query();
+			//$db->setQuery($sql);
+			//$db->query();
+			clm_core::$db->query($sql);	
 		}
 		for ($x = 0;$x < $cnt_rnd_spl;$x++) {
 			$spl_rnd = explode("','", $spl_rnd_daten[$x]);
@@ -1402,14 +1461,16 @@ class CLMControllerDB extends JControllerLegacy {
 				}
 			}
 			if (!$row->store()) {
-				return JError::raiseWarning(500, $row->getError());
+				$mainframe->enqueueMessage($row->getError(),'warning');
+				return;
 			}
 		}
 		// Rundentermine anlegen
 		if ($liga != "new") {
 			$sql = " DELETE FROM #__clm_runden_termine WHERE liga = $liga AND sid = $saison ";
-			$db->setQuery($sql);
-			$db->query();
+			//$db->setQuery($sql);
+			//$db->query();
+			clm_core::$db->query($sql);	
 		}
 		for ($x = 0;$x < $cnt_rnd_ter;$x++) {
 			$spl_rnd = explode("','", $rnd_ter_daten[$x]);
@@ -1426,10 +1487,10 @@ class CLMControllerDB extends JControllerLegacy {
 			$row->meldung = $spl_rnd[5];
 			$row->sl_ok = $spl_rnd[6];
 			$row->published = $spl_rnd[7];
-			$bem = utf8_encode($spl_rnd[8]);
+			$bem = clm_core::$load->utf8encode($spl_rnd[8]);
 			$neu = str_replace('\r\n', "\n", $bem);
 			$row->bemerkungen = $neu;
-			$bem = utf8_encode($spl_rnd[9]);
+			$bem = clm_core::$load->utf8encode($spl_rnd[9]);
 			$neu = str_replace('\r\n', "\n", $bem);
 			$row->bem_int = $neu;
 			if ($spl_rnd[10] != "NULL" AND $jid_new[$spl_rnd[10]] != "") {
@@ -1458,28 +1519,30 @@ class CLMControllerDB extends JControllerLegacy {
 			}
 			$row->zeit = $spl_rnd[12];
 			$row->edit_zeit = $spl_rnd[13];
-			$row->ordering = substr($spl_rnd[14], 0, -1);
+			$row->ordering = substr($spl_rnd[14], 0, -2);
 			if (!$row->store()) {
-				return JError::raiseWarning(500, $row->getError());
+				$mainframe->enqueueMessage($row->getError(),'warning');
+				return;
 			}
 		}
 		// Ranglistengruppe anlegen
 		// Ranglistendaten auslesen
 	  if ($rang_name > "0") {
 		$rang_dat = explode("','", $rang_name_daten[0]);
-		$gruppe = utf8_encode(substr($rang_dat[0], 3));
+		$gruppe = clm_core::$load->utf8encode(substr($rang_dat[0], 3));
 		$melde = $rang_dat[1];
-		$gesch = utf8_encode($rang_dat[2]);
-		$alter = $rang_dat[3];
-		$grenze = $rang_dat[4];
-		$ruser = $rang_dat[6];
-		$r_clm = $rang_dat[7];
+		$gesch = clm_core::$load->utf8encode($rang_dat[2]);
+		$grenze = $rang_dat[3];
+		$alter = $rang_dat[4];
+		$status = $rang_dat[5];
+		$ruser = $rang_dat[7];
 		$bem = $rang_dat[8];
 		$ibem = $rang_dat[9];
 		$order = $rang_dat[10];
 		$publish = substr($rang_dat[11], 0, -2);;
 		// existiert Rangliste schon ?!?
-		$query = " SELECT id FROM #__clm_rangliste_name " . " WHERE Gruppe = '" . $gruppe . "'" . " AND Meldeschluss = '" . $melde . "'" . " AND geschlecht  = '" . $gesch . "'" . " AND alter_grenze = " . $grenze . " AND `alter` = " . $alter . " AND sid = " . $saison . " AND user = " . $ruser . " AND user_clm = " . $r_clm;
+		$query = " SELECT id FROM #__clm_rangliste_name " . " WHERE Gruppe = '" . $gruppe . "'" . " AND Meldeschluss = '" . $melde . "'";
+		$query .= " AND geschlecht  = '" . $gesch . "'" . " AND alter_grenze = " . $grenze . " AND `alter` = " . $alter . " AND `status` = '" . $status . "' AND sid = " . $saison . " AND user = " . $ruser;
 		$db->setQuery($query);
 		$res = $db->loadResult();
 		if (!$res OR $res == "0") {
@@ -1489,15 +1552,16 @@ class CLMControllerDB extends JControllerLegacy {
 			$row->geschlecht = $gesch;
 			$row->alter_grenze = $grenze;
 			$row->alter = $alter;
+			$row->status = $status;
 			$row->sid = $saison;
 			$row->user = $ruser;
-			$row->user_clm = $r_clm;
 			$row->bemerkungen = $bem;
 			$row->bem_int = $ibem;
 			$row->ordering = $order;
 			$row->published = $publish;
 			if (!$row->store()) {
-				return JError::raiseWarning(500, $row->getError());
+				$mainframe->enqueueMessage($row->getError(),'warning');
+				return;
 			}
 			$rang_res = $row->id;
 		} else {
@@ -1517,7 +1581,8 @@ class CLMControllerDB extends JControllerLegacy {
 				$row->bem_int = $rid[6];
 				$row->ordering = substr($rid[7], 0, -2);
 				if (!$row->store()) {
-					return JError::raiseWarning(500, $row->getError());
+					$mainframe->enqueueMessage($row->getError(),'warning');
+					return;
 				}
 			}
 		}
@@ -1545,7 +1610,8 @@ class CLMControllerDB extends JControllerLegacy {
 					$row->bem_int = $rid[6];
 					$row->ordering = substr($rid[7], 0, -2);
 					if (!$row->store()) {
-						return JError::raiseWarning(500, $row->getError());
+						$mainframe->enqueueMessage($row->getError(),'warning');
+						return;
 					}
 				}
 			}
@@ -1564,7 +1630,8 @@ class CLMControllerDB extends JControllerLegacy {
 				$row->man_nr = $rspl[5];
 				$row->sid = $saison;
 				if (!$row->store()) {
-					return JError::raiseWarning(500, $row->getError());
+					$mainframe->enqueueMessage($row->getError(),'warning');
+					return;
 				}
 			}
 		}
@@ -1572,6 +1639,7 @@ class CLMControllerDB extends JControllerLegacy {
 		else {
 			for ($x = 0;$x < $rang_spl;$x++) {
 				$rspl = explode("','", $rang_spl_daten[$x]);
+				$row = JTable::getInstance('rangspieler', 'TableCLM');
 				$row->Gruppe = $res;
 				$row->ZPS = $rspl[1];
 				$row->Mgl_Nr = $rspl[2];
@@ -1579,7 +1647,7 @@ class CLMControllerDB extends JControllerLegacy {
 				$row->Rang = $rspl[4];
 				$row->man_nr = $rspl[5];
 				$row->sid = $saison;
-				$query = " SELECT Rang FROM #__clm_rangliste_spieler " . " WHERE Gruppe = '" . $res . "'" . " AND ZPS = '$saison'" . " AND Mgl_Nr = '$zps'";
+				$query = " SELECT Rang FROM #__clm_rangliste_spieler " . " WHERE Gruppe = '" . $res . "'" . " AND ZPS = '$row->ZPS'" . " AND Mgl_Nr = '$row->Mgl_Nr'";
 				$db->setQuery($query);
 				$res_spl = $db->loadResult();
 				if (!$res_spl OR $res_spl == "0") {
@@ -1592,262 +1660,15 @@ class CLMControllerDB extends JControllerLegacy {
 					$row->man_nr = $rspl[5];
 					$row->sid = $saison;
 					if (!$row->store()) {
-						return JError::raiseWarning(500, $row->getError());
+						$mainframe->enqueueMessage($row->getError(),'warning');
+						return;
 					}
 				}
 			}
 		}
 	  }
 		$msg = JText::_('DB_IMPORT') . ' ' . $datei . ' ' . JText::_('DB_ERFOLGREICH');
-		$mainframe->redirect('index.php?option=com_clm&view=db', $msg, "message");
+		$mainframe->enqueueMessage($msg,'message');
+		$mainframe->redirect('index.php?option=com_clm&view=db');
 	}
-	// Wird das noch verwendet?
-	/*
-	// Englische Version
-	if($version == 2 ) {
-	$fp	= fopen($filesDir,"r");
-	$pre_sql= " REPLACE INTO `dwz_spieler` (`ZPS`, `Mgl_Nr`, `clubname`, `Spielername`,`Geschlecht`,`Geburtsjahr`,`DWZ`,`category`,`grade`,`grade_last`,`grade_games`,`FIDE_ID`,`FIDE_Land`) VALUES ";
-	
-	$sql = " SELECT ZPS, Vereinname FROM `dwz_vereine` ";
-	$db->setQuery($sql);
-	$engl_vereine = $db->loadObjectList();
-	
-	// Array für die Zuordnung des Namens zum Club Code
-	foreach($engl_vereine AS $vereine_arr){ $vereine[$vereine_arr->Vereinname] = $vereine_arr->ZPS; }
-	
-	while($zeile = fgetcsv($fp,500,",")){
-		$Nr++;
-	if($Nr > 1 AND $vereine[$zeile[12]] !="" ) {
-		$ssql = "('".$vereine[$zeile[12]]."','".$zeile[0]."','".$zeile[12]."','".$zeile[1]."','".$zeile[2]."','".$zeile[3]."','".$zeile[5]."','".$zeile[4]."','".$zeile[5]."','".$zeile[6]."','".$zeile[7]."','".$zeile[18]."','".$zeile[20]."')";
-		$datCounter++;
-		}
-	$dat	= $pre_sql.$ssql;
-	$db->setQuery($dat);
-	$db->query();
-		}
-	fclose($fp);
-	}
-	*/
-	// Keine Methode nach dem Umwandeln der DB wieder auf eine Deutsch Variante zu kommen?
-	/*
-	public static function convert_db ()
-	{
-	$mainframe	= JFactory::getApplication();
-	// Check for request forgeries
-	JRequest::checkToken() or die( 'Invalid Token' );
-	$db 		= JFactory::getDBO();
-	$option		= JRequest::getCmd('option');
-	$section	= JRequest::getVar('section');
-	
-	// Konfigurationsparameter auslesen
-	$config		= clm_core::$db->config();
-	$version	= $config->version;
-	$lv		= $config->lv;
-	
-	// DB auf deutsche Version ändern
-	if($version =="0"){
-	
-	}
-	
-	// DB auf niederländische Version ändern
-	if($version =="1"){
-	
-	// Prüfen ob benötigte Dateien vorhanden sind
-	$path		= 'components'.DS.$option.DS.upload.DIRECTORY_SEPARATOR;
-	$leden		= $path.'leden.csv';
-	$verenigingen	= $path.'verenigingen.csv';
-	
-	if ( !file_exists( $leden) ) {
-	JError::raiseWarning( 500, JText::_( 'DB_DATEI_LEDEN') );
-	//$mainframe->redirect( 'index.php?option='. $option.'&section='.$section );
-	$this->setRedirect('index.php?option=com_clm&view=db'); 
-		}
-	
-	if ( !file_exists( $verenigingen) ) {
-	JError::raiseWarning( 500, JText::_( 'DB_DATEI_VEREINIGEN' ) );
-	//$mainframe->redirect( 'index.php?option='. $option.'&section='.$section );
-	$this->setRedirect('index.php?option=com_clm&view=db'); 
-		}
-	
-	
-	// Tabellen bearbeiten
-	$sql = "ALTER TABLE `dwz_spieler` CHANGE `Mgl_Nr` `Mgl_Nr` CHAR( 7 ) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL"
-	;
-	$db->setQuery($sql);
-	$db->query();
-	
-	$sql = "ALTER TABLE `dwz_verbaende` CHANGE `Verband` `Verband` CHAR( 4 ) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,"
-	." CHANGE `LV` `LV` CHAR( 2 ) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,"
-	." CHANGE `Uebergeordnet` `Uebergeordnet` CHAR( 4 ) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL"
-	;
-	$db->setQuery($sql);
-	$db->query();
-	
-	$sql = "ALTER TABLE `dwz_vereine` CHANGE `Verband` `Verband` CHAR( 4 ) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,"
-	." CHANGE `LV` `LV` CHAR( 2 ) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL"
-	;
-	$db->setQuery($sql);
-	$db->query();
-	
-	$sql = "ALTER TABLE `#__clm_dwz_spieler` CHANGE `Mgl_Nr` `Mgl_Nr` VARCHAR( 7 ) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL"
-	;
-	$db->setQuery($sql);
-	$db->query();
-	
-	$sql = "ALTER TABLE `#__clm_dwz_vereine` CHANGE `Verband` `Verband` CHAR( 4 ) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL,"
-	." CHANGE `LV` `LV` CHAR( 2 ) CHARACTER SET latin1 COLLATE latin1_swedish_ci NOT NULL "
-	;
-	$db->setQuery($sql);
-	$db->query();
-	
-	$sql = "ALTER TABLE `#__clm_meldeliste_spieler` CHANGE `mgl_nr` `mgl_nr` MEDIUMINT( 7 ) UNSIGNED NOT NULL DEFAULT '0' "
-	;
-	$db->setQuery($sql);
-	$db->query();
-	
-	$sql = "ALTER TABLE `#__clm_rangliste_spieler` CHANGE `Mgl_Nr` `Mgl_Nr` MEDIUMINT( 7 ) UNSIGNED NOT NULL DEFAULT '0'"
-	;
-	$db->setQuery($sql);
-	$db->query();
-	
-	$sql = "ALTER TABLE `#__clm_rnd_spl` CHANGE `spieler` `spieler` MEDIUMINT( 7 ) UNSIGNED NULL DEFAULT NULL,"
-	." CHANGE `gegner` `gegner` MEDIUMINT( 7 ) UNSIGNED NULL DEFAULT NULL"
-	;
-	$db->setQuery($sql);
-	$db->query();
-	
-	///////////////////////////////////
-	// Noch KEINE SWT Unterstützung !!
-	///////////////////////////////////
-	
-	$sql = "ALTER TABLE `#__clm_turniere_rnd_spl` CHANGE `spieler` `spieler` MEDIUMINT( 7 ) UNSIGNED NULL DEFAULT NULL , "
-	." CHANGE `gegner` `gegner` MEDIUMINT( 7 ) UNSIGNED NULL DEFAULT NULL "
-	;
-	$db->setQuery($sql);
-	$db->query();
-	
-	$sql = "ALTER TABLE `#__clm_turniere_tlnr` CHANGE `mgl_nr` `mgl_nr` MEDIUMINT( 7 ) UNSIGNED NOT NULL DEFAULT '0' "
-	;
-	$db->setQuery($sql);
-	$db->query();
-	
-	
-	// alte Verbände löschen
-	$sql = "TRUNCATE TABLE `dwz_verbaende`";
-	$db->setQuery($sql);
-	$db->query();
-	
-	// Verbände in SQL DB
-	$sql = " REPLACE INTO `dwz_verbaende` (`Verband`, `LV`, `Uebergeordnet`, `Verbandname`) VALUES "
-		."('00','00','0000','KNSB'),"
-		."('01','01','0000','FSB'),"
-		."('02','02','0000','NOSBO'),"
-		."('03','03','0000','SBO'),"
-		."('04','04','0000','OSBO'),"
-		."('06','06','0000','SGS'),"
-		."('08','08','0000','SGA'),"
-		."('09','09','0000','NHSB'),"
-		."('11','11','0000','LeiSB'),"
-		."('12','12','0000','HSB'),"
-		."('14','14','0000','RSB'),"
-		."('16','16','0000','ZSB'),"
-		."('17','17','0000','NBSB'),"
-		."('19','19','0000','LiSB'),"
-		."('20','20','0000','Onbekend'),"
-		."('30','30','0000','Scholen')"
-		;
-	$db->setQuery($sql);
-	$db->query();
-	
-	unset($sql);
-	// Vereine in SQL DB
-	// alte Vereine löschen
-	$del_sql = "TRUNCATE TABLE `dwz_vereine`";
-	$db->setQuery($del_sql);
-	$db->query();
-	
-	$Nr = 0;
-	$fp = fopen($verenigingen,"r");
-	while($zeile = fgetcsv($fp,500,",")){
-	$Nr++;
-	
-	if($Nr == 2) {
-	$sql = $sql."(".$zeile[0].",".substr($zeile[0], 0,-3)."',".substr($zeile[0], 0,-3)."',".$zeile[1].")";
-		}
-	if($Nr > 2) {
-		$sql = $sql.",(".$zeile[0].",".substr($zeile[0], 0,-3)."',".substr($zeile[0], 0,-3)."',".$zeile[1].")";
-		}
-		}
-	fclose($fp);
-	
-	$pre_sql_verein	= " REPLACE INTO `dwz_vereine` (`ZPS`, `LV`, `Verband`, `Vereinname`) VALUES ";
-	$dat		= $pre_sql_verein.$sql;
-	$db->setQuery($dat);
-	$db->query();
-	
-	// Spieler in SQL DB
-	// alte Vereine löschen
-	$del_sql = "TRUNCATE TABLE `dwz_spieler`";
-	$db->setQuery($del_sql);
-	$db->query();
-	
-	// 1)  Relatienummer		Mgl_nr
-	// 2)  VerenigingID		ZPS
-	// 3)  LidmaatschapTypeID	Mitgliedschaftstyp, H=Haupt, D=Passiv
-	// 4)  Achternaam;		Nachname
-	// 5)  Tussenvoegsel		Zwischenstück (van, van der, etc.)
-	// 6)  Voornaam			Vorname
-	// 7)  Voorletters		Vorbuchstaben
-	// 8)  FIDEnaam			FIDE Name
-	// 9)  Geslacht			Geschlecht
-	// 10) Geboren			Geburtstag
-	// 11) Nationaliteit		Nationalität
-	// 12) KNSBRating		DWZ
-	// 13) KNSBJeugdRating		Jugend Rating
-	// 14) AantalJeugdPartijen	Anzahl Jugend Partien
-	// 15) AantalPartijen		Anzahl Partien
-	// 16) FIDERating		FIDERating
-	// 17) FIDEid			FIDEid
-	// 18) Titel			Titel
-	// 19) BondID			Bund ID (Verband)
-	
-	unset($zeile);
-	$Nr = 0;
-	$fp = fopen($leden,"r");
-	while($zeile = fgetcsv($fp,500,";")){
-	$Nr++;
-	
-	$pre_sql	= " REPLACE INTO `dwz_spieler` (`ZPS`, `Mgl_Nr`, `Status`, `Spielername`,`Geschlecht`,`Geburtsjahr`,`DWZ`,`DWZ_Index`,`FIDE_Elo`,`FIDE_Titel`,`FIDE_ID`,`FIDE_Land`) VALUES ";
-	
-	if($Nr > 1 AND $lv == $zeile[18] ) {
-		$ssql = "('".$zeile[1]."','".$zeile[0]."','".$zeile[2]."','".$zeile[7]."','".$zeile[8]."','".$zeile[9]."','".$zeile[11]."','','".$zeile[15]."','".$zeile[17]."','".$zeile[16]."','".$zeile[10]."')";
-		}
-	$dat		= $pre_sql.$ssql;
-	$db->setQuery($dat);
-	$db->query();
-	
-		}
-	fclose($fp);
-	
-	}
-	
-	
-	// Log
-	// Konfigurationsparameter auslesen
-	$config		= clm_core::$db->config();
-	$version	= $config->version;
-	if($version =="0"){ $db_version = "deutsche";}
-	if($version =="1"){ $db_version = "niederländische";}
-	
-	// Log schreiben
-	$clmLog = new CLMLog();
-	$clmLog->aktion = "DB auf $version geändert";
-	$clmLog->params = array('cids' => $file['size']);
-	$clmLog->write();
-	
-	
-	$msg = JText::_( 'DB_DATENBANK').' '.$db_version.' '.JText::_( 'DB_VERSION');
-	$mainframe->redirect('index.php?option=com_clm&view=db',$msg,"message"); 
-	}
-	*/
 } ?>

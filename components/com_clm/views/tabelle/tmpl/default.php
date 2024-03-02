@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2019 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2022 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -9,14 +9,14 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 defined('_JEXEC') or die('Restricted access');
-JHtml::_('behavior.tooltip', '.CLMTooltip');
+
+require_once (JPATH_COMPONENT . DS . 'includes' . DS . 'clm_tooltip.php');
  
-$lid		= JRequest::getInt('liga','1'); 
-$sid		= JRequest::getInt('saison',0);
-$runde		= JRequest::getInt('runde');
-$item		= JRequest::getInt('Itemid','1');
+$lid		= clm_core::$load->request_int('liga',1); 
+$sid		= clm_core::$load->request_int('saison',0);
+$runde		= clm_core::$load->request_int('runde');
+$item		= clm_core::$load->request_int('Itemid',1);
 $liga		= $this->liga;
 	//Liga-Parameter aufbereiten
 	$paramsStringArray = explode("\n", $liga[0]->params);
@@ -30,7 +30,11 @@ $liga		= $this->liga;
 	if (!isset($params['dwz_date'])) $params['dwz_date'] = '1970-01-01';
 $punkte		= $this->punkte;
 $spielfrei	= $this->spielfrei;
-$dwzschnitt	= $this->dwzschnitt;
+//$dwzschnitt	= $this->dwzschnitt;
+
+// Test MP als Feinwertung -> d.h. Spalte MP als Hauptwertung wird dann unterdrückt
+if ($liga[0]->tiebr1 == 9 OR $liga[0]->tiebr2 == 9 OR $liga[0]->tiebr3 == 9) $columnMP = 0;
+else $columnMP = 1;
 
 if ($sid == 0) {
 	$db	= JFactory::getDBO();
@@ -42,7 +46,7 @@ if ($sid == 0) {
 	$db->setQuery($query);
 	$zz	=$db->loadObjectList();
 	if (isset($zz)) {
-		JRequest::setVar('saison', $zz[0]->sid);
+		$_GET['saison'] = $zz[0]->sid;
 		$sid = $zz[0]->sid;
 	}
 }
@@ -58,6 +62,7 @@ require_once(JPATH_COMPONENT.DS.'includes'.DS.'css_path.php');
 	$config = clm_core::$db->config();
 	$pdf_melde = $config->pdf_meldelisten;
 	$man_showdwz = $config->man_showdwz;
+	$show_sl_mail = $config->show_sl_mail;
 
 		// Userkennung holen
 	$user	=JFactory::getUser();
@@ -87,18 +92,6 @@ elseif (!$liga OR $liga[0]->published == 0) {
 
 } else {
 
-	// Array für DWZ Schnitt setzen
-	$dwz = array();
-	for ($y=1; $y< ($liga[0]->teil)+1; $y++) {
-		if ($params['dwz_date'] == '0000-00-00' OR $params['dwz_date'] == '1970-01-01') {
-			if(isset($dwzschnitt[($y-1)]->dwz)) {
-			$dwz[$dwzschnitt[($y-1)]->tlnr] = $dwzschnitt[($y-1)]->dwz; }
-		} else {
-			if(isset($dwzschnitt[($y-1)]->start_dwz)) {
-			$dwz[$dwzschnitt[($y-1)]->tlnr] = $dwzschnitt[($y-1)]->start_dwz; }
-		}
-	}
-
 	// Spielfreie Teilnehmer finden //
 	$diff = $spielfrei[0]->count;
 	?>
@@ -112,7 +105,15 @@ elseif (!$liga OR $liga[0]->published == 0) {
 
 	<?php
 	echo CLMContent::createPDFLink('tabelle', JText::_('TABELLE_PDF'), array('saison' => $sid, 'layout' => 'tabelle', 'liga' => $lid));
-	echo CLMContent::createViewLink('rangliste', JText::_('TABELLE_GOTO_RANGLISTE'), array('saison' => $sid, 'liga' => $lid) );
+	echo CLMContent::createViewLink('rangliste', JText::_('TABELLE_GOTO_RANGLISTE'), array('saison' => $sid, 'liga' => $lid, 'Itemid' => $item) );
+
+	// DWZ Durchschnitte - Aufstellung
+	$result = clm_core::$api->db_nwz_average($lid);
+//echo "<br>lid:"; var_dump($lid);
+//echo "<br>result:"; var_dump($result);
+	$a_average_dwz_lineup = $result[2];
+//echo "<br>a_average_dwz_p:"; var_dump($a_average_dwz_p);
+//die();
 	?>
 
 	</div></div>
@@ -129,8 +130,9 @@ elseif (!$liga OR $liga[0]->published == 0) {
 			<th class="gsrv"><div><?php echo JText::_('TABELLE_WINS') ?></div></th>
 			<th class="gsrv"><div><?php echo JText::_('TABELLE_DRAW') ?></div></th>
 			<th class="gsrv"><div><?php echo JText::_('TABELLE_LOST') ?></div></th>
-			<th class="mp"><div><?php echo JText::_('MP') ?></div></th>
-			
+			<?php if ($columnMP == 1) { ?>
+				<th class="mp"><div><?php echo JText::_('MP') ?></div></th>
+			<?php } ?>			
 			<?php 
 			if ( $liga[0]->liga_mt == 0) { 
 				echo '<th class="bp"><div>'.JText::_('BP').'</div></th>';
@@ -195,11 +197,13 @@ elseif (!$liga OR $liga[0]->published == 0) {
 					echo '<div>'.$strName.'</div>';
 					if ($man_showdwz == 1) {
 						echo '<div class="dwz">';
-						if (isset($dwz[($punkte[$x]->tln_nr)])) {
+/*						if (isset($dwz[($punkte[$x]->tln_nr)])) {
 							echo "(".round($dwz[($punkte[$x]->tln_nr)]).")"; 
 						} else {
 							echo "(-)";
 						}
+*/
+						echo "(".$a_average_dwz_lineup[$punkte[$x]->tln_nr].")";
 						echo '</div>';
 					}
 				echo '</td>';
@@ -209,8 +213,9 @@ elseif (!$liga OR $liga[0]->published == 0) {
 				echo '<td class="gsrv"><div>'.$punkte[$x]->count_S; echo '</div></td>';
 				echo '<td class="gsrv"><div>'.$punkte[$x]->count_R; echo '</div></td>';
 				echo '<td class="gsrv"><div>'.$punkte[$x]->count_V; echo '</div></td>';
-				echo '<td class="mp"><div>'.$punkte[$x]->mp; if ($punkte[$x]->abzug > 0) echo '*'; echo '</div></td>';
-				
+				if ($columnMP == 1) {
+					echo '<td class="mp"><div>'.$punkte[$x]->mp; if ($punkte[$x]->abzug > 0) echo '*'; echo '</div></td>';
+				}
 				// BP
 				if ( $liga[0]->liga_mt == 0) {
 					echo '<td class="bp"><div>'.$punkte[$x]->bp; if ($punkte[$x]->bpabzug > 0) echo '*'; echo '</div></td>';
@@ -254,7 +259,11 @@ elseif (!$liga OR $liga[0]->published == 0) {
 				?>
 				<div class="ran_chief">
 					<div class="ran_chief_left"><?php echo JText::_('CHIEF') ?></div>
-					<div class="ran_chief_right"><?php echo $liga[0]->sl; ?> | <?php echo JHTML::_( 'email.cloak', $liga[0]->email ); ?></div>	
+					<?php if ($jid > 0 OR $show_sl_mail > 0) { ?>
+						<div class="ran_chief_right"><?php echo $liga[0]->sl; ?> | <?php echo JHTML::_( 'email.cloak', $liga[0]->email ); ?></div>	
+					<?php } else { ?>
+						<div class="ran_chief_right"><?php echo $liga[0]->sl; ?></div>	
+					<?php } ?>
 				</div>
 				<div class="clr"></div>
 				<?php  
@@ -264,7 +273,7 @@ elseif (!$liga OR $liga[0]->published == 0) {
 			if ($liga[0]->bemerkungen <> "") { 
 				?>
 				<div class="ran_note">
-					<div class="ran_note_left"><?php echo JText::_('NOTICE') ?></div>
+					<div class="ran_note_left"><?php echo JText::_('NOTICE_SL') ?></div>
 					<div class="ran_note_right"><?php echo nl2br($liga[0]->bemerkungen); ?></div>
 				</div>
 				<div class="clr"></div>

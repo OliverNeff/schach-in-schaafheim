@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2019 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2022 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -9,22 +9,24 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 defined('_JEXEC') or die('Restricted access');
-JHTML::_( 'behavior.modal' );
+//JHtml::_( 'behavior.modal' );
+//JHtml::_('behavior.tooltip', '.CLMTooltip');
+require_once (JPATH_COMPONENT . DS . 'includes' . DS . 'clm_tooltip.php');
 
 // Stylesheet laden
 require_once(JPATH_COMPONENT.DS.'includes'.DS.'css_path.php');
 
 	
 // Konfigurationsparameter auslesen
-$itemid 		= JRequest::getVar( 'Itemid' );
+$itemid 		= clm_core::$load->request_int( 'Itemid' );
 $config = clm_core::$db->config();
 $countryversion = $config->countryversion;
 $turParams = new clm_class_params($this->turnier->params);
+$typeAccount 	= $turParams->get('typeAccount', 0);
 	
 // CLM-Container
-echo '<div ><div id="turnier_player">';
+echo '<div id="clm"><div id="turnier_player">';
 	
 	
 // Componentheading
@@ -118,6 +120,14 @@ if ($this->playerPhoto != '') { ?>
 					?>
 				</td>
 			</tr>
+			<?php // Online Account
+			if ($typeAccount > 0) { ?>
+			<tr>
+				<td align="left" class="tp_col_1"><?php echo JText::_('REGISTRATION_ACCOUNT_'.$typeAccount) ?>:</td>
+				<td class="tp_col_data"><a href="<?php echo $this->player->account ?>" target="blank"><?php echo $this->player->account ?></a></td>
+			</tr>
+			<?php } ?>
+			
 			<?php // Federation
 			if ($turParams->get('displayPlayerFederation', 0) == 1) { ?>
 			<tr>
@@ -160,7 +170,7 @@ if ($this->playerPhoto != '') { ?>
         </div>
  
 	<?php
-	if (!is_null($this->matches) AND count($this->matches) > 0) {
+	if (isset($this->matches) AND !is_null($this->matches) AND count($this->matches) > 0) {
 	?>
 	
 		<table cellpadding="0" cellspacing="0" class="turnier_rangliste">
@@ -229,7 +239,8 @@ if ($this->playerPhoto != '') { ?>
 					echo "</td>";
 					
 					// Ergebnis
-					if ($value->ergebnis != '') {
+					//if ($value->ergebnis != '') {
+					if (!is_null($value->ergebnis)) {
 						echo '<td class="tp_col_5">';
 						if ($value->pgn == '' OR !$this->pgnShow) {
 							echo CLMText::getResultString($value->ergebnis, 0);

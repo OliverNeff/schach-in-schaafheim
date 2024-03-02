@@ -1,7 +1,7 @@
 <?php
 /**
  * @ Chess League Manager (CLM) Component 
- * @Copyright (C) 2008-2018 CLM Team.  All rights reserved
+ * @Copyright (C) 2008-2023 CLM Team.  All rights reserved
  * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
  * @link http://www.chessleaguemanager.de
  * @author Thomas Schwietert
@@ -9,31 +9,43 @@
  * @author Andreas Dorn
  * @email webmaster@sbbl.org
 */
-
 defined('_JEXEC') or die('Restricted access');
 
-$swt = JRequest::getVar('swt', '', 'default', 'string');
-$update = JRequest::getVar('update', 0, 'default', 'int');
-$mturnier = JRequest::getVar('mturnier', 0, 'default', 'int');
-$noOrgReference = JRequest::getVar('noOrgReference', '0', 'default', 'string');
-$noBoardResults = JRequest::getVar('noBoardResults', '0', 'default', 'string');
-$lid = JRequest::getVar('liga', 0, 'default', 'int');
+$swt_file = clm_core::$load->request_string('swt_file', '');
+$update = clm_core::$load->request_int('update', 0);
+$mturnier = clm_core::$load->request_int('mturnier', 0);
+$noOrgReference = clm_core::$load->request_string('noOrgReference', '0');
+$noBoardResults = clm_core::$load->request_string('noBoardResults', '0');
+$lid = clm_core::$load->request_int('lid', 0);
 $ordering = $this->default['ordering'];
+$str_params = clm_core::$load->request_string('str_params');
 ?>
 
 <script language="javascript" type="text/javascript">
 
-		 Joomla.submitbutton = function (pressbutton) { 		
+		Joomla.submitbutton = function (pressbutton) { 		
         var form = document.adminForm;
         if (pressbutton == 'cancel') {
-            submitform( pressbutton );
+            Joomla.submitform( pressbutton );
             return;
         }
         // do field validation
         if (form.name.value == "") {
             alert( "<?php echo JText::_( 'LEAGUE_HINT_1', true ); ?>" );
-        } else if ( getSelectedValue('adminForm','sid') == 0 ) {
-            alert( "<?php echo JText::_( 'LEAGUE_HINT_2', true ); ?>" );
+		} else {
+			// get references to select list and display text box
+			var sel = document.getElementById('sid');			
+			var opt;
+			for ( var i = 0, len = sel.options.length; i < len; i++ ) {
+				opt = sel.options[i];
+				if ( opt.selected === true ) {
+					val = opt.value;
+					break;
+				}
+			}
+		}
+		if ( val == 0 ) {
+			alert( "<?php echo JText::_( 'LEAGUE_HINT_2', true ); ?>" );
         } else if (form.stamm.value == "") {
             alert( "<?php echo JText::_( 'LEAGUE_HINT_3', true ); ?>" );
         } else if (form.ersatz.value == "") {
@@ -42,14 +54,26 @@ $ordering = $this->default['ordering'];
             alert( "<?php echo JText::_( 'LEAGUE_HINT_5', true ); ?>" );
         } else if (form.runden.value == "") {
             alert( "<?php echo JText::_( 'LEAGUE_HINT_6', true ); ?>" );
-        } else if ( getSelectedValue('adminForm','durchgang') == "" ) {
-            alert( "<?php echo JText::_( 'LEAGUE_HINT_7', true ); ?>" );
+		} else {
+			// get references to select list and display text box
+			var sel = document.getElementById('durchgang');			
+			var opt;
+			for ( var i = 0, len = sel.options.length; i < len; i++ ) {
+				opt = sel.options[i];
+				if ( opt.selected === true ) {
+					val = opt.value;
+					break;
+				}
+			}
+		}
+		if ( val == 0 ) {
+			alert( "<?php echo JText::_( 'LEAGUE_HINT_7', true ); ?>" );
         } else if ( form.anz_sgp.value < 0 ) {
             alert( "<?php echo JText::_( 'LEAGUE_HINT_8', true ); ?>" );
         } else if ( form.anz_sgp.value > 20 ) {
             alert( "<?php echo JText::_( 'LEAGUE_HINT_8', true ); ?>" );
         } else {
-            submitform( pressbutton );
+            Joomla.submitform( pressbutton );
         }
     }
 
@@ -140,10 +164,20 @@ $ordering = $this->default['ordering'];
 						<select name="durchgang" id="durchgang" value="<?php echo $this->swt_data['anz_durchgaenge']; ?>" size="1">
 							<option value="1" <?php if ($this->swt_data['anz_durchgaenge'] < 2) {echo 'selected="selected"';} ?>>1</option>
 							<option value="2" <?php if ($this->swt_data['anz_durchgaenge'] == 2) {echo 'selected="selected"';} ?>>2</option>
+							<option value="3" <?php if ($this->swt_data['anz_durchgaenge'] == 3) {echo 'selected="selected"';} ?>>3</option>
+							<option value="4" <?php if ($this->swt_data['anz_durchgaenge'] == 4) {echo 'selected="selected"';} ?>>4</option>
 						</select>
 					</td>
 				</tr>
 				<tr>
+					<td nowrap="nowrap">
+						<label for="ersatz_regel"><?php echo JText::_( 'LEAGUE_ERSATZ_REGEL' ); ?></label>
+					</td><td colspan="2">
+						<select name="ersatz_regel" id="ersatz_regel" value="<?php echo $this->lists['ersatz_regel']; ?>" size="1">
+							<option value="0" <?php if ($this->lists['ersatz_regel'] == 0) {echo 'selected="selected"';} ?>><?php echo JText::_( 'LEAGUE_ERSATZ_REGEL_0' );?></option>
+							<option value="1" <?php if ($this->lists['ersatz_regel'] == 1) {echo 'selected="selected"';} ?>><?php echo JText::_( 'LEAGUE_ERSATZ_REGEL_1' );?></option>
+						</select>
+					</td>
 					<td nowrap="nowrap">
 						<label for="anz_sgp"><?php echo JText::_( 'LEAGUE_ANZ_SGP' ); ?></label>
 						</td><td colspan="2">
@@ -174,8 +208,8 @@ $ordering = $this->default['ordering'];
 					<td nowrap="nowrap">
 						<label for="runden_modus"><?php echo JText::_( 'MTURN_PAIRING_MODE' ); ?></label>
 						</td><td colspan="2">
-						<select name="runden_modus" id="runden_modus" value="<?php echo $swt_data['runden_modus']; ?>" size="1">
-							<!--<option>- wählen -</option>-->
+						<select name="runden_modus" id="runden_modus" value="<?php echo $this->swt_data['runden_modus']; ?>" size="1">
+							<!-- <option>- wählen -</option> -->
 							<option value="1" <?php if ($this->swt_data['runden_modus'] == 1) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_PAIRING_MODE_2' );?></option>
 							<option value="2" <?php if ($this->swt_data['runden_modus'] == 2) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_PAIRING_MODE_3' );?></option>
 							<option value="3" <?php if ($this->swt_data['runden_modus'] == 3) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_PAIRING_MODE_4' );?></option>
@@ -199,9 +233,15 @@ $ordering = $this->default['ordering'];
 							<option value="1" <?php if ($this->swt_data['tiebr1'] == 1) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_1' );?></option>
 							<option value="11" <?php if ($this->swt_data['tiebr1'] == 11) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_11' );?></option>
 							<option value="2" <?php if ($this->swt_data['tiebr1'] == 2) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_2' );?></option>
+							<option value="12" <?php if ($this->swt_data['tiebr1'] == 12) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_12' );?></option>
+							<option value="7" <?php if ($this->swt_data['tiebr1'] == 7) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_7' );?></option>
+							<option value="17" <?php if ($this->swt_data['tiebr1'] == 17) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_17' );?></option>
+							<option value="8" <?php if ($this->swt_data['tiebr1'] == 8) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_8' );?></option>
+							<option value="18" <?php if ($this->swt_data['tiebr1'] == 18) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_18' );?></option>
 							<option value="23" <?php if ($this->swt_data['tiebr1'] == 23) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_23' );?></option>
 							<option value="4" <?php if ($this->swt_data['tiebr1'] == 4) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_4' );?></option>
 							<option value="5" <?php if ($this->swt_data['tiebr1'] == 5) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_5' );?></option>
+							<option value="9" <?php if ($this->swt_data['tiebr1'] == 9) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_9' );?></option>
 							<option value="10" <?php if ($this->swt_data['tiebr1'] == 10) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_10' );?></option>
 							<option value="3" <?php if ($this->swt_data['tiebr1'] == 3) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_3' );?></option>
 							<option value="25" <?php if ($this->swt_data['tiebr1'] == 25) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_25' );?></option>
@@ -217,9 +257,15 @@ $ordering = $this->default['ordering'];
 							<option value="1" <?php if ($this->swt_data['tiebr2'] == 1) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_1' );?></option>
 							<option value="11" <?php if ($this->swt_data['tiebr2'] == 11) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_11' );?></option>
 							<option value="2" <?php if ($this->swt_data['tiebr2'] == 2) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_2' );?></option>
+							<option value="12" <?php if ($this->swt_data['tiebr2'] == 12) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_12' );?></option>
+							<option value="7" <?php if ($this->swt_data['tiebr2'] == 7) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_7' );?></option>
+							<option value="17" <?php if ($this->swt_data['tiebr2'] == 17) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_17' );?></option>
+							<option value="8" <?php if ($this->swt_data['tiebr2'] == 8) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_8' );?></option>
+							<option value="18" <?php if ($this->swt_data['tiebr2'] == 18) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_18' );?></option>
 							<option value="23" <?php if ($this->swt_data['tiebr2'] == 23) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_23' );?></option>
 							<option value="4" <?php if ($this->swt_data['tiebr2'] == 4) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_4' );?></option>
 							<option value="5" <?php if ($this->swt_data['tiebr2'] == 5) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_5' );?></option>
+							<option value="9" <?php if ($this->swt_data['tiebr2'] == 9) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_9' );?></option>
 							<option value="10" <?php if ($this->swt_data['tiebr2'] == 10) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_10' );?></option>
 							<option value="3" <?php if ($this->swt_data['tiebr2'] == 3) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_3' );?></option>
 							<option value="25" <?php if ($this->swt_data['tiebr2'] == 25) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_25' );?></option>
@@ -236,9 +282,15 @@ $ordering = $this->default['ordering'];
 							<option value="1" <?php if ($this->swt_data['tiebr3'] == 1) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_1' );?></option>
 							<option value="11" <?php if ($this->swt_data['tiebr3'] == 11) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_11' );?></option>
 							<option value="2" <?php if ($this->swt_data['tiebr3'] == 2) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_2' );?></option>
+							<option value="12" <?php if ($this->swt_data['tiebr3'] == 12) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_12' );?></option>
+							<option value="7" <?php if ($this->swt_data['tiebr3'] == 7) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_7' );?></option>
+							<option value="17" <?php if ($this->swt_data['tiebr3'] == 17) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_17' );?></option>
+							<option value="8" <?php if ($this->swt_data['tiebr3'] == 8) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_8' );?></option>
+							<option value="18" <?php if ($this->swt_data['tiebr3'] == 18) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_18' );?></option>
 							<option value="23" <?php if ($this->swt_data['tiebr3'] == 23) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_23' );?></option>
 							<option value="4" <?php if ($this->swt_data['tiebr3'] == 4) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_4' );?></option>
 							<option value="5" <?php if ($this->swt_data['tiebr3'] == 5) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_5' );?></option>
+							<option value="9" <?php if ($this->swt_data['tiebr3'] == 9) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_9' );?></option>
 							<option value="10" <?php if ($this->swt_data['tiebr3'] == 10) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_10' );?></option>
 							<option value="3" <?php if ($this->swt_data['tiebr3'] == 3) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_3' );?></option>
 							<option value="25" <?php if ($this->swt_data['tiebr3'] == 25) {echo 'selected="selected"';} ?>><?php echo JText::_( 'MTURN_TIEBR_25' );?></option>
@@ -274,6 +326,14 @@ $ordering = $this->default['ordering'];
 				</tr>
 <?php } ?>
 <!-- bis hier Liga-Eingabemaske -->
+			<tr>
+				<td nowrap="nowrap">
+					<label for="pseudo_dwz"><?php echo JText::_( 'LEAGUE_PSEUDO_DWZ' ); ?></label>
+				</td><td colspan="2">
+					<input class="inputbox" type="text" name="pseudo_dwz" id="pseudo_dwz" size="4" maxlength="4" value="<?php echo $this->swt_data['pseudo_dwz']; ?>" />
+				</td>
+				<td colspan="2"></td>
+			</tr>
 				
 			</table>
 		</fieldset>
@@ -330,11 +390,11 @@ $ordering = $this->default['ordering'];
 						<label for="sieg_bed"><?php echo JText::_( 'LEAGUE_WINNING_CONDITIONS' ); ?></label>
 					</td>
 					<td colspan="2">&nbsp;&nbsp;
-						<select name="sieg_bed" id="sieg_bed" value="<?php /*echo $this->swt_data['sieg_bed']; */ ?>" size="1">
-							<option value="1" <?php if ($this->swt_data['sieg_bed'] == 1) {echo '"selected"';}  ?>>
+						<select name="sieg_bed" id="sieg_bed" value="<?php echo $this->swt_data['sieg_bed']; ?>" size="1">
+							<option value="1" <?php if ($this->swt_data['sieg_bed'] == 1) {echo 'selected="selected"';}  ?>>
 								<?php echo JText::_( 'LEAGUE_WINNING_CONDITIONS_1' );?>
 							</option>
-							<option value="2" <?php if ($this->swt_data['sieg_bed'] == 2) {echo '"selected"';}  ?>>
+							<option value="2" <?php if ($this->swt_data['sieg_bed'] == 2) {echo 'selected="selected"';}  ?>>
 								<?php echo JText::_( 'LEAGUE_WINNING_CONDITIONS_2' );?>
 							</option>
 						</select>
@@ -396,6 +456,13 @@ $ordering = $this->default['ordering'];
 			<table class="paramlist admintable">
 
 				<tr>
+					<td nowrap="nowrap" colspan="2">
+						<label for="anzeige_ma"><?php echo JText::_( 'LEAGUE_SHOW_PLAYERLIST' ); ?></label>
+						</td><td colspan="1"><fieldset class="radio">
+						<?php echo $this->lists['anzeige_ma']; ?>
+						</fieldset></td>
+				</tr>
+				<tr>
 					<td nowrap="nowrap">
 						<label for="mail"><?php echo JText::_( 'LEAGUE_MAIL' ); ?></label>
 					</td>
@@ -441,6 +508,31 @@ $ordering = $this->default['ordering'];
 
 	<div class="width-40 fltrt">
 		<fieldset class="adminform">
+			<legend><?php echo ''; ?></legend>
+			<table class="paramlist admintable">
+				<legend><?php echo JText::_( 'SWT_DWZ_HANDLING' ); ?></legend>
+				<tr>
+					<td style="text-align: left;">					
+						<label for="dwz_trans_1">
+						<input type="radio" id="dwz_trans_1" name="dwz_handling" value="1" >
+						<?php echo '&nbsp;'.JText::_( 'SWT_DWZ_HANDLING_1' ); ?></label>
+						<label for="dwz_trans_0">
+						<input type="radio" id="dwz_trans_0" name="dwz_handling" value="0" checked="checked" >
+						<?php echo '&nbsp;'.JText::_( 'SWT_DWZ_HANDLING_0' ); ?></label>
+					</td>
+				</tr>
+			</table>
+			<br>
+				<legend><?php echo JText::_( 'SWT_SP_ACTIONS' ); ?></legend>
+				<tr>
+					<td nowrap="nowrap">
+						<label for="name_land"><?php echo JText::_( 'SWT_NAME_LAND' ); ?></label>
+					</td>
+					<td><fieldset class="radio">
+						<?php echo $this->lists['name_land']; ?>
+					</fieldset></td>
+				</tr>
+			<br><br>
 			<legend><?php echo JText::_( 'REMARKS' ); ?></legend>
 			<table class="paramlist admintable">
 				<legend><?php echo JText::_( 'REMARKS_PUBLIC' ); ?></legend>
@@ -504,12 +596,13 @@ $ordering = $this->default['ordering'];
 	<input type="hidden" name="view" value="swtligainfo" />
 	<input type="hidden" name="controller" value="swtligainfo" />
 	<input type="hidden" name="task" value="" />
-	<input type="hidden" name="swt" value="<?php echo $swt; ?>" />
+	<input type="hidden" name="swt_file" value="<?php echo $swt_file; ?>" />
 	<input type="hidden" name="update" value="<?php echo $update; ?>" />
 	<input type="hidden" name="mturnier" value="<?php echo $mturnier; ?>" />
 	<input type="hidden" name="noOrgReference" value="<?php echo $noOrgReference; ?>" />
 	<input type="hidden" name="noBoardResults" value="<?php echo $noBoardResults; ?>" />
 	<input type="hidden" name="lid" value="<?php echo $lid; ?>" />
 	<input type="hidden" name="ordering" value="<?php echo $ordering; ?>" />
+	<input type="hidden" name="str_params" value="<?php echo $str_params; ?>" />
 	<?php echo JHtml::_( 'form.token' ); ?>
 </form>

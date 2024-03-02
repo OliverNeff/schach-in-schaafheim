@@ -1,25 +1,32 @@
-<?php // no direct access
+<?php 
+/**
+ * @ Chess League Manager (CLM) Archiv Modul 
+ * @Copyright (C) 2008-2021 CLM Team.  All rights reserved
+ * @license http://www.gnu.org/copyleft/gpl.html GNU/GPL
+ * @link http://www.chessleaguemanager.de
+*/
+// no direct access
 defined('_JEXEC') or die('Restricted access'); 
 
-$sid	= JRequest::getInt( 'saison');
-$liga	= JRequest::getInt( 'liga');
-$turnier	= JRequest::getInt( 'turnier', 0);
-$runde	= JRequest::getInt( 'runde');
-$view	= JRequest::getVar( 'view' );
-$dg	= JRequest::getInt( 'dg' );
+$sid	= clm_core::$load->request_int( 'saison');
+$liga	= clm_core::$load->request_int( 'liga');
+$turnier	= clm_core::$load->request_int( 'turnier', 0);
+$runde	= clm_core::$load->request_int( 'runde');
+$view	= clm_core::$load->request_string( 'view' );
+$dg	= clm_core::$load->request_int( 'dg' );
 // itemid
 if($par_itemid == '' || !is_numeric($par_itemid)) {
-	$itemid	= JRequest::getVar( 'Itemid' );
+	$itemid	= clm_core::$load->request_string( 'Itemid' );
 } else {
 	$itemid = $par_itemid;
 }
 $par_mt_type = $params->def('mt_type', 0);
-$typeid	= JRequest::getVar( 'typeid' );
+$typeid	= clm_core::$load->request_string( 'typeid' );
 if (!isset($typeid)) $typeid = 21; 
 
 //URL-Test: falls nicht belegt --> mod_clm oder mod_clm_archiv
 //			falls belegt --> mod_clm_ext
-$url		= JRequest::getVar('url');
+$url		= clm_core::$load->request_string('url');
 
 // Konfigurationsparameter auslesen
 $config = clm_core::$db->config();
@@ -37,7 +44,7 @@ $countryversion	= $config->countryversion;
 	</li>
 <?php    
 //} else {
-if($sid == $saison->id AND !isset($url)) { ?>
+if($sid == $saison->id AND (!isset($url) OR $url == '')) { ?>
 <ul><?php
 foreach ($link as $link) {
   if ($par_mt_type == 0) {
