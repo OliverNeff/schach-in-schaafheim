@@ -59,7 +59,7 @@ class CLMContent {
 		$string = '<div class="pdf">';
 		
 		// imageTag zusammensetzen
-		$imageTag = '<img src="'.CLMImage::imageURL('pdf_button.png').'" width="16" height="19" title="'.JText::_('PDF_PRINT').$title.'" alt="PDF" class="Tooltip" />';
+		$imageTag = '<img src="'.CLMImage::imageURL('pdf_button.png').'" width="16" height="19" title="'.JText::_('PDF_PRINT').$title.'" alt="PDF" class="tooltip" />';
 		
 		// Format ergänzen
 		$params['format'] = 'pdf';
@@ -83,7 +83,7 @@ class CLMContent {
 		$string = '<div class="pdf">';
 		
 		// imageTag zusammensetzen
-		$imageTag = '<img src="'.CLMImage::imageURL('goto_view.jpg').'" width="16" height="19" title="'.$title.'" alt="Goto" class="Tooltip" />';
+		$imageTag = '<img src="'.CLMImage::imageURL('goto_view.jpg').'" width="16" height="19" title="'.$title.'" alt="Goto" class="tooltip" />';
 			
 		$string .= CLMText::createCLMLink($imageTag, $view, $params);
 		
@@ -106,7 +106,7 @@ class CLMContent {
 		$string = '<div class="pdf">';
 		
 		// imageTag zusammensetzen
-		$imageTag = '<img src="'.CLMImage::imageURL('pgn.gif').'" width="16" height="19" title="'.$title.'" alt="PGN" class="Tooltip" />';
+		$imageTag = '<img src="'.CLMImage::imageURL('pgn.gif').'" width="16" height="19" title="'.$title.'" alt="PGN" class="tooltip" />';
 		
 		// Paramter pgn ergänzen
 		$params['pgn'] = $pgn;

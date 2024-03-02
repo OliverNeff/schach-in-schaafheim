@@ -218,7 +218,7 @@ else { $sum_ea = 0; $sum_punkte = 0; $sum_partien = 0; $ex = 0; ?>
         <th><?php echo JText::_('PLAYER_OPONENT') ?></th>
         <th class="gsp">
 		<?php if ($hint_dwzdsb != '') { ?>
-			<a title="<?php echo $hint_dwzdsb; ?>" class="CLMTooltip"><?php echo JText::_('PLAYER_RATING') ?></a>
+			<a title="<?php echo $hint_dwzdsb; ?>" class="tooltip"><?php echo JText::_('PLAYER_RATING') ?></a>
 		<?php } else { ?>
 			<?php echo JText::_('PLAYER_RATING') ?>
 		<?php } ?>
@@ -329,7 +329,7 @@ else { $sum_ea = 0; $sum_punkte = 0; $sum_partien = 0; $ex = 0; ?>
         <th class="anfang" colspan="9"><?php echo $spielerl->liga_name; ?></th>
     </tr>
     <tr>
-        <td><a title="<?php echo $hint_dwzdsb; ?>" class="CLMTooltip"><?php echo JText::_('PLAYER_RATING_OLD') ?></a></td>
+        <td><a title="<?php echo $hint_dwzdsb; ?>" class="tooltip"><?php echo JText::_('PLAYER_RATING_OLD') ?></a></td>
 		<td><?php echo JText::_('PLAYER_W') ?></td>
         <td><?php echo JText::_('PLAYER_WE') ?></td>
         <td><?php echo JText::_('PLAYER_EF') ?></td>

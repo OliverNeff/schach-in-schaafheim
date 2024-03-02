@@ -192,10 +192,10 @@ if ($termin[$term]->published =="1") { ?>
 		<div class="left" style="width: 70%;">
 		<?php 
 		if ($termin[$term]->bemerkungen <> "") { ?>
-			<span class="editlinktip hasTip"><img src="<?php echo CLMImage::imageURL('con_info.png'); ?>" class="CLMTooltip" title="<?php echo JText::_( 'CHIEF_NOTE') ?>" /></span><?php }
+			<span class="editlinktip hasTip"><img src="<?php echo CLMImage::imageURL('con_info.png'); ?>" class="tooltip" title="<?php echo JText::_( 'CHIEF_NOTE') ?>" /></span><?php }
 		// Wenn SL_OK dann Haken anzeigen
 		if ($rundensumme[$rund_sum]->sl_ok > 0) { ?>
-			<span class="editlinktip hasTip"><img  src="<?php echo CLMImage::imageURL('accept.png'); ?>" class="CLMTooltip" title="<?php echo JText::_( 'CHIEF_OK') ?>" /></span><?php } ?>
+			<span class="editlinktip hasTip"><img  src="<?php echo CLMImage::imageURL('accept.png'); ?>" class="tooltip" title="<?php echo JText::_( 'CHIEF_OK') ?>" /></span><?php } ?>
 		<b>&nbsp;<?php if (isset($termin[$term]) AND $termin[$term]->nr == ($x+1+ (($xx)*$liga[0]->runden)) ) { 
 			if ($termin[$term]->datum > 0) { echo JHTML::_('date',  $termin[$term]->datum, JText::_('DATE_FORMAT_CLM_F')); 
 			if($params['round_date'] == '0' and isset($termin[$term]->startzeit) and $termin[$term]->startzeit != '00:00:00') { echo '  '.substr($termin[$term]->startzeit,0,5); }

@@ -33,7 +33,7 @@
 <div id="1499292000" class="tag normal">06</div>
 <div id="1499378400" class="tag normal">07</div>
 <div id="1499464800" class="tag normal">08</div>
-<div id="1499551200" class="tag heute"><a href="index.php?option=com_clm&amp;view=termine&amp;Itemid=1&amp;start=2017-07-01" ><span title="heute" class="CLMTooltip">09</span></a></div>
+<div id="1499551200" class="tag heute"><a href="index.php?option=com_clm&amp;view=termine&amp;Itemid=1&amp;start=2017-07-01" ><span title="heute" class="tooltip">09</span></a></div>
 <div id="1499637600" class="tag normal">10</div>
 <div id="1499724000" class="tag normal">11</div>
 <div id="1499810400" class="tag normal">12</div>

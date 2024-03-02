@@ -114,9 +114,9 @@ if (isset($spieler[$count-1]) AND $spieler[$count-1]->count > 0) {
 	<td><?php echo JText::_('DWZ_NR') ?></td>
 	<td><?php echo JText::_('DWZ_NAME') ?></td>
 	<?php if ($old) { ?>
-		<td><a title="<?php echo $hint_dwzdsb; ?>" class="CLMTooltip"><?php echo JText::_('DWZ_OLD') ?></a></td>
+		<td><a title="<?php echo $hint_dwzdsb; ?>" class="tooltip"><?php echo JText::_('DWZ_OLD') ?></a></td>
 	<?php } else { ?>
-		<td><a title="<?php echo $hint_dwzdsb; ?>" class="CLMTooltip"><?php echo JText::_('DWZ_START') ?></a></td>
+		<td><a title="<?php echo $hint_dwzdsb; ?>" class="tooltip"><?php echo JText::_('DWZ_START') ?></a></td>
 	<?php } ?>
 	<td><?php echo JText::_('DWZ_W') ?></td>
 	<td><?php echo JText::_('DWZ_WE') ?></td>

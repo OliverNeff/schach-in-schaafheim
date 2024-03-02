@@ -12,7 +12,24 @@ $ -> Language fix or change
 - -> Removed
 ! -> Note
 
-- - - - - 4.1.3 - [30-12-2023] - - - - - - - - - - - - - - - - - - - -
+- - - - - 4.1.4 - [25-02-2024] - - - - - - - - - - - - - - - - - - - -
+# SWT-Import Einzelturniere: Anzeige noch nicht gespielter Runden bei CH-Modus (Nachtrag)
+^ Backend: Codeanpassung php 8.2 für Einzelturniere einschl. Sonderranglisten
+^ Backend: Codeanpassung php 8.2 für Termine und Kategorien
++ Loggimg: neue Löschfunktion, fast alles löschen
+^ Rangfolgemeldung im FE: Eine Mail je Person und Funktion
+# Teamwettbewerbe: Berechnung Wertpunkte nach Annullieren
+^ Copyright 2008-2024
+# Rundenbericht: Anzeige Brettergebnis nach TO-Korrektur bei 3-2-1-Wertung							
+# Einzelturniere: pdf-Rundenbericht Darstellung kampflose Paarungen
+^ Termine: Export und Import im iCal-format
++ Saisonüberblick: Ausgabe Kalenderdatei
+^ Ligastatistik: Diagramme - Ersatz von apis.ggogle durch gstatic
+# Mitgliederverwaltung: Prüfung vor dem Löschen von Spielern
+# Ligaauswertung: keine Warnung bei kampflosen Paarungen 
+# Termine fehlen im pdf-Rundenbericht bei Mannschaftsturnier mit individuellen Terminen
+
+- - - - - 4.1.3 - [24-12-2023] - - - - - - - - - - - - - - - - - - - -
 # Admin View Meldeliste: Einfügen Spieler und Prüfung Doppeleintrag
 # View Runde: Spielgemeinschaften (Nachbesserung) 
 # Datenbereitstellung für Content-Plugin

@@ -1,16 +1,16 @@
 <?xml version="1.0" encoding="UTF-8" ?>
  <extension type="package" version="2.5" method="upgrade">
  <name>CLM - Core</name>
- <creationDate>31.12.2023</creationDate>
+ <creationDate>25.02.2024</creationDate>
  <packagename>clm</packagename>
  <author>CLM Team</author>
- <version>4.1.3</version>
+ <version>4.1.4</version>
  <packager>CLM Team</packager>
  <packagerurl>www.chessleaguemanager.de</packagerurl>
  	<description>
 		<![CDATA[
 	 	<img src="components/com_clm/images/clm_logo.png" alt="" align="left" />
-		 <h3>CLM - Chess League Manager :  4.1.3  [31.12.2023]</h3>
+		 <h3>CLM - Chess League Manager :  4.1.4  [25.02.2024]</h3>
 		 <p>Die CLM Komponente ist ein Ligamanager für Schachligen und mehr...</p>
 		 <a href="http://www.chessleaguemanager.de" target="blank">CLM Projekt Homepage</a>  |  <a href="http://www.chessleaguemanager.de/index.php?option=com_kunena" target="blank">Support Forum</a>
 		 <br><br>

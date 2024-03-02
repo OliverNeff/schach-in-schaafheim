@@ -28,7 +28,7 @@
 }
 .kalender .tag {
     float:left;
-    width: 23.7px  !important;
+    width: 24px  !important;
     height: 25px  !important;
     line-height: 25px;
     text-align: center;
@@ -49,7 +49,7 @@
 }
 .kalender  .tag.event {
 	font-weight:bold;
-	background-color: #FFBF00 !important;
+	background-color: #EEE !important;
 }
 .kalender  .tag.event  a{
 	color: blue;

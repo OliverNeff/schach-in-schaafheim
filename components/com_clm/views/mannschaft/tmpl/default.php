@@ -308,7 +308,7 @@ elseif ($mannschaft[0]->lpublished != 0 AND $mannschaft[0]->published != 0) { ?>
         <th class="name"><?php echo JText::_('DWZ_NAME') ?></th>
         <th class="dwz">
 		<?php if ($hint_dwzdsb != '') { ?>
-			<a title="<?php echo $hint_dwzdsb; ?>" class="CLMTooltip"><?php if ($countryversion == "de") echo JText::_('LEAGUE_STAT_DWZ'); else echo JText::_('LEAGUE_STAT_DWZ_EN')?></a>
+			<a title="<?php echo $hint_dwzdsb; ?>" class="tooltip"><?php if ($countryversion == "de") echo JText::_('LEAGUE_STAT_DWZ'); else echo JText::_('LEAGUE_STAT_DWZ_EN')?></a>
 		<?php } else { ?>
 			<?php if ($countryversion == "de") echo JText::_('LEAGUE_STAT_DWZ'); else echo JText::_('LEAGUE_STAT_DWZ_EN')?>
 		<?php } ?>
