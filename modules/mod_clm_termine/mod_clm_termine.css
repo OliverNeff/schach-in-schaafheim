@@ -8,9 +8,9 @@
 @charset "utf-8";
 /* CSS Document */
 
-.kalenderli {
+.kalender {
     font-family:verdana;
-    font-size:13px;
+    font-size:12px;
 }
 .kalender {
 	width:180px  !important;
@@ -28,7 +28,7 @@
 }
 .kalender .tag {
     float:left;
-    width: 24px  !important;
+    width: 23.7px  !important;
     height: 25px  !important;
     line-height: 25px;
     text-align: center;
@@ -49,7 +49,7 @@
 }
 .kalender  .tag.event {
 	font-weight:bold;
-	background-color: #EEE !important;
+	background-color: #FFBF00 !important;
 }
 .kalender  .tag.event  a{
 	color: blue;
